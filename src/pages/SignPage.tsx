@@ -132,13 +132,23 @@ export default function SignPage() {
     setLoading(true);
     try {
       if (authMethod === "google" && googleUser) {
-        await saveUser(googleUser.uid, displayName || googleUser.displayName, googleUser.email, selectedPlan);
-        navigate("/chat");
+        await saveUser(googleUser.uid, displayName || googleUser.displayName, googleUser.email, selectedPlan === "free" ? "free" : selectedPlan);
+        if (selectedPlan !== "free") {
+          const price = selectedPlan === "pro" ? "499" : "1299";
+          navigate(`/payment?plan=${selectedPlan}&price=${price}`);
+        } else {
+          navigate("/chat");
+        }
       } else if (authMethod === "email") {
         const r = await createUserWithEmailAndPassword(auth, email, password);
         if (displayName) await updateProfile(r.user, { displayName });
-        await saveUser(r.user.uid, displayName || null, email, selectedPlan);
-        navigate("/chat");
+        await saveUser(r.user.uid, displayName || null, email, selectedPlan === "free" ? "free" : selectedPlan);
+        if (selectedPlan !== "free") {
+          const price = selectedPlan === "pro" ? "499" : "1299";
+          navigate(`/payment?plan=${selectedPlan}&price=${price}`);
+        } else {
+          navigate("/chat");
+        }
       }
     } catch (err: unknown) {
       const code = (err as { code?: string }).code || "";

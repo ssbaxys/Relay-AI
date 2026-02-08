@@ -5,13 +5,15 @@ import { ref, push, onValue, serverTimestamp, query, orderByChild, remove, updat
 import { auth, db } from "../firebase";
 import { useAuth } from "../App";
 import MarkdownRenderer from "../components/MarkdownRenderer";
+import ElectricBorder from "../components/ElectricBorder";
 import {
   Plus, Search, Send, ChevronDown, ChevronRight,
   LogOut, Trash2, MessageSquare, Check, Square,
   Folder, Pencil, X, ArrowDownAZ, Clock, MessageCircle,
   GripVertical, FolderOpen, Home, User, Lock, FileText, PanelLeftClose, PanelLeft,
   Shield, Wrench, AlertTriangle, Ban, TicketCheck, ChevronLeft, Send as SendIcon,
-  Play, Pause, Download, Code, Image as ImageIcon, Music, ExternalLink, Eye
+  Play, Pause, Download, Code, Image as ImageIcon, Music, ExternalLink, Eye,
+  Crown, Gem, Sparkles
 } from "lucide-react";
 
 const MAX_CHARS = 2000;
@@ -306,7 +308,7 @@ export default function ChatPage() {
   const [chatContextMenu, setChatContextMenu] = useState<{ chatId: string; x: number; y: number } | null>(null);
   const [folderContextMenu, setFolderContextMenu] = useState<{ folderId: string; x: number; y: number } | null>(null);
   const [showProfile, setShowProfile] = useState(false);
-  const [profileData, setProfileData] = useState({ displayName: "", systemNick: "", visibleNick: "", id: "" });
+  const [profileData, setProfileData] = useState({ displayName: "", systemNick: "", visibleNick: "", id: "", plan: "free" });
   const [editingVisibleNick, setEditingVisibleNick] = useState(false);
   const [visibleNickInput, setVisibleNickInput] = useState("");
   const [adminInput, setAdminInput] = useState("");
@@ -380,7 +382,7 @@ export default function ChatPage() {
   // Listen for admin viewing as this user
   useEffect(() => { if (!user) return; const unsub = onValue(ref(db, `viewAsUser/${user.uid}`), (snap) => { setViewAsUser(!!snap.val()); }); return () => unsub(); }, [user]);
   useEffect(() => { setCurrentSuggestions(getRandomSuggestions(selectedModel.id)); }, [selectedModel.id]);
-  useEffect(() => { if (!user) return; const unsub = onValue(ref(db, `users/${user.uid}`), (snap) => { const d = snap.val(); if (d) { setProfileData({ displayName: d.displayName || user.displayName || "User", systemNick: user.email || "", visibleNick: d.visibleNick || d.displayName || user.displayName || "User", id: d.uniqueId || "" }); if (!d.uniqueId) set(ref(db, `users/${user.uid}/uniqueId`), String(Math.floor(10000000 + Math.random() * 90000000))); } }); return () => unsub(); }, [user]);
+  useEffect(() => { if (!user) return; const unsub = onValue(ref(db, `users/${user.uid}`), (snap) => { const d = snap.val(); if (d) { setProfileData({ displayName: d.displayName || user.displayName || "User", systemNick: user.email || "", visibleNick: d.visibleNick || d.displayName || user.displayName || "User", id: d.uniqueId || "", plan: d.plan || "free" }); if (!d.uniqueId) set(ref(db, `users/${user.uid}/uniqueId`), String(Math.floor(10000000 + Math.random() * 90000000))); } }); return () => unsub(); }, [user]);
   useEffect(() => { if (!user) return; const q = query(ref(db, `chats/${user.uid}`), orderByChild("createdAt")); const unsub = onValue(q, (snap) => { const d = snap.val(); if (d) { setChatSessions(Object.entries(d).map(([id, v]: [string, any]) => ({ id, title: v.title || "Новый чат", model: v.model || "gpt-5.2-codex", createdAt: v.createdAt || 0, lastMessage: v.lastMessage || v.createdAt || 0, messageCount: v.messageCount || 0, folderId: v.folderId || undefined }))); } else setChatSessions([]); }); return () => unsub(); }, [user]);
   useEffect(() => { if (!user) return; const unsub = onValue(ref(db, `folders/${user.uid}`), (snap) => { const d = snap.val(); if (d) { setFolders(Object.entries(d).map(([id, v]: [string, any]) => ({ id, name: v.name || "Папка", createdAt: v.createdAt || 0, collapsed: v.collapsed || false }))); } else setFolders([]); }); return () => unsub(); }, [user]);
 
@@ -742,6 +744,58 @@ export default function ChatPage() {
             </div>
             <div className="p-6 space-y-4">
               <div><label className="block text-[10px] text-zinc-600 uppercase tracking-wider mb-1">Системный ник (Email)</label><p className="text-sm text-zinc-300 font-mono">{profileData.systemNick}</p></div>
+              
+              {/* Subscription Card */}
+              <div><label className="block text-[10px] text-zinc-600 uppercase tracking-wider mb-2">Подписка</label>
+                {profileData.plan === "ultra" ? (
+                  <ElectricBorder color="#f59e0b" speed={1} chaos={0.12} borderRadius={16} className="w-full">
+                    <div className="bg-[#0d0d10] p-4 rounded-2xl">
+                      <div className="flex items-center justify-between mb-2">
+                        <div className="flex items-center gap-2">
+                          <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-yellow-500/30 to-amber-600/30 flex items-center justify-center">
+                            <Gem className="w-4 h-4 text-yellow-400" />
+                          </div>
+                          <span className="text-sm font-bold bg-gradient-to-r from-yellow-400 via-amber-300 to-yellow-500 bg-clip-text text-transparent">ULTRA</span>
+                        </div>
+                        <span className="text-[10px] font-medium text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full">Активна</span>
+                      </div>
+                      <p className="text-[11px] text-zinc-500">Максимальный план · 1 299₽/мес</p>
+                    </div>
+                  </ElectricBorder>
+                ) : profileData.plan === "pro" ? (
+                  <div className="bg-violet-600/10 border border-violet-500/30 rounded-2xl p-4">
+                    <div className="flex items-center justify-between mb-2">
+                      <div className="flex items-center gap-2">
+                        <div className="w-8 h-8 rounded-lg bg-violet-600/20 flex items-center justify-center">
+                          <Crown className="w-4 h-4 text-violet-400" />
+                        </div>
+                        <span className="text-sm font-bold text-violet-400">PRO</span>
+                      </div>
+                      <span className="text-[10px] font-medium text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full">Активна</span>
+                    </div>
+                    <p className="text-[11px] text-zinc-500 mb-3">499₽/мес</p>
+                    <Link to="/payment?plan=ultra&price=1299" onClick={() => setShowProfile(false)} className="block w-full py-2 rounded-xl text-center text-xs font-medium bg-gradient-to-r from-yellow-500/10 to-amber-500/10 border border-yellow-500/20 text-yellow-400 hover:from-yellow-500/20 hover:to-amber-500/20 transition-all">
+                      Улучшить до Ultra
+                    </Link>
+                  </div>
+                ) : (
+                  <div className="bg-zinc-900/50 border border-zinc-800 rounded-2xl p-4">
+                    <div className="flex items-center justify-between mb-2">
+                      <div className="flex items-center gap-2">
+                        <div className="w-8 h-8 rounded-lg bg-zinc-800 flex items-center justify-center">
+                          <Sparkles className="w-4 h-4 text-zinc-500" />
+                        </div>
+                        <span className="text-sm font-medium text-zinc-400">Free</span>
+                      </div>
+                    </div>
+                    <p className="text-[11px] text-zinc-600 mb-3">Базовый план</p>
+                    <Link to="/payment?plan=pro&price=499" onClick={() => setShowProfile(false)} className="block w-full py-2 rounded-xl text-center text-xs font-medium bg-violet-600 text-white hover:bg-violet-500 transition-all">
+                      Улучшить до Pro
+                    </Link>
+                  </div>
+                )}
+              </div>
+              
               <div className="pt-2 border-t border-white/[0.04] space-y-2">
                 <Link to="/terms" onClick={() => setShowProfile(false)} className="flex items-center gap-2 px-3 py-2 rounded-lg text-xs text-zinc-400 hover:bg-white/[0.03] transition-all"><FileText className="w-3.5 h-3.5" /> Условия использования</Link>
                 {hasAdminAccess ? <Link to="/admin" onClick={() => setShowProfile(false)} className="flex items-center gap-2 px-3 py-2 rounded-lg text-xs text-violet-400 hover:bg-violet-600/10 transition-all"><Lock className="w-3.5 h-3.5" /> Админ панель</Link> : (

@@ -256,7 +256,11 @@ export default function HomePage() {
                     </li>
                   ))}
                 </ul>
-                <Link to={user ? "/chat" : "/sign"}
+                <Link to={
+                    p.name === "Free"
+                      ? (user ? "/chat" : "/sign")
+                      : (user ? `/payment?plan=${p.name.toLowerCase()}&price=${p.price.replace(/[^\d]/g, "")}` : "/sign")
+                  }
                   className={`block text-center py-2.5 rounded-xl text-sm font-medium transition-all ${
                     p.highlighted
                       ? "bg-white text-violet-700 hover:bg-violet-50"

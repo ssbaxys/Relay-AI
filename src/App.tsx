@@ -8,6 +8,7 @@ import ChatPage from "./pages/ChatPage";
 import TermsPage from "./pages/TermsPage";
 import AdminPage from "./pages/AdminPage";
 import UptimePage from "./pages/UptimePage";
+import PaymentPage from "./pages/PaymentPage";
 
 interface AuthContextType {
   user: User | null;
@@ -47,6 +48,7 @@ export function App() {
           <Route path="/terms" element={<TermsPage />} />
           <Route path="/admin" element={<AdminPage />} />
           <Route path="/uptime" element={<UptimePage />} />
+          <Route path="/payment" element={<ProtectedRoute><PaymentPage /></ProtectedRoute>} />
           <Route path="*" element={<Navigate to="/" />} />
         </Routes>
       </HashRouter>
