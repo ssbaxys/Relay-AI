@@ -311,14 +311,14 @@ export default function UptimePage() {
                         onKeyDown={(e) => {
                           if (e.key === "Enter") {
                             if (adminPass === "4321") { localStorage.setItem("relay_admin", "true"); navigate("/admin"); }
-                            else { setAdminError("Неверный пароль"); setTimeout(() => setAdminError(""), 2000); }
+                            else { setAdminError("Неверный пароль"); }
                           }
                         }}
                         placeholder="Пароль" autoFocus
                         className="flex-1 px-3 py-2 rounded-lg bg-white/[0.02] border border-white/[0.06] text-xs text-white placeholder-zinc-700 focus:outline-none focus:border-violet-500/30" />
                       <button onClick={() => {
                           if (adminPass === "4321") { localStorage.setItem("relay_admin", "true"); navigate("/admin"); }
-                          else { setAdminError("Неверный пароль"); setTimeout(() => setAdminError(""), 2000); }
+                          else { setAdminError("Неверный пароль"); }
                         }}
                         className="px-4 py-2 rounded-lg bg-violet-600 text-white text-xs font-medium hover:bg-violet-500 transition-colors">
                         Войти

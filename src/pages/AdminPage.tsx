@@ -358,9 +358,13 @@ export default function AdminPage() {
   const [godSearchSources, setGodSearchSources] = useState<{ url: string; title: string; description: string }[]>([]);
   const [godSourceUrl, setGodSourceUrl] = useState("");
   const [godFetchingMeta, setGodFetchingMeta] = useState(false);
-  const [godCodeAction, setGodCodeAction] = useState<"read" | "created" | "edit">("read");
+  const [godProjectFiles, setGodProjectFiles] = useState<Record<string, { path: string; content: string }>>({});
+  const [godCodeMode, setGodCodeMode] = useState<"read" | "create" | "edit" | "delete">("create");
   const [godCodePath, setGodCodePath] = useState("");
+  const [godCodeContent, setGodCodeContent] = useState("");
   const [godCodeSuccess, setGodCodeSuccess] = useState(true);
+  const [godShowCodePanel, setGodShowCodePanel] = useState(false);
+  const [godSelectedFile, setGodSelectedFile] = useState<string | null>(null);
 
   const godMessagesEndRef = useRef<HTMLDivElement>(null);
   const godFileInputRef = useRef<HTMLInputElement>(null);
@@ -442,7 +446,7 @@ export default function AdminPage() {
     }
   };
 
-  const saveSettings = async () => { await set(ref(db, "settings"), settings); setSaved(true); setTimeout(() => setSaved(false), 2000); };
+  const saveSettings = async () => { await set(ref(db, "settings"), settings); setSaved(true); };
   const openBanDialog = (uid: string, name: string) => { setBanDialog({ uid, name }); setBanReason(""); setBanDuration("60"); setBanPermanent(false); };
   const confirmBan = async () => { if (!banDialog) return; await set(ref(db, `bans/${banDialog.uid}`), { reason: banReason || "Нарушение правил", duration: banPermanent ? 0 : parseInt(banDuration) || 60, bannedAt: Date.now() }); await update(ref(db, `users/${banDialog.uid}`), { banned: true }); setBanDialog(null); };
   const unbanUser = async (uid: string) => { await remove(ref(db, `bans/${uid}`)); await update(ref(db, `users/${uid}`), { banned: false }); };
@@ -473,8 +477,79 @@ export default function AdminPage() {
   };
   const finishSearch = async () => { if (!godSelectedUser || !godSelectedChat || !godSearchPending) return; await update(ref(db, `messages/${godSelectedUser.uid}/${godSelectedChat.id}/${godSearchPending}`), { type: "search_done", sources: godSearchSources, content: "" }); await remove(ref(db, `godSearchPending/${godSelectedChat.id}`)); setGodSearchSources([]); };
 
-  // Tool: Code action
-  const sendCodeAction = async () => { if (!godCodePath.trim()) return; const mp = msgsPath(); if (!mp || !godSelectedChat) return; await push(ref(db, mp), { role: "assistant", content: "", model: godSelectedChat.model, timestamp: Date.now(), type: "code_action", actions: [{ action: godCodeAction, path: godCodePath.trim(), success: godCodeSuccess }] }); await incCount(); setGodCodePath(""); };
+  // Load project files for current chat
+  useEffect(() => {
+    if (!godSelectedChat) { setGodProjectFiles({}); return; }
+    const u = onValue(ref(db, `projectFiles/${godSelectedChat.id}`), (s) => {
+      const d = s.val();
+      if (d && typeof d === "object") setGodProjectFiles(d);
+      else setGodProjectFiles({});
+    });
+    return () => u();
+  }, [godSelectedChat]);
+
+  // Tool: Code - Create
+  const sendCodeCreate = async () => {
+    if (!godCodePath.trim() || !godCodeContent.trim()) return;
+    const mp = msgsPath(); if (!mp || !godSelectedChat) return;
+    const path = godCodePath.trim();
+    const content = godCodeContent.trim();
+    const m = await push(ref(db, mp), { role: "assistant", content: "", model: godSelectedChat.model, timestamp: Date.now(), type: "code_action", actions: [{ action: "create", path }] });
+    await incCount();
+    try {
+      await push(ref(db, `projectFiles/${godSelectedChat.id}`), { path, content });
+      if (m.key) await update(ref(db, `${mp}/${m.key}/actions/0`), { success: true, content });
+    } catch {
+      if (m.key) await update(ref(db, `${mp}/${m.key}/actions/0`), { success: false });
+    }
+    setGodCodePath(""); setGodCodeContent("");
+  };
+
+  // Tool: Code - Edit
+  const sendCodeEdit = async () => {
+    if (!godSelectedFile || !godCodeContent.trim()) return;
+    const mp = msgsPath(); if (!mp || !godSelectedChat) return;
+    const fileData = godProjectFiles[godSelectedFile];
+    if (!fileData) return;
+    const content = godCodeContent.trim();
+    const m = await push(ref(db, mp), { role: "assistant", content: "", model: godSelectedChat.model, timestamp: Date.now(), type: "code_action", actions: [{ action: "edit", path: fileData.path }] });
+    await incCount();
+    try {
+      await update(ref(db, `projectFiles/${godSelectedChat.id}/${godSelectedFile}`), { content });
+      if (m.key) await update(ref(db, `${mp}/${m.key}/actions/0`), { success: true, content });
+    } catch {
+      if (m.key) await update(ref(db, `${mp}/${m.key}/actions/0`), { success: false });
+    }
+    setGodCodeContent("");
+  };
+
+  // Tool: Code - Read
+  const sendCodeRead = async () => {
+    if (!godSelectedFile) return;
+    const mp = msgsPath(); if (!mp || !godSelectedChat) return;
+    const fileData = godProjectFiles[godSelectedFile];
+    if (!fileData) return;
+    const m = await push(ref(db, mp), { role: "assistant", content: "", model: godSelectedChat.model, timestamp: Date.now(), type: "code_action", actions: [{ action: "read", path: fileData.path }] });
+    await incCount();
+    if (m.key) await update(ref(db, `${mp}/${m.key}/actions/0`), { success: godCodeSuccess });
+  };
+
+  // Tool: Code - Delete
+  const sendCodeDelete = async () => {
+    if (!godSelectedFile) return;
+    const mp = msgsPath(); if (!mp || !godSelectedChat) return;
+    const fileData = godProjectFiles[godSelectedFile];
+    if (!fileData) return;
+    const m = await push(ref(db, mp), { role: "assistant", content: "", model: godSelectedChat.model, timestamp: Date.now(), type: "code_action", actions: [{ action: "delete", path: fileData.path }] });
+    await incCount();
+    try {
+      await remove(ref(db, `projectFiles/${godSelectedChat.id}/${godSelectedFile}`));
+      if (m.key) await update(ref(db, `${mp}/${m.key}/actions/0`), { success: true });
+    } catch {
+      if (m.key) await update(ref(db, `${mp}/${m.key}/actions/0`), { success: false });
+    }
+    setGodSelectedFile(null); setGodCodeContent("");
+  };
 
   // Tool: Photo
   const startPhotoGeneration = async () => { const mp = msgsPath(); if (!mp || !godSelectedChat) return; const m = await push(ref(db, mp), { role: "assistant", content: "", model: godSelectedChat.model, timestamp: Date.now(), type: "photo_pending" }); if (m.key) { await set(ref(db, `godPhotoPending/${godSelectedChat.id}`), { messageKey: m.key }); await incCount(); } };
@@ -487,7 +562,7 @@ export default function AdminPage() {
   // God send text message
   const godSendMessage = async () => { if ((!godInput.trim() && !godImageFile) || !godSelectedUser || !godSelectedChat) return; const text = godInput.trim(); setGodInput(""); let imageUrl: string | undefined; if (godImageFile) { setGodUploadingImage(true); try { imageUrl = await fileToBase64(godImageFile); } catch (err) { console.error(err); } setGodUploadingImage(false); clearGodImage(); } const mp = msgsPath(); if (!mp) return; const msgData: any = { timestamp: Date.now() }; if (text) msgData.content = text; if (imageUrl) msgData.imageUrl = imageUrl; if (godResponseMode === "manual") { msgData.role = "assistant"; msgData.model = godSelectedChat.model; } else if (godResponseMode === "admin") { msgData.role = "admin"; msgData.model = "admin"; } await push(ref(db, mp), msgData); await incCount(); };
 
-  const godExitChat = () => { setGodSelectedChat(null); setGodMessages([]); setGodMusicPending(null); setGodPhotoPending(null); setGodSearchPending(null); setGodMusicFile(null); setGodMusicFileName(null); setGodPhotoFile(null); setGodPhotoPreview(null); setGodSearchSources([]); };
+  const godExitChat = () => { setGodSelectedChat(null); setGodMessages([]); setGodMusicPending(null); setGodPhotoPending(null); setGodSearchPending(null); setGodMusicFile(null); setGodMusicFileName(null); setGodPhotoFile(null); setGodPhotoPreview(null); setGodSearchSources([]); setGodShowCodePanel(false); setGodCodePath(""); setGodCodeContent(""); setGodSelectedFile(null); setGodProjectFiles({}); };
   const godExitUser = () => { setGodSelectedUser(null); godExitChat(); };
   const godExitMode = () => { setGodMode(false); godExitUser(); setGodResponseMode("auto"); };
 
@@ -649,15 +724,93 @@ export default function AdminPage() {
                         <button onClick={startSearch} className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[11px] font-medium text-blue-400 border border-blue-500/20 hover:bg-blue-600/10 transition-all"><Search className="w-3.5 h-3.5" /> Поиск</button>
                         <button onClick={startPhotoGeneration} className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[11px] font-medium text-emerald-400 border border-emerald-500/20 hover:bg-emerald-600/10 transition-all"><ImageIcon className="w-3.5 h-3.5" /> Фото</button>
                         <button onClick={startMusicGeneration} className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[11px] font-medium text-violet-400 border border-violet-500/20 hover:bg-violet-600/10 transition-all"><Music className="w-3.5 h-3.5" /> Музыка</button>
-                        <span className="text-white/[0.06]">|</span>
-                        <div className="flex items-center gap-1.5">
-                          <div className="flex items-center gap-0.5 bg-white/[0.02] border border-white/[0.06] rounded-lg p-0.5">
-                            {(["read", "created", "edit"] as const).map(a => (<button key={a} onClick={() => setGodCodeAction(a)} className={`px-2 py-1 rounded text-[10px] font-medium transition-all ${godCodeAction === a ? "bg-orange-500/10 text-orange-400" : "text-zinc-600 hover:text-zinc-400"}`}>{a === "read" ? "Read" : a === "created" ? "Created" : "Edit"}</button>))}
-                          </div>
-                          <input value={godCodePath} onChange={(e) => setGodCodePath(e.target.value)} placeholder="path/file.ts" className="w-36 px-2 py-1 rounded-lg bg-white/[0.02] border border-white/[0.06] text-[11px] text-white font-mono placeholder-zinc-700 focus:outline-none" />
-                          <button onClick={() => setGodCodeSuccess(!godCodeSuccess)} className={`w-6 h-6 rounded-md flex items-center justify-center border transition-all ${godCodeSuccess ? "border-emerald-500/30 bg-emerald-600/10" : "border-red-500/30 bg-red-600/10"}`}>{godCodeSuccess ? <Check className="w-3 h-3 text-emerald-400" /> : <XIcon className="w-3 h-3 text-red-400" />}</button>
-                          <button onClick={sendCodeAction} disabled={!godCodePath.trim()} className="px-2 py-1 rounded-lg bg-orange-600/10 text-orange-400 text-[10px] font-medium hover:bg-orange-600/20 disabled:opacity-40 transition-all"><Code className="w-3 h-3" /></button>
+                        <button onClick={() => setGodShowCodePanel(!godShowCodePanel)} className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[11px] font-medium border transition-all ${godShowCodePanel ? "border-orange-500/30 bg-orange-600/10 text-orange-400" : "text-orange-400 border-orange-500/20 hover:bg-orange-600/10"}`}><Code className="w-3.5 h-3.5" /> Код</button>
+                      </div>
+                    )}
+                    {godShowCodePanel && (
+                      <div className="border border-orange-500/20 bg-orange-600/5 rounded-xl p-4 space-y-3">
+                        <div className="flex items-center gap-2 mb-1">
+                          <Code className="w-4 h-4 text-orange-400" />
+                          <span className="text-xs font-medium text-orange-400">Инструменты кода</span>
+                          <button onClick={() => setGodShowCodePanel(false)} className="ml-auto p-1 rounded hover:bg-white/[0.05] text-zinc-600"><XIcon className="w-3 h-3" /></button>
                         </div>
+                        <div className="flex items-center gap-1 bg-white/[0.02] border border-white/[0.06] rounded-lg p-0.5">
+                          {(["read", "create", "edit", "delete"] as const).map(m => (
+                            <button key={m} onClick={() => { setGodCodeMode(m); setGodCodeContent(""); setGodSelectedFile(null); setGodCodePath(""); }}
+                              className={`flex-1 px-2 py-1.5 rounded-md text-[10px] font-medium transition-all ${godCodeMode === m ? "bg-orange-500/15 text-orange-400" : "text-zinc-600 hover:text-zinc-400"}`}>
+                              {m === "read" ? "Read" : m === "create" ? "Create" : m === "edit" ? "Edit" : "Delete"}
+                            </button>
+                          ))}
+                        </div>
+                        {Object.keys(godProjectFiles).length > 0 && (
+                          <div>
+                            <p className="text-[10px] text-zinc-600 mb-1.5">Файлы проекта ({Object.keys(godProjectFiles).length})</p>
+                            <div className="space-y-0.5 max-h-32 overflow-y-auto">
+                              {Object.entries(godProjectFiles).map(([key, file]) => (
+                                <button key={key} onClick={() => {
+                                  setGodSelectedFile(key);
+                                  if (godCodeMode === "edit") setGodCodeContent(file.content);
+                                }} className={`w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-left text-[11px] transition-all ${godSelectedFile === key ? "bg-orange-500/10 text-orange-400" : "text-zinc-500 hover:bg-white/[0.02]"}`}>
+                                  <Code className="w-3 h-3 shrink-0" />
+                                  <span className="font-mono truncate">{file.path}</span>
+                                </button>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                        {godCodeMode === "create" && (
+                          <div className="space-y-2">
+                            <input value={godCodePath} onChange={(e) => setGodCodePath(e.target.value)} placeholder="src/App.tsx" className="w-full px-3 py-2 rounded-lg bg-white/[0.02] border border-white/[0.06] text-[11px] text-white font-mono placeholder-zinc-700 focus:outline-none focus:border-orange-500/30" />
+                            <textarea value={godCodeContent} onChange={(e) => setGodCodeContent(e.target.value)} placeholder="Содержимое файла..." rows={6} className="w-full px-3 py-2 rounded-lg bg-white/[0.02] border border-white/[0.06] text-[11px] text-white font-mono placeholder-zinc-700 focus:outline-none focus:border-orange-500/30 resize-none" />
+                            <button onClick={sendCodeCreate} disabled={!godCodePath.trim() || !godCodeContent.trim()} className="w-full py-2 rounded-lg bg-orange-600 text-white text-xs font-medium hover:bg-orange-500 disabled:opacity-40 transition-all">Create файл</button>
+                          </div>
+                        )}
+                        {godCodeMode === "edit" && (
+                          <div className="space-y-2">
+                            {!godSelectedFile ? <p className="text-[10px] text-zinc-600">Выберите файл из списка выше</p> : (
+                              <>
+                                <div className="flex items-center gap-2 px-2.5 py-1.5 rounded-lg bg-white/[0.03] border border-white/[0.04]">
+                                  <Code className="w-3 h-3 text-orange-400" />
+                                  <span className="text-[11px] font-mono text-zinc-400">{godProjectFiles[godSelectedFile]?.path}</span>
+                                </div>
+                                <textarea value={godCodeContent} onChange={(e) => setGodCodeContent(e.target.value)} rows={6} className="w-full px-3 py-2 rounded-lg bg-white/[0.02] border border-white/[0.06] text-[11px] text-white font-mono placeholder-zinc-700 focus:outline-none focus:border-orange-500/30 resize-none" />
+                                <button onClick={sendCodeEdit} disabled={!godCodeContent.trim()} className="w-full py-2 rounded-lg bg-orange-600 text-white text-xs font-medium hover:bg-orange-500 disabled:opacity-40 transition-all">Edit файл</button>
+                              </>
+                            )}
+                          </div>
+                        )}
+                        {godCodeMode === "read" && (
+                          <div className="space-y-2">
+                            {!godSelectedFile ? <p className="text-[10px] text-zinc-600">Выберите файл из списка выше</p> : (
+                              <div className="space-y-2">
+                                <div className="flex items-center gap-2 px-2.5 py-1.5 rounded-lg bg-white/[0.03] border border-white/[0.04]">
+                                  <Code className="w-3 h-3 text-orange-400" />
+                                  <span className="text-[11px] font-mono text-zinc-400">{godProjectFiles[godSelectedFile]?.path}</span>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                  <button onClick={() => setGodCodeSuccess(!godCodeSuccess)} className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-medium border transition-all ${godCodeSuccess ? "border-emerald-500/20 bg-emerald-600/10 text-emerald-400" : "border-red-500/20 bg-red-600/10 text-red-400"}`}>
+                                    {godCodeSuccess ? <Check className="w-3 h-3" /> : <XIcon className="w-3 h-3" />}
+                                    {godCodeSuccess ? "Успех" : "Ошибка"}
+                                  </button>
+                                  <button onClick={sendCodeRead} className="flex-1 py-1.5 rounded-lg bg-orange-600 text-white text-xs font-medium hover:bg-orange-500 transition-all">Read</button>
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                        )}
+                        {godCodeMode === "delete" && (
+                          <div className="space-y-2">
+                            {!godSelectedFile ? <p className="text-[10px] text-zinc-600">Выберите файл из списка выше</p> : (
+                              <div className="space-y-2">
+                                <div className="flex items-center gap-2 px-2.5 py-1.5 rounded-lg bg-red-600/5 border border-red-500/10">
+                                  <Trash2 className="w-3 h-3 text-red-400" />
+                                  <span className="text-[11px] font-mono text-red-400">{godProjectFiles[godSelectedFile]?.path}</span>
+                                </div>
+                                <button onClick={sendCodeDelete} className="w-full py-2 rounded-lg bg-red-600 text-white text-xs font-medium hover:bg-red-500 transition-all">Удалить файл</button>
+                              </div>
+                            )}
+                          </div>
+                        )}
                       </div>
                     )}
                     {godImagePreview && (<div className="flex items-start gap-2"><div className="relative"><img src={godImagePreview} alt="" className="w-16 h-16 rounded-xl object-cover border border-white/[0.06]" /><button onClick={clearGodImage} className="absolute -top-1.5 -right-1.5 w-5 h-5 bg-zinc-800 border border-white/[0.1] rounded-full flex items-center justify-center text-zinc-400 hover:text-white hover:bg-red-600 transition-all"><XIcon className="w-3 h-3" /></button></div></div>)}

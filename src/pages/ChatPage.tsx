@@ -129,6 +129,60 @@ function SourcesModal({ sources, onClose }: { sources: any[]; onClose: () => voi
   );
 }
 
+function CodeActionDisplay({ msg }: { msg: any }) {
+  const [expandedIdx, setExpandedIdx] = useState<number | null>(null);
+  const rawAct = msg.actions;
+  const actions: any[] = Array.isArray(rawAct) ? rawAct : (rawAct && typeof rawAct === "object" ? Object.values(rawAct) : []);
+  const pastLabels: Record<string, string> = { read: "Readed", create: "Created", edit: "Edited", delete: "Deleted" };
+  const presentLabels: Record<string, string> = { read: "Read", create: "Create", edit: "Edit", delete: "Delete" };
+  return (
+    <div className="space-y-1.5 max-w-[420px]">
+      {actions.map((a: any, i: number) => {
+        const act = String(a.action || "read");
+        const isPending = a.success === undefined || a.success === null;
+        const ok = a.success === true;
+        const path = String(a.path || "");
+        const content = a.content ? String(a.content) : null;
+        const canExpand = (act === "create" || act === "edit") && !!content && !isPending;
+        const isExpanded = expandedIdx === i;
+        const label = isPending ? presentLabels[act] || act : (pastLabels[act] || act);
+        return (
+          <div key={i}>
+            <div onClick={() => canExpand && setExpandedIdx(isExpanded ? null : i)}
+              className={`flex items-center gap-2.5 px-3.5 py-2.5 rounded-xl border transition-all ${isPending ? "border-yellow-500/10 bg-yellow-600/5" : ok ? "border-emerald-500/10 bg-emerald-600/5" : "border-red-500/10 bg-red-600/5"} ${canExpand ? "cursor-pointer hover:brightness-110" : ""}`}>
+              <div className={`w-6 h-6 rounded-md flex items-center justify-center shrink-0 ${isPending ? "bg-yellow-500/10" : ok ? "bg-emerald-500/10" : "bg-red-500/10"}`}>
+                <Code className={`w-3.5 h-3.5 ${isPending ? "text-yellow-400" : ok ? "text-emerald-400" : "text-red-400"}`} />
+              </div>
+              <div className="flex-1 min-w-0 flex items-center gap-1.5">
+                <span className={`text-[11px] font-semibold font-mono ${isPending ? "text-yellow-400" : ok ? "text-emerald-400" : "text-red-400"}`}>{label}</span>
+                <span className="text-[11px] text-zinc-600 font-mono truncate">({path})</span>
+              </div>
+              {isPending ? (
+                <div className="flex items-center gap-0.5 shrink-0">{[0,1,2].map(d => (<div key={d} className="w-1 h-1 bg-yellow-400/60 rounded-full animate-pulse" style={{ animationDelay: `${d * 200}ms` }} />))}</div>
+              ) : (
+                <div className={`w-5 h-5 rounded-full flex items-center justify-center shrink-0 ${ok ? "bg-emerald-500/20" : "bg-red-500/20"}`}>
+                  {ok ? <Check className="w-3 h-3 text-emerald-400" /> : <X className="w-3 h-3 text-red-400" />}
+                </div>
+              )}
+              {canExpand && <ChevronDown className={`w-3.5 h-3.5 text-zinc-600 shrink-0 transition-transform duration-200 ${isExpanded ? "rotate-180" : ""}`} />}
+            </div>
+            {isExpanded && content && (
+              <div className="mt-1 rounded-xl border border-white/[0.04] bg-[#0a0a0d] overflow-hidden">
+                <div className="flex items-center justify-between px-3 py-1.5 border-b border-white/[0.04]">
+                  <span className="text-[10px] text-zinc-600 font-mono">{path}</span>
+                  <button onClick={(e) => { e.stopPropagation(); navigator.clipboard.writeText(content); }} className="text-[10px] text-zinc-600 hover:text-violet-400 transition-colors px-1.5 py-0.5">Копировать</button>
+                </div>
+                <pre className="p-3 text-[11px] text-zinc-300 font-mono overflow-x-auto max-h-64 overflow-y-auto leading-relaxed"><code>{content}</code></pre>
+              </div>
+            )}
+          </div>
+        );
+      })}
+      {msg.content && <div className="mt-2 text-zinc-300 text-sm"><MarkdownRenderer content={String(msg.content)} /></div>}
+    </div>
+  );
+}
+
 function SpecialMessage({ msg }: { msg: any }) {
   const [showSources, setShowSources] = useState(false);
   const t = String(msg.type || "");
@@ -187,36 +241,7 @@ function SpecialMessage({ msg }: { msg: any }) {
     );
   }
 
-  if (t === "code_action") {
-    const rawAct = msg.actions;
-    const actions: any[] = Array.isArray(rawAct) ? rawAct : (rawAct && typeof rawAct === "object" ? Object.values(rawAct) : []);
-    return (
-      <div className="space-y-1.5 max-w-[400px]">
-        {actions.map((a: any, i: number) => {
-          const act = String(a.action || "read");
-          const ok = a.success !== false;
-          const path = String(a.path || "");
-          return (
-            <div key={i} className={`flex items-center gap-2.5 px-3 py-2 rounded-xl border ${ok ? "border-emerald-500/10 bg-emerald-600/5" : "border-red-500/10 bg-red-600/5"}`}>
-              <div className={`w-6 h-6 rounded-md flex items-center justify-center ${ok ? "bg-emerald-500/10" : "bg-red-500/10"}`}>
-                {act === "read" && <svg className={`w-3.5 h-3.5 ${ok ? "text-emerald-400" : "text-red-400"}`} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>}
-                {act === "created" && <svg className={`w-3.5 h-3.5 ${ok ? "text-emerald-400" : "text-red-400"}`} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><line x1="9" y1="15" x2="15" y2="15"/></svg>}
-                {act === "edit" && <svg className={`w-3.5 h-3.5 ${ok ? "text-emerald-400" : "text-red-400"}`} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>}
-              </div>
-              <div className="flex-1 min-w-0">
-                <span className="text-[11px] font-medium text-zinc-400 capitalize">{act === "read" ? "Read" : act === "created" ? "Created" : "Edit"}</span>
-                <p className="text-[11px] text-zinc-500 font-mono truncate">{path}</p>
-              </div>
-              <div className={`w-5 h-5 rounded-full flex items-center justify-center ${ok ? "bg-emerald-500/20" : "bg-red-500/20"}`}>
-                {ok ? <Check className="w-3 h-3 text-emerald-400" /> : <X className="w-3 h-3 text-red-400" />}
-              </div>
-            </div>
-          );
-        })}
-        {msg.content && <div className="mt-2 text-zinc-300 text-sm"><MarkdownRenderer content={String(msg.content)} /></div>}
-      </div>
-    );
-  }
+  if (t === "code_action") { return <CodeActionDisplay msg={msg} />; }
 
   if (t === "photo_pending") {
     return (
@@ -442,13 +467,14 @@ export default function ChatPage() {
     if (godModeActive === "manual" || godModeActive === "admin") return;
 
     setIsGenerating(true); generationAbortRef.current = false;
-    setTimeout(async () => {
+    const doRespond = async () => {
       if (generationAbortRef.current) { setIsGenerating(false); generationAbortRef.current = false; return; }
       const responseText = responses[Math.floor(Math.random() * responses.length)];
       const msgRef = await push(msgsRef, { role: "assistant", content: responseText, model: selectedModel.id, timestamp: Date.now() });
       await update(chatRef, { lastMessage: Date.now(), messageCount: (cc2?.messageCount || 0) + 2 });
       if (msgRef.key) animateTyping(responseText, msgRef.key);
-    }, 600 + Math.random() * 800);
+    };
+    doRespond();
   };
 
   const stopGeneration = () => { generationAbortRef.current = true; };
@@ -460,8 +486,8 @@ export default function ChatPage() {
   useEffect(() => { const h = (e: MouseEvent) => { if (profileRef.current && !profileRef.current.contains(e.target as Node)) setShowProfile(false); }; if (showProfile) document.addEventListener("mousedown", h); return () => document.removeEventListener("mousedown", h); }, [showProfile]);
 
   const saveVisibleNick = async () => { if (!user || !visibleNickInput.trim()) return; await update(ref(db, `users/${user.uid}`), { visibleNick: visibleNickInput.trim() }); setEditingVisibleNick(false); };
-  const handleAdminAccess = () => { if (adminInput === "4321") { localStorage.setItem("relay_admin", "true"); navigate("/admin"); } else { setAdminError("Неверный пароль"); setTimeout(() => setAdminError(""), 2000); } };
-  const handleMaintenanceAdmin = () => { if (maintenanceAdminPass === "4321") { localStorage.setItem("relay_admin", "true"); navigate("/admin"); } else { setMaintenanceAdminError("Неверный пароль"); setTimeout(() => setMaintenanceAdminError(""), 2000); } };
+  const handleAdminAccess = () => { if (adminInput === "4321") { localStorage.setItem("relay_admin", "true"); navigate("/admin"); } else { setAdminError("Неверный пароль"); } };
+  const handleMaintenanceAdmin = () => { if (maintenanceAdminPass === "4321") { localStorage.setItem("relay_admin", "true"); navigate("/admin"); } else { setMaintenanceAdminError("Неверный пароль"); } };
 
   const renderChatItem = (s: ChatSession) => (
     <div key={s.id} draggable onDragStart={() => handleDragStart(s.id)} onDragOver={(e) => handleDragOverChat(e, s.id)}
