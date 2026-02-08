@@ -11,7 +11,7 @@ import {
   Folder, Pencil, X, ArrowDownAZ, Clock, MessageCircle,
   GripVertical, FolderOpen, Home, User, Lock, FileText, PanelLeftClose, PanelLeft,
   Shield, Wrench, AlertTriangle, Ban, TicketCheck, ChevronLeft, Send as SendIcon,
-  Play, Pause, Download, Code, Image as ImageIcon, Music, ExternalLink
+  Play, Pause, Download, Code, Image as ImageIcon, Music, ExternalLink, Eye
 } from "lucide-react";
 
 const MAX_CHARS = 2000;
@@ -162,20 +162,24 @@ function SpecialMessage({ msg }: { msg: any }) {
           </div>
         </div>
         {sources.length > 0 && (
-          <div className="flex items-center gap-1.5 flex-wrap">
-            {sources.map((s: any, i: number) => {
-              const sUrl = String(s.url || "");
-              const sTitle = String(s.title || s.url || "");
-              let sHost = "example.com";
-              try { sHost = new URL(sUrl).hostname; } catch {}
-              return (
-                <button key={i} onClick={() => setShowSources(true)} className="w-7 h-7 rounded-full bg-white/[0.05] border border-white/[0.06] hover:border-violet-500/30 transition-all overflow-hidden flex items-center justify-center" title={sTitle}>
-                  <img src={`https://www.google.com/s2/favicons?domain=${sHost}&sz=32`} alt="" className="w-4 h-4" />
-                </button>
-              );
-            })}
-            <button onClick={() => setShowSources(true)} className="text-[10px] text-zinc-600 hover:text-violet-400 transition-colors ml-1">Подробнее</button>
-          </div>
+          <button onClick={() => setShowSources(true)} className="flex items-center group mt-1">
+            <div className="flex items-center -space-x-2">
+              {sources.slice(0, 6).map((s: any, i: number) => {
+                const sUrl = String(s.url || "");
+                let sHost = "example.com";
+                try { sHost = new URL(sUrl).hostname; } catch {}
+                return (
+                  <div key={i} className="w-7 h-7 rounded-full bg-[#111114] border-2 border-[#0a0a0d] overflow-hidden flex items-center justify-center shadow-sm hover:z-10 hover:scale-110 transition-transform" style={{ zIndex: sources.length - i }}>
+                    <img src={`https://www.google.com/s2/favicons?domain=${sHost}&sz=32`} alt="" className="w-4 h-4" />
+                  </div>
+                );
+              })}
+              {sources.length > 6 && (
+                <div className="w-7 h-7 rounded-full bg-[#111114] border-2 border-[#0a0a0d] flex items-center justify-center text-[9px] font-medium text-zinc-400" style={{ zIndex: 0 }}>+{sources.length - 6}</div>
+              )}
+            </div>
+            <span className="text-[10px] text-zinc-600 group-hover:text-violet-400 transition-colors ml-2">{sources.length} источн.</span>
+          </button>
         )}
         {msg.content && <div className="mt-2 text-zinc-300 text-sm"><MarkdownRenderer content={String(msg.content)} /></div>}
         {showSources && <SourcesModal sources={sources} onClose={() => setShowSources(false)} />}
@@ -287,6 +291,7 @@ export default function ChatPage() {
   const [maintenanceMessage, setMaintenanceMessage] = useState("");
   const [maintenanceEstimate, setMaintenanceEstimate] = useState("");
   const [godModeActive, setGodModeActive] = useState<string | null>(null);
+  const [viewAsUser, setViewAsUser] = useState(false);
   const [showAdminLogin, setShowAdminLogin] = useState(false);
   const [maintenanceAdminPass, setMaintenanceAdminPass] = useState("");
   const [maintenanceAdminError, setMaintenanceAdminError] = useState("");
@@ -347,6 +352,8 @@ export default function ChatPage() {
   useEffect(() => { if (isModelDisabledCheck(selectedModel.id) && enabledModels.length > 0) setSelectedModel(enabledModels[0]); }, [disabledModels, selectedModel.id, enabledModels, isModelDisabledCheck]);
   useEffect(() => { const unsub = onValue(ref(db, "settings"), (snap) => { const d = snap.val(); if (d) { setMaintenance(!!d.maintenance); setMaintenanceMessage(d.maintenanceMessage || "Мы проводим плановые технические работы."); setMaintenanceEstimate(d.maintenanceEstimate || ""); } else setMaintenance(false); }); return () => unsub(); }, []);
   useEffect(() => { if (!user || !currentChatId) { setGodModeActive(null); return; } const unsub = onValue(ref(db, `godmode/${user.uid}/${currentChatId}`), (snap) => { const d = snap.val(); if (d && d.mode && d.mode !== "auto") setGodModeActive(d.mode); else setGodModeActive(null); }); return () => unsub(); }, [user, currentChatId]);
+  // Listen for admin viewing as this user
+  useEffect(() => { if (!user) return; const unsub = onValue(ref(db, `viewAsUser/${user.uid}`), (snap) => { setViewAsUser(!!snap.val()); }); return () => unsub(); }, [user]);
   useEffect(() => { setCurrentSuggestions(getRandomSuggestions(selectedModel.id)); }, [selectedModel.id]);
   useEffect(() => { if (!user) return; const unsub = onValue(ref(db, `users/${user.uid}`), (snap) => { const d = snap.val(); if (d) { setProfileData({ displayName: d.displayName || user.displayName || "User", systemNick: user.email || "", visibleNick: d.visibleNick || d.displayName || user.displayName || "User", id: d.uniqueId || "" }); if (!d.uniqueId) set(ref(db, `users/${user.uid}/uniqueId`), String(Math.floor(10000000 + Math.random() * 90000000))); } }); return () => unsub(); }, [user]);
   useEffect(() => { if (!user) return; const q = query(ref(db, `chats/${user.uid}`), orderByChild("createdAt")); const unsub = onValue(q, (snap) => { const d = snap.val(); if (d) { setChatSessions(Object.entries(d).map(([id, v]: [string, any]) => ({ id, title: v.title || "Новый чат", model: v.model || "gpt-5.2-codex", createdAt: v.createdAt || 0, lastMessage: v.lastMessage || v.createdAt || 0, messageCount: v.messageCount || 0, folderId: v.folderId || undefined }))); } else setChatSessions([]); }); return () => unsub(); }, [user]);
@@ -618,7 +625,15 @@ export default function ChatPage() {
   const noModelsAvailable = enabledModels.length === 0;
 
   return (
-    <div className="h-screen bg-[#050507] text-zinc-100 flex overflow-hidden">
+    <div className="h-screen bg-[#050507] text-zinc-100 flex flex-col overflow-hidden">
+      {/* Admin viewing banner */}
+      {viewAsUser && (
+        <div className="shrink-0 bg-violet-600/10 border-b border-violet-500/20 px-4 py-1.5 flex items-center justify-center gap-2">
+          <Eye className="w-3.5 h-3.5 text-violet-400" />
+          <span className="text-[11px] text-violet-300 font-medium">Администратор просматривает ваш аккаунт</span>
+        </div>
+      )}
+      <div className="flex-1 flex overflow-hidden">
       {/* Sidebar */}
       <div className="shrink-0 border-r border-white/[0.04] bg-[#0a0a0d] flex transition-all duration-300 ease-in-out overflow-hidden" style={{ width: sidebarOpen ? 260 : 0 }}>
         <div className="w-[260px] min-w-[260px] flex flex-col h-full">
@@ -769,8 +784,10 @@ export default function ChatPage() {
                 onInput={(e) => { const el = e.target as HTMLTextAreaElement; el.style.height = "20px"; el.style.height = Math.min(el.scrollHeight, 128) + "px"; }} />
               <div className="flex items-center gap-2 shrink-0">
                 {charCount > 0 && <span className={`text-[10px] tabular-nums ${charOverLimit ? "text-red-400" : "text-zinc-700"}`}>{charCount}/{MAX_CHARS}</span>}
-                {isGenerating ? (
-                  <button onClick={stopGeneration} className="w-8 h-8 rounded-full bg-white flex items-center justify-center hover:bg-zinc-200 transition-all"><Square className="w-3 h-3 text-zinc-900 fill-zinc-900" /></button>
+                {isGenerating || godModeActive === "manual" ? (
+                  <div className="w-8 h-8 rounded-full bg-white flex items-center justify-center cursor-default" title={godModeActive === "manual" ? "Ожидание ответа от оператора" : "Генерация..."}>
+                    <Square className="w-3 h-3 text-zinc-900 fill-zinc-900" />
+                  </div>
                 ) : (
                   <button onClick={sendMessage} disabled={!input.trim() || charOverLimit || isModelDisabled || noModelsAvailable}
                     className="p-2 rounded-xl text-zinc-600 hover:text-violet-400 hover:bg-violet-600/10 disabled:text-zinc-800 transition-all"><Send className="w-4 h-4" /></button>
@@ -780,6 +797,7 @@ export default function ChatPage() {
             <p className="text-center text-[10px] text-zinc-700 mt-2">AI может ошибаться. Проверяйте важную информацию.</p>
           </div>
         </div>
+      </div>
       </div>
     </div>
   );

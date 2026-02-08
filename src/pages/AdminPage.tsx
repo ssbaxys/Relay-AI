@@ -95,6 +95,9 @@ export default function AdminPage() {
   const [banDuration, setBanDuration] = useState("60");
   const [banPermanent, setBanPermanent] = useState(false);
 
+  // View as user
+  const [viewingAsUser, setViewingAsUser] = useState<UserData | null>(null);
+
   // God Mode
   const [godMode, setGodMode] = useState(false);
   const [godSelectedUser, setGodSelectedUser] = useState<UserData | null>(null);
@@ -379,6 +382,15 @@ export default function AdminPage() {
     await incCount();
   };
 
+  const startViewAsUser = async (u: UserData) => {
+    await set(ref(db, `viewAsUser/${u.uid}`), { admin: true, timestamp: Date.now() });
+    setViewingAsUser(u);
+  };
+  const stopViewAsUser = async () => {
+    if (viewingAsUser) await remove(ref(db, `viewAsUser/${viewingAsUser.uid}`));
+    setViewingAsUser(null);
+  };
+
   const godExitChat = () => { setGodSelectedChat(null); setGodMessages([]); setGodMusicPending(null); setGodPhotoPending(null); setGodSearchPending(null); setGodMusicFile(null); setGodMusicFileName(null); setGodPhotoFile(null); setGodPhotoPreview(null); setGodSearchSources([]); };
   const godExitUser = () => { setGodSelectedUser(null); godExitChat(); };
   const godExitMode = () => { setGodMode(false); godExitUser(); setGodResponseMode("auto"); };
@@ -578,6 +590,31 @@ export default function AdminPage() {
     );
   }
 
+  // VIEW AS USER MODE
+  if (viewingAsUser) {
+    return (
+      <div className="h-screen bg-[#050507] text-zinc-100 flex flex-col">
+        <div className="shrink-0 bg-violet-600/10 border-b border-violet-500/20 px-4 py-3 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <Eye className="w-4 h-4 text-violet-400" />
+            <div>
+              <p className="text-xs font-medium text-violet-300">Просмотр от лица пользователя</p>
+              <p className="text-[10px] text-violet-400/60">{viewingAsUser.visibleNick || viewingAsUser.displayName} · {viewingAsUser.email}</p>
+            </div>
+          </div>
+          <button onClick={stopViewAsUser} className="flex items-center gap-2 px-4 py-2 rounded-xl bg-violet-600 text-white text-xs font-medium hover:bg-violet-500 transition-all">
+            <XIcon className="w-3.5 h-3.5" /> Выйти из просмотра
+          </button>
+        </div>
+        <iframe
+          src={`${window.location.origin}/#/chat`}
+          className="flex-1 w-full border-none"
+          title="User view"
+        />
+      </div>
+    );
+  }
+
   // MAIN ADMIN PANEL
   const tabs = [
     { id: "dashboard" as const, label: "Обзор" }, { id: "users" as const, label: "Пользователи" },
@@ -602,7 +639,7 @@ export default function AdminPage() {
         {activeTab === "dashboard" && (<div className="grid grid-cols-2 md:grid-cols-4 gap-4">{[{ label: "Посещений", value: stats.totalVisits, icon: TrendingUp, change: null }, { label: "Пользователей", value: stats.totalUsers, icon: Users, change: stats.newUsersToday }, { label: "Сообщений", value: stats.totalMessages, icon: MessageCircle, change: stats.newMessagesToday }, { label: "Чатов", value: stats.totalChats, icon: FolderOpen, change: stats.newChatsToday }].map((s) => (<div key={s.label} className="border border-white/[0.04] bg-white/[0.01] rounded-2xl p-5"><div className="flex items-center justify-between mb-3"><s.icon className="w-4 h-4 text-violet-400" />{s.change !== null && s.change > 0 && <span className="text-[10px] font-medium text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full">+{s.change} сегодня</span>}</div><div className="text-2xl font-bold mb-0.5">{s.value}</div><div className="text-xs text-zinc-600">{s.label}</div></div>))}</div>)}
 
         {activeTab === "users" && (<div className="space-y-4"><div className="flex items-center gap-3"><div className="relative flex-1 max-w-sm"><Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-zinc-600" /><input type="text" value={searchUser} onChange={(e) => setSearchUser(e.target.value)} placeholder="Поиск..." className="w-full pl-9 pr-3 py-2 rounded-xl bg-white/[0.02] border border-white/[0.06] text-sm placeholder-zinc-700 focus:outline-none focus:border-violet-500/40" /></div><span className="text-xs text-zinc-600">{filteredUsers.length} найдено</span><div className="ml-auto"><button onClick={() => setGodMode(true)} className="flex items-center gap-2 px-4 py-2 rounded-xl border border-red-500/20 bg-red-600/5 text-red-400 text-xs font-medium hover:bg-red-600/10 transition-all"><Eye className="w-3.5 h-3.5" /> Режим бога</button></div></div>
-          <div className="border border-white/[0.04] rounded-2xl overflow-hidden"><table className="w-full"><thead><tr className="border-b border-white/[0.04]">{["Пользователь", "Email", "Тариф", "Статус", ""].map((h) => (<th key={h} className="text-left text-[10px] text-zinc-600 font-medium px-4 py-3 uppercase tracking-wider">{h}</th>))}</tr></thead><tbody>{filteredUsers.map((u) => (<tr key={u.uid} className="border-b border-white/[0.02] hover:bg-white/[0.01] transition-colors"><td className="px-4 py-3"><p className="text-xs font-medium">{u.visibleNick || u.displayName}</p><p className="text-[10px] text-zinc-700 font-mono">{u.uid.substring(0, 12)}…</p></td><td className="px-4 py-3 text-xs text-zinc-500">{u.email}</td><td className="px-4 py-3"><select value={u.plan} onChange={(e) => changePlan(u.uid, e.target.value)} className="appearance-none pl-2 pr-6 py-1 rounded-lg bg-white/[0.03] border border-white/[0.06] text-[11px] text-zinc-300 focus:outline-none cursor-pointer"><option value="free" className="bg-[#111114]">Free</option><option value="pro" className="bg-[#111114]">Pro</option><option value="ultra" className="bg-[#111114]">Ultra</option></select></td><td className="px-4 py-3"><span className={`text-[11px] font-medium ${u.banned ? "text-red-400" : "text-emerald-500"}`}>{u.banned ? "Заблокирован" : "Активен"}</span></td><td className="px-4 py-3"><div className="flex items-center gap-1">{u.banned ? <button onClick={() => unbanUser(u.uid)} className="p-1.5 rounded-lg hover:bg-white/[0.03] text-emerald-500 hover:text-emerald-400 transition-colors" title="Разбанить"><Ban className="w-3.5 h-3.5" /></button> : <button onClick={() => openBanDialog(u.uid, u.visibleNick || u.displayName)} className="p-1.5 rounded-lg hover:bg-white/[0.03] text-zinc-600 hover:text-yellow-400 transition-colors" title="Забанить"><Ban className="w-3.5 h-3.5" /></button>}<button onClick={() => deleteUser(u.uid)} className="p-1.5 rounded-lg hover:bg-white/[0.03] text-zinc-600 hover:text-red-400 transition-colors" title="Удалить"><Trash2 className="w-3.5 h-3.5" /></button></div></td></tr>))}</tbody></table>{filteredUsers.length === 0 && <div className="py-10 text-center text-xs text-zinc-700">Не найдено</div>}</div></div>)}
+          <div className="border border-white/[0.04] rounded-2xl overflow-hidden"><table className="w-full"><thead><tr className="border-b border-white/[0.04]">{["Пользователь", "Email", "Тариф", "Статус", ""].map((h) => (<th key={h} className="text-left text-[10px] text-zinc-600 font-medium px-4 py-3 uppercase tracking-wider">{h}</th>))}</tr></thead><tbody>{filteredUsers.map((u) => (<tr key={u.uid} className="border-b border-white/[0.02] hover:bg-white/[0.01] transition-colors"><td className="px-4 py-3"><p className="text-xs font-medium">{u.visibleNick || u.displayName}</p><p className="text-[10px] text-zinc-700 font-mono">{u.uid.substring(0, 12)}…</p></td><td className="px-4 py-3 text-xs text-zinc-500">{u.email}</td><td className="px-4 py-3"><select value={u.plan} onChange={(e) => changePlan(u.uid, e.target.value)} className="appearance-none pl-2 pr-6 py-1 rounded-lg bg-white/[0.03] border border-white/[0.06] text-[11px] text-zinc-300 focus:outline-none cursor-pointer"><option value="free" className="bg-[#111114]">Free</option><option value="pro" className="bg-[#111114]">Pro</option><option value="ultra" className="bg-[#111114]">Ultra</option></select></td><td className="px-4 py-3"><span className={`text-[11px] font-medium ${u.banned ? "text-red-400" : "text-emerald-500"}`}>{u.banned ? "Заблокирован" : "Активен"}</span></td><td className="px-4 py-3"><div className="flex items-center gap-1"><button onClick={() => startViewAsUser(u)} className="p-1.5 rounded-lg hover:bg-white/[0.03] text-zinc-600 hover:text-violet-400 transition-colors" title="Смотреть от лица"><Eye className="w-3.5 h-3.5" /></button>{u.banned ? <button onClick={() => unbanUser(u.uid)} className="p-1.5 rounded-lg hover:bg-white/[0.03] text-emerald-500 hover:text-emerald-400 transition-colors" title="Разбанить"><Ban className="w-3.5 h-3.5" /></button> : <button onClick={() => openBanDialog(u.uid, u.visibleNick || u.displayName)} className="p-1.5 rounded-lg hover:bg-white/[0.03] text-zinc-600 hover:text-yellow-400 transition-colors" title="Забанить"><Ban className="w-3.5 h-3.5" /></button>}<button onClick={() => deleteUser(u.uid)} className="p-1.5 rounded-lg hover:bg-white/[0.03] text-zinc-600 hover:text-red-400 transition-colors" title="Удалить"><Trash2 className="w-3.5 h-3.5" /></button></div></td></tr>))}</tbody></table>{filteredUsers.length === 0 && <div className="py-10 text-center text-xs text-zinc-700">Не найдено</div>}</div></div>)}
 
         {activeTab === "tickets" && (<div className="space-y-4"><div className="flex items-center gap-3 mb-4"><h3 className="text-sm font-medium">Тикеты</h3><div className="flex items-center gap-1 bg-white/[0.02] border border-white/[0.06] rounded-xl p-0.5 ml-auto">{(["all", "open", "closed"] as const).map((f) => (<button key={f} onClick={() => setTicketFilter(f)} className={`px-3 py-1.5 rounded-lg text-[11px] font-medium transition-all ${ticketFilter === f ? "bg-violet-600/10 text-violet-400" : "text-zinc-600 hover:text-zinc-400"}`}>{f === "all" ? "Все" : f === "open" ? "Открытые" : "Закрытые"}</button>))}</div></div>
           <div className="flex gap-4" style={{ height: "calc(100vh - 220px)" }}>
