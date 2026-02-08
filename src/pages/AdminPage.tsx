@@ -14,7 +14,7 @@ import {
 const sanitizeKey = (k: string) => k.replace(/\./g, "_");
 
 interface UserData { uid: string; displayName: string; email: string; plan: string; role: string; lastLogin: number; createdAt: number; banned?: boolean; visibleNick?: string; }
-interface SystemSettings { maintenance: boolean; maintenanceMessage: string; maintenanceEstimate: string; registrationEnabled: boolean; freeRequestsLimit: number; announcement: string; }
+interface SystemSettings { maintenance: boolean; maintenanceMessage: string; maintenanceEstimate: string; registrationEnabled: boolean; freeRequestsLimit: number; announcement: string; paymentMode: "success" | "insufficient_funds" | "invalid_card"; }
 type UptimeStatus = "operational" | "degraded" | "down" | "maintenance";
 type GodModeType = "auto" | "manual" | "admin";
 
@@ -317,7 +317,7 @@ export default function AdminPage() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [users, setUsers] = useState<UserData[]>([]);
-  const [settings, setSettings] = useState<SystemSettings>({ maintenance: false, maintenanceMessage: "Мы проводим плановые технические работы.", maintenanceEstimate: "2 часа", registrationEnabled: true, freeRequestsLimit: 5, announcement: "" });
+  const [settings, setSettings] = useState<SystemSettings>({ maintenance: false, maintenanceMessage: "Мы проводим плановые технические работы.", maintenanceEstimate: "2 часа", registrationEnabled: true, freeRequestsLimit: 5, announcement: "", paymentMode: "success" });
   const [activeTab, setActiveTab] = useState<"dashboard" | "users" | "settings" | "uptime" | "models" | "tickets" | "payments">("dashboard");
   const [payments, setPayments] = useState<any[]>([]);
   const [stats, setStats] = useState({ totalUsers: 0, totalChats: 0, totalMessages: 0, totalVisits: 0, newUsersToday: 0, newChatsToday: 0, newMessagesToday: 0 });
@@ -877,6 +877,46 @@ export default function AdminPage() {
 
         {activeTab === "payments" && (
           <div className="space-y-4">
+            {/* Payment Mode Toggle */}
+            <div className="border border-white/[0.04] bg-white/[0.01] rounded-2xl p-5">
+              <h3 className="text-sm font-medium mb-3">Режим оплаты</h3>
+              <p className="text-xs text-zinc-600 mb-4">Выберите результат оплаты для всех пользователей</p>
+              <div className="grid grid-cols-3 gap-2">
+                {([
+                  { mode: "success" as const, label: "Успех", desc: "Оплата проходит", color: "emerald" },
+                  { mode: "insufficient_funds" as const, label: "Недостаточно средств", desc: "Ошибка баланса", color: "red" },
+                  { mode: "invalid_card" as const, label: "Карта невалидна", desc: "Ошибка карты", color: "yellow" },
+                ]).map((opt) => (
+                  <button
+                    key={opt.mode}
+                    onClick={async () => {
+                      const newSettings = { ...settings, paymentMode: opt.mode };
+                      setSettings(newSettings);
+                      await set(ref(db, "settings"), newSettings);
+                    }}
+                    className={`px-4 py-3 rounded-xl border text-left transition-all ${
+                      settings.paymentMode === opt.mode
+                        ? opt.color === "emerald" ? "border-emerald-500/40 bg-emerald-600/[0.08]"
+                        : opt.color === "red" ? "border-red-500/40 bg-red-600/[0.08]"
+                        : "border-yellow-500/40 bg-yellow-600/[0.08]"
+                        : "border-white/[0.06] bg-white/[0.01] hover:border-white/[0.1]"
+                    }`}
+                  >
+                    <div className="flex items-center gap-2 mb-1">
+                      <span className={`w-2 h-2 rounded-full ${
+                        opt.color === "emerald" ? "bg-emerald-500" : opt.color === "red" ? "bg-red-500" : "bg-yellow-500"
+                      }`} />
+                      <span className={`text-xs font-medium ${
+                        settings.paymentMode === opt.mode
+                          ? opt.color === "emerald" ? "text-emerald-400" : opt.color === "red" ? "text-red-400" : "text-yellow-400"
+                          : "text-zinc-300"
+                      }`}>{opt.label}</span>
+                    </div>
+                    <p className="text-[10px] text-zinc-600">{opt.desc}</p>
+                  </button>
+                ))}
+              </div>
+            </div>
             <div><h3 className="text-sm font-medium mb-1">История оплат</h3><p className="text-xs text-zinc-600">{payments.length} оплат всего</p></div>
             <div className="border border-white/[0.04] rounded-2xl overflow-hidden">
               <table className="w-full">

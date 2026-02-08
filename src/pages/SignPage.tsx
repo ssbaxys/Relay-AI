@@ -6,7 +6,7 @@ import {
   signInWithPopup,
   updateProfile,
 } from "firebase/auth";
-import { ref, set, serverTimestamp } from "firebase/database";
+import { ref, set, get, serverTimestamp } from "firebase/database";
 import { auth, googleProvider, db } from "../firebase";
 import { ArrowLeft, Eye, EyeOff, Check, ChevronRight, ChevronLeft, Sparkles, Zap, Crown } from "lucide-react";
 
@@ -57,14 +57,66 @@ export default function SignPage() {
   const [googleUser, setGoogleUser] = useState<{ uid: string; email: string | null; displayName: string | null } | null>(null);
   const navigate = useNavigate();
 
-  const totalSteps = isLogin ? 1 : 3;
+  // Create or update user record - ALWAYS ensures user has name and email
+  const ensureUserRecord = async (uid: string, name: string | null, userEmail: string | null, plan?: string) => {
+    const userRef = ref(db, `users/${uid}`);
+    const snapshot = await get(userRef);
+    
+    if (snapshot.exists()) {
+      // User exists - just update lastLogin, but also fix missing fields
+      const existingData = snapshot.val();
+      const updates: Record<string, unknown> = {
+        lastLogin: serverTimestamp(),
+      };
+      
+      // Fix missing displayName
+      if (!existingData.displayName || existingData.displayName === "User") {
+        updates.displayName = name || userEmail?.split("@")[0] || "User";
+      }
+      
+      // Fix missing visibleNick
+      if (!existingData.visibleNick || existingData.visibleNick === "User") {
+        updates.visibleNick = name || existingData.displayName || userEmail?.split("@")[0] || "User";
+      }
+      
+      // Fix missing email
+      if (!existingData.email && userEmail) {
+        updates.email = userEmail;
+      }
+      
+      // Fix missing uniqueId
+      if (!existingData.uniqueId) {
+        updates.uniqueId = String(Math.floor(10000000 + Math.random() * 90000000));
+      }
+      
+      await set(userRef, { ...existingData, ...updates });
+    } else {
+      // New user - create full record
+      const uniqueId = String(Math.floor(10000000 + Math.random() * 90000000));
+      const finalName = name || userEmail?.split("@")[0] || "User";
+      
+      await set(userRef, {
+        displayName: finalName,
+        visibleNick: finalName,
+        email: userEmail || "",
+        lastLogin: serverTimestamp(),
+        createdAt: serverTimestamp(),
+        plan: plan || "free",
+        role: "user",
+        uniqueId,
+      });
+    }
+  };
 
-  const saveUser = async (uid: string, name: string | null, userEmail: string | null, plan: string) => {
+  // Create new user record (for registration only)
+  const createUserRecord = async (uid: string, name: string | null, userEmail: string | null, plan: string) => {
     const uniqueId = String(Math.floor(10000000 + Math.random() * 90000000));
+    const finalName = name || userEmail?.split("@")[0] || "User";
+    
     await set(ref(db, `users/${uid}`), {
-      displayName: name || "User",
-      visibleNick: name || "User",
-      email: userEmail,
+      displayName: finalName,
+      visibleNick: finalName,
+      email: userEmail || "",
       lastLogin: serverTimestamp(),
       createdAt: serverTimestamp(),
       plan,
@@ -79,15 +131,18 @@ export default function SignPage() {
     try {
       const r = await signInWithPopup(auth, googleProvider);
       if (isLogin) {
-        await set(ref(db, `users/${r.user.uid}/lastLogin`), serverTimestamp());
+        // Login - ensure user record exists with proper data
+        await ensureUserRecord(r.user.uid, r.user.displayName, r.user.email);
         navigate("/chat");
       } else {
+        // Registration - go to step 2
         setGoogleUser({ uid: r.user.uid, email: r.user.email, displayName: r.user.displayName });
         setDisplayName(r.user.displayName || "");
         setAuthMethod("google");
         setStep(2);
       }
-    } catch {
+    } catch (e: unknown) {
+      console.error("Google auth error:", e);
       setError("Ошибка входа через Google");
     }
     setLoading(false);
@@ -98,7 +153,8 @@ export default function SignPage() {
     setLoading(true);
     try {
       const r = await signInWithEmailAndPassword(auth, email, password);
-      await set(ref(db, `users/${r.user.uid}/lastLogin`), serverTimestamp());
+      // Ensure user record exists with proper data
+      await ensureUserRecord(r.user.uid, r.user.displayName, email);
       navigate("/chat");
     } catch (err: unknown) {
       const code = (err as { code?: string }).code || "";
@@ -132,7 +188,9 @@ export default function SignPage() {
     setLoading(true);
     try {
       if (authMethod === "google" && googleUser) {
-        await saveUser(googleUser.uid, displayName || googleUser.displayName, googleUser.email, selectedPlan === "free" ? "free" : selectedPlan);
+        const finalName = displayName.trim() || googleUser.displayName || googleUser.email?.split("@")[0] || "User";
+        await createUserRecord(googleUser.uid, finalName, googleUser.email, selectedPlan);
+        
         if (selectedPlan !== "free") {
           const price = selectedPlan === "pro" ? "499" : "1299";
           navigate(`/payment?plan=${selectedPlan}&price=${price}`);
@@ -141,8 +199,14 @@ export default function SignPage() {
         }
       } else if (authMethod === "email") {
         const r = await createUserWithEmailAndPassword(auth, email, password);
-        if (displayName) await updateProfile(r.user, { displayName });
-        await saveUser(r.user.uid, displayName || null, email, selectedPlan === "free" ? "free" : selectedPlan);
+        const finalName = displayName.trim() || email.split("@")[0] || "User";
+        
+        if (finalName) {
+          await updateProfile(r.user, { displayName: finalName });
+        }
+        
+        await createUserRecord(r.user.uid, finalName, email, selectedPlan);
+        
         if (selectedPlan !== "free") {
           const price = selectedPlan === "pro" ? "499" : "1299";
           navigate(`/payment?plan=${selectedPlan}&price=${price}`);

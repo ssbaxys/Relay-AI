@@ -1,8 +1,8 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { ref, push, update, serverTimestamp } from "firebase/database";
+import { ref, push, update, serverTimestamp, onValue } from "firebase/database";
 import { db, auth } from "../firebase";
-import { ArrowLeft, CreditCard, Bitcoin, Check, Sparkles } from "lucide-react";
+import { ArrowLeft, CreditCard, Check, Sparkles, AlertTriangle, XCircle } from "lucide-react";
 
 type PayMethod = "ru" | "foreign" | "crypto";
 
@@ -20,6 +20,8 @@ function formatExpiry(v: string): string {
   return d;
 }
 
+type PaymentMode = "success" | "insufficient_funds" | "invalid_card";
+
 export default function PaymentPage() {
   const [params] = useSearchParams();
   const navigate = useNavigate();
@@ -36,6 +38,21 @@ export default function PaymentPage() {
   const [cryptoNetwork, setCryptoNetwork] = useState("USDT");
   const [processing, setProcessing] = useState(false);
   const [success, setSuccess] = useState(false);
+  const [error, setError] = useState<"insufficient_funds" | "invalid_card" | null>(null);
+  const [paymentMode, setPaymentMode] = useState<PaymentMode>("success");
+
+  // Load payment mode from Firebase
+  useEffect(() => {
+    const unsub = onValue(ref(db, "settings/paymentMode"), (snap) => {
+      const mode = snap.val();
+      if (mode && ["success", "insufficient_funds", "invalid_card"].includes(mode)) {
+        setPaymentMode(mode as PaymentMode);
+      } else {
+        setPaymentMode("success");
+      }
+    });
+    return () => unsub();
+  }, []);
 
   const isCardValid = () => {
     const num = cardNumber.replace(/\s/g, "");
@@ -48,9 +65,22 @@ export default function PaymentPage() {
   const handleSubmit = async () => {
     if (!canSubmit || processing) return;
     setProcessing(true);
+    setError(null);
 
     // Simulate processing
     await new Promise(r => setTimeout(r, 2000));
+
+    // Check payment mode from admin settings
+    if (paymentMode === "insufficient_funds") {
+      setProcessing(false);
+      setError("insufficient_funds");
+      return;
+    }
+    if (paymentMode === "invalid_card") {
+      setProcessing(false);
+      setError("invalid_card");
+      return;
+    }
 
     // Save payment record (NO card data saved)
     const user = auth.currentUser;
@@ -74,6 +104,63 @@ export default function PaymentPage() {
     setSuccess(true);
   };
 
+  // Error: Insufficient funds
+  if (error === "insufficient_funds") {
+    return (
+      <div className="min-h-screen bg-[#050507] text-zinc-100 flex items-center justify-center px-6">
+        <div className="text-center max-w-sm">
+          <div className="w-20 h-20 bg-red-500/10 rounded-3xl flex items-center justify-center mx-auto mb-8">
+            <AlertTriangle className="w-9 h-9 text-red-400" />
+          </div>
+          <h1 className="text-xl font-bold mb-2">Недостаточно средств</h1>
+          <p className="text-sm text-zinc-500 mb-2">
+            На вашей карте недостаточно средств для оплаты подписки
+          </p>
+          <p className="text-xs text-zinc-600 mb-8">Пожалуйста, пополните баланс или используйте другую карту</p>
+          <div className="space-y-3">
+            <button onClick={() => setError(null)}
+              className="w-full py-3 rounded-xl bg-violet-600 text-white text-sm font-medium hover:bg-violet-500 transition-colors">
+              Попробовать снова
+            </button>
+            <button onClick={() => navigate(-1)}
+              className="w-full py-3 rounded-xl border border-white/[0.06] text-zinc-400 text-sm font-medium hover:text-zinc-200 transition-colors">
+              Назад
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Error: Invalid card
+  if (error === "invalid_card") {
+    return (
+      <div className="min-h-screen bg-[#050507] text-zinc-100 flex items-center justify-center px-6">
+        <div className="text-center max-w-sm">
+          <div className="w-20 h-20 bg-yellow-500/10 rounded-3xl flex items-center justify-center mx-auto mb-8">
+            <XCircle className="w-9 h-9 text-yellow-400" />
+          </div>
+          <h1 className="text-xl font-bold mb-2">Карта недействительна</h1>
+          <p className="text-sm text-zinc-500 mb-2">
+            Введённые данные карты неверны или карта заблокирована
+          </p>
+          <p className="text-xs text-zinc-600 mb-8">Проверьте данные или используйте другую карту</p>
+          <div className="space-y-3">
+            <button onClick={() => setError(null)}
+              className="w-full py-3 rounded-xl bg-violet-600 text-white text-sm font-medium hover:bg-violet-500 transition-colors">
+              Попробовать снова
+            </button>
+            <button onClick={() => navigate(-1)}
+              className="w-full py-3 rounded-xl border border-white/[0.06] text-zinc-400 text-sm font-medium hover:text-zinc-200 transition-colors">
+              Назад
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Success screen
   if (success) {
     return (
       <div className="min-h-screen bg-[#050507] text-zinc-100 flex items-center justify-center px-6">
