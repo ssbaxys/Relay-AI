@@ -172,3 +172,14 @@ textarea {
   from { transform: translateX(0); opacity: 1; }
   to { transform: translateX(-100%); opacity: 0; }
 }
+
+/* Search spinning animation */
+@keyframes searchSpin {
+  0%, 100% { transform: rotate(0deg); }
+  25% { transform: rotate(15deg); }
+  50% { transform: rotate(0deg); }
+  75% { transform: rotate(-15deg); }
+}
+.animate-search-spin {
+  animation: searchSpin 1.5s ease-in-out infinite;
+}

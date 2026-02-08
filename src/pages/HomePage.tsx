@@ -1,7 +1,14 @@
+import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { useAuth } from "../App";
 import { ArrowRight, Check, Zap, Shield, Globe, Layers } from "lucide-react";
+import { ref, onValue } from "firebase/database";
+import { db } from "../firebase";
 import Dither from "../components/Dither";
+
+type UptimeStatus = "operational" | "degraded" | "down" | "maintenance";
+
+const UPTIME_KEYS = ["api_gateway", "ai_router", "web_app", "database", "auth", "cdn"];
 
 const models = [
   { name: "GPT-5.2 Codex", provider: "OpenAI", tag: "Code", logo: "https://img.icons8.com/fluency-systems-regular/48/chatgpt.png", logoFilter: "invert(1) brightness(2)" },
@@ -36,6 +43,58 @@ const features = [
 
 export default function HomePage() {
   const { user } = useAuth();
+  const [userCount, setUserCount] = useState<string>("0");
+  const [avgUptime, setAvgUptime] = useState<string>("99.9%");
+
+  // Dynamic user count from Firebase
+  useEffect(() => {
+    const unsub = onValue(ref(db, "users"), (snap) => {
+      const d = snap.val();
+      if (d && typeof d === "object") {
+        const count = Object.keys(d).length;
+        if (count >= 1000) {
+          setUserCount((count / 1000).toFixed(1).replace(/\.0$/, "") + "K+");
+        } else {
+          setUserCount(String(count));
+        }
+      } else {
+        setUserCount("0");
+      }
+    });
+    return () => unsub();
+  }, []);
+
+  // Average uptime from Firebase
+  useEffect(() => {
+    const unsub = onValue(ref(db, "uptime"), (snap) => {
+      const d = snap.val();
+      if (d && typeof d === "object") {
+        let totalPercent = 0;
+        let componentCount = 0;
+        for (const key of UPTIME_KEYS) {
+          const hours = d[key];
+          if (hours && typeof hours === "object") {
+            const arr: UptimeStatus[] = [];
+            // Firebase may store as object with numeric keys
+            for (let i = 0; i < 90; i++) {
+              arr.push((hours[i] as UptimeStatus) || "operational");
+            }
+            const operational = arr.filter(h => h === "operational").length;
+            totalPercent += (operational / 90) * 100;
+            componentCount++;
+          }
+        }
+        if (componentCount > 0) {
+          setAvgUptime((totalPercent / componentCount).toFixed(1) + "%");
+        } else {
+          setAvgUptime("99.9%");
+        }
+      } else {
+        setAvgUptime("99.9%");
+      }
+    });
+    return () => unsub();
+  }, []);
 
   return (
     <div className="min-h-screen bg-[#050507] text-zinc-100">
@@ -111,13 +170,13 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* Stats */}
+      {/* Stats — dynamic */}
       <section className="py-20 px-6">
         <div className="max-w-4xl mx-auto grid grid-cols-2 md:grid-cols-4 gap-6">
           {[
             { value: "3", label: "AI модели" },
-            { value: "50K+", label: "Пользователей" },
-            { value: "99.9%", label: "Uptime" },
+            { value: userCount, label: "Пользователей" },
+            { value: avgUptime, label: "Uptime" },
             { value: "<50ms", label: "Задержка" },
           ].map((s) => (
             <div key={s.label} className="text-center">
@@ -208,17 +267,6 @@ export default function HomePage() {
               </div>
             ))}
           </div>
-        </div>
-      </section>
-
-      {/* CTA */}
-      <section className="pb-24 px-6">
-        <div className="max-w-3xl mx-auto text-center border border-white/[0.04] bg-white/[0.01] rounded-2xl p-14">
-          <h2 className="text-2xl font-bold mb-3">Готовы начать?</h2>
-          <p className="text-zinc-500 text-sm mb-8 max-w-md mx-auto">Присоединяйтесь к 50,000+ пользователям Relay AI.</p>
-          <Link to={user ? "/chat" : "/sign"} className="inline-flex items-center gap-2 bg-violet-600 text-white px-7 py-3 rounded-xl font-medium text-sm hover:bg-violet-500 transition-all hover:shadow-lg hover:shadow-violet-600/20">
-            Попробовать бесплатно <ArrowRight className="w-4 h-4" />
-          </Link>
         </div>
       </section>
 
