@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { ref, onValue, set, remove, update, push, get } from "firebase/database";
 import { db } from "../firebase";
@@ -7,7 +7,8 @@ import {
   Lock, Search, Ban, Trash2, ChevronDown, Save, Check, TrendingUp, Users, MessageCircle, FolderOpen,
   Eye, Send, ArrowLeft as Back, Radio, Bot, Shield, Folder, ChevronRight, MessageSquare,
   Power, PowerOff, X as XIcon, TicketCheck, Clock, Music, Play, Pause, Download,
-  Code, Image as ImageIcon
+  Code, Image as ImageIcon, PanelLeft, Plus, Home, LogOut, Pencil, ArrowDownAZ,
+  GripVertical, ExternalLink, AlertTriangle, Square
 } from "lucide-react";
 
 const sanitizeKey = (k: string) => k.replace(/\./g, "_");
@@ -42,7 +43,6 @@ function AdminModelLogo({ modelId, size = 20 }: { modelId: string; size?: number
 function getDefaultHours(): UptimeStatus[] { return Array.from({ length: 90 }, () => "operational" as UptimeStatus); }
 function formatDur(sec: number): string { const m = Math.floor(sec / 60); const s = Math.floor(sec % 60); return `${m}:${s.toString().padStart(2, "0")}`; }
 
-// Convert file to base64 data URL — stored directly in RTDB, no Firebase Storage needed
 function fileToBase64(file: File): Promise<string> {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
@@ -76,6 +76,241 @@ function AdminAudioPlayer({ url }: { url: string }) {
   );
 }
 
+// ===================== VIEW AS USER COMPONENT =====================
+function ViewAsUserPanel({ targetUser, onExit }: { targetUser: UserData; onExit: () => void }) {
+  const [chats, setChats] = useState<any[]>([]);
+  const [folders, setFolders] = useState<any[]>([]);
+  const [selectedChat, setSelectedChat] = useState<any>(null);
+  const [messages, setMessages] = useState<any[]>([]);
+  const [collapsedFolders, setCollapsedFolders] = useState<Set<string>>(new Set());
+  const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [searchQuery, setSearchQuery] = useState("");
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  // Load user's chats in real-time
+  useEffect(() => {
+    const u1 = onValue(ref(db, `chats/${targetUser.uid}`), (s) => {
+      const d = s.val();
+      if (d) {
+        setChats(Object.entries(d).map(([id, v]: [string, any]) => ({
+          id, title: v.title || "Новый чат", model: v.model || "gpt-5.2-codex",
+          createdAt: v.createdAt || 0, lastMessage: v.lastMessage || 0,
+          messageCount: v.messageCount || 0, folderId: v.folderId || undefined
+        })).sort((a: any, b: any) => b.lastMessage - a.lastMessage));
+      } else setChats([]);
+    });
+    const u2 = onValue(ref(db, `folders/${targetUser.uid}`), (s) => {
+      const d = s.val();
+      if (d) {
+        setFolders(Object.entries(d).map(([id, v]: [string, any]) => ({
+          id, name: v.name || "Папка", createdAt: v.createdAt || 0, collapsed: v.collapsed || false
+        })));
+      } else setFolders([]);
+    });
+    return () => { u1(); u2(); };
+  }, [targetUser.uid]);
+
+  // Load messages for selected chat in real-time
+  useEffect(() => {
+    if (!selectedChat) { setMessages([]); return; }
+    const u = onValue(ref(db, `messages/${targetUser.uid}/${selectedChat.id}`), (s) => {
+      const d = s.val();
+      if (d) {
+        setMessages(Object.entries(d).map(([id, v]: [string, any]) => ({ id, ...v })).sort((a: any, b: any) => (a.timestamp || 0) - (b.timestamp || 0)));
+      } else setMessages([]);
+    });
+    return () => u();
+  }, [targetUser.uid, selectedChat]);
+
+  useEffect(() => { messagesEndRef.current?.scrollIntoView({ behavior: "smooth" }); }, [messages]);
+
+  const getModelName = (id: string) => adminModels.find(m => m.id === id)?.name || id;
+  const filteredChats = chats.filter(c => !searchQuery.trim() || c.title.toLowerCase().includes(searchQuery.toLowerCase()));
+  const folderedChats = filteredChats.filter(c => c.folderId);
+  const unfolderedChats = filteredChats.filter(c => !c.folderId);
+
+  const renderMsg = (msg: any) => {
+    const role = String(msg.role || "user");
+    const t = String(msg.type || "");
+    const content = String(msg.content || "");
+
+    if (role === "user") {
+      return (
+        <div className="flex justify-end">
+          <div className="max-w-[75%]">
+            {msg.imageUrl && <div className="mb-2 flex justify-end"><img src={String(msg.imageUrl)} alt="" className="max-w-[260px] max-h-[260px] rounded-xl object-cover border border-white/[0.06]" /></div>}
+            {content && <div className="bg-violet-600/15 text-zinc-100 px-4 py-3 rounded-2xl rounded-br-md text-sm"><span className="whitespace-pre-wrap">{content}</span></div>}
+            {msg.tool && <div className="flex justify-end mt-1"><span className="text-[9px] text-zinc-600 bg-white/[0.02] px-2 py-0.5 rounded-full">🔧 {TOOL_LABELS[String(msg.tool)] || msg.tool}</span></div>}
+          </div>
+        </div>
+      );
+    }
+
+    if (role === "admin") {
+      return (
+        <div className="max-w-[75%]">
+          <div className="flex items-center gap-2 mb-1.5"><Shield className="w-4 h-4 text-red-400" /><span className="text-[11px] font-medium text-red-400">Администратор</span></div>
+          {msg.imageUrl && <img src={String(msg.imageUrl)} alt="" className="max-w-[260px] max-h-[260px] rounded-xl object-cover border border-red-500/10 mb-2" />}
+          <div className="bg-red-600/5 border border-red-500/10 text-zinc-300 px-4 py-3 rounded-2xl rounded-tl-md text-sm"><MarkdownRenderer content={content} /></div>
+        </div>
+      );
+    }
+
+    // Assistant
+    return (
+      <div className="max-w-[75%]">
+        <div className="flex items-center gap-2 mb-1.5"><AdminModelLogo modelId={msg.model || ""} size={18} /><span className="text-[11px] font-medium text-zinc-400">{getModelName(String(msg.model || ""))}</span></div>
+        {t === "search_pending" && (
+          <div className="flex items-center gap-3 bg-blue-600/5 border border-blue-500/10 rounded-2xl px-5 py-4 max-w-[300px]">
+            <Search className="w-5 h-5 text-blue-400 animate-search-spin" />
+            <p className="text-sm text-blue-400 animate-pulse">Поиск в интернете...</p>
+          </div>
+        )}
+        {t === "search_done" && (
+          <div className="flex items-center gap-3 bg-blue-600/5 border border-blue-500/10 rounded-2xl px-5 py-4 max-w-[300px]">
+            <Search className="w-5 h-5 text-blue-400" />
+            <p className="text-sm text-blue-400">Поиск завершён</p>
+          </div>
+        )}
+        {t === "photo_pending" && (
+          <div className="w-[180px] h-[180px] rounded-2xl bg-zinc-800/50 border border-white/[0.06] flex flex-col items-center justify-center gap-3">
+            <ImageIcon className="w-8 h-8 text-zinc-500" /><p className="text-xs text-zinc-500 animate-pulse">Генерация...</p>
+          </div>
+        )}
+        {t === "photo" && msg.imageUrl && <img src={String(msg.imageUrl)} alt="" className="max-w-[260px] max-h-[260px] rounded-2xl object-cover border border-white/[0.06]" />}
+        {t === "music_generating" && (
+          <div className="flex items-center gap-3 bg-violet-600/5 border border-violet-500/10 rounded-2xl px-5 py-4 max-w-[300px]">
+            <Music className="w-5 h-5 text-violet-400 animate-spin" style={{ animationDuration: "3s" }} />
+            <p className="text-sm text-violet-400 animate-pulse">Генерация музыки...</p>
+          </div>
+        )}
+        {t === "music" && msg.audioUrl && <AdminAudioPlayer url={String(msg.audioUrl)} />}
+        {t === "code_action" && (() => {
+          const acts: any[] = Array.isArray(msg.actions) ? msg.actions : (msg.actions ? Object.values(msg.actions) : []);
+          return (
+            <div className="space-y-1.5">{acts.map((a: any, i: number) => (
+              <div key={i} className={`flex items-center gap-2 px-3 py-2 rounded-xl border ${a.success !== false ? "border-emerald-500/10 bg-emerald-600/5" : "border-red-500/10 bg-red-600/5"}`}>
+                <span className="text-[11px] font-medium text-zinc-400 capitalize w-14">{String(a.action || "")}</span>
+                <span className="text-[11px] text-zinc-500 font-mono truncate flex-1">{String(a.path || "")}</span>
+                {a.success !== false ? <Check className="w-3 h-3 text-emerald-400" /> : <XIcon className="w-3 h-3 text-red-400" />}
+              </div>
+            ))}</div>
+          );
+        })()}
+        {!["search_pending", "search_done", "photo_pending", "photo", "music_generating", "music", "code_action"].includes(t) && (
+          <>
+            {msg.imageUrl && <img src={String(msg.imageUrl)} alt="" className="max-w-[260px] max-h-[260px] rounded-xl object-cover border border-white/[0.06] mb-2" />}
+            {msg.audioUrl && <div className="mb-2"><AdminAudioPlayer url={String(msg.audioUrl)} /></div>}
+            {content && <div className="text-zinc-300 text-sm"><MarkdownRenderer content={content} /></div>}
+          </>
+        )}
+      </div>
+    );
+  };
+
+  return (
+    <div className="h-screen bg-[#050507] text-zinc-100 flex flex-col overflow-hidden">
+      {/* Top bar */}
+      <div className="shrink-0 bg-violet-600/10 border-b border-violet-500/20 px-4 h-12 flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <Eye className="w-4 h-4 text-violet-400" />
+          <div>
+            <span className="text-xs font-medium text-violet-300">Просмотр от лица: </span>
+            <span className="text-xs text-violet-200 font-semibold">{targetUser.visibleNick || targetUser.displayName}</span>
+            <span className="text-[10px] text-violet-400/60 ml-2">{targetUser.email}</span>
+          </div>
+        </div>
+        <button onClick={onExit} className="flex items-center gap-2 px-4 py-1.5 rounded-xl bg-violet-600 text-white text-xs font-medium hover:bg-violet-500 transition-all">
+          <XIcon className="w-3.5 h-3.5" /> Выйти из просмотра
+        </button>
+      </div>
+
+      <div className="flex-1 flex overflow-hidden">
+        {/* Sidebar */}
+        <div className="shrink-0 border-r border-white/[0.04] bg-[#0a0a0d] transition-all duration-300 overflow-hidden" style={{ width: sidebarOpen ? 260 : 0 }}>
+          <div className="w-[260px] min-w-[260px] flex flex-col h-full">
+            <div className="p-3 space-y-2">
+              <div className="flex items-center gap-1.5">
+                <div className="flex-1 text-xs font-medium text-zinc-400 px-2">Чаты пользователя</div>
+                <button onClick={() => setSidebarOpen(false)} className="p-2 rounded-xl border border-white/[0.06] hover:bg-white/[0.03] text-zinc-500 transition-all"><PanelLeft className="w-4 h-4" /></button>
+              </div>
+              <div className="relative"><Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3 h-3 text-zinc-700" /><input type="text" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} placeholder="Поиск..." className="w-full pl-7 pr-2 py-1.5 rounded-lg bg-white/[0.02] border border-white/[0.04] text-[11px] text-white placeholder-zinc-700 focus:outline-none focus:border-violet-500/30" /></div>
+            </div>
+            <div className="flex-1 overflow-y-auto px-2 space-y-0.5 pb-2">
+              {folders.map((folder: any) => {
+                const fc = folderedChats.filter(c => c.folderId === folder.id);
+                const col = collapsedFolders.has(folder.id);
+                return (
+                  <div key={folder.id} className="mb-1">
+                    <button onClick={() => { const n = new Set(collapsedFolders); col ? n.delete(folder.id) : n.add(folder.id); setCollapsedFolders(n); }} className="flex items-center gap-1.5 px-2 py-1.5 rounded-lg text-xs text-zinc-500 hover:text-zinc-300 w-full text-left transition-colors">
+                      <ChevronRight className={`w-3 h-3 transition-transform duration-200 ${!col ? "rotate-90" : ""}`} />
+                      <Folder className="w-3.5 h-3.5 text-violet-400/60" />
+                      <span className="flex-1 truncate font-medium">{folder.name}</span>
+                      <span className="text-[10px] text-zinc-700">{fc.length}</span>
+                    </button>
+                    {!col && <div className="pl-4 space-y-0.5 mt-0.5">{fc.map((ch: any) => (
+                      <button key={ch.id} onClick={() => setSelectedChat(ch)} className={`w-full flex items-center gap-2 px-3 py-2 rounded-lg text-left text-xs transition-all ${selectedChat?.id === ch.id ? "bg-violet-600/10 text-violet-300" : "text-zinc-500 hover:bg-white/[0.03]"}`}>
+                        <MessageSquare className="w-3.5 h-3.5 shrink-0 opacity-50" /><span className="truncate">{ch.title}</span>
+                      </button>
+                    ))}</div>}
+                  </div>
+                );
+              })}
+              {unfolderedChats.map((ch: any) => (
+                <button key={ch.id} onClick={() => setSelectedChat(ch)} className={`w-full flex items-center gap-2 px-3 py-2 rounded-lg text-left text-xs transition-all ${selectedChat?.id === ch.id ? "bg-violet-600/10 text-violet-300" : "text-zinc-500 hover:bg-white/[0.03]"}`}>
+                  <MessageSquare className="w-3.5 h-3.5 shrink-0 opacity-50" /><span className="truncate flex-1">{ch.title}</span>
+                  <span className="text-[10px] text-zinc-700">{ch.messageCount}</span>
+                </button>
+              ))}
+              {chats.length === 0 && <div className="text-center py-10 text-xs text-zinc-700">Нет чатов</div>}
+            </div>
+            <div className="p-3 border-t border-white/[0.04]">
+              <div className="flex items-center gap-2 px-2">
+                <div className="w-7 h-7 rounded-lg bg-violet-600/20 flex items-center justify-center text-xs font-medium text-violet-400">{(targetUser.visibleNick || targetUser.displayName)[0]?.toUpperCase()}</div>
+                <div className="flex-1 min-w-0"><p className="text-xs font-medium truncate">{targetUser.visibleNick || targetUser.displayName}</p><p className="text-[10px] text-zinc-600 truncate">{targetUser.email}</p></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Main content */}
+        <div className="flex-1 flex flex-col min-w-0">
+          <div className="h-12 border-b border-white/[0.04] flex items-center px-4 shrink-0">
+            {!sidebarOpen && <button onClick={() => setSidebarOpen(true)} className="p-1.5 rounded-lg hover:bg-white/[0.03] text-zinc-500 transition-all mr-3"><PanelLeft className="w-4 h-4" /></button>}
+            {selectedChat ? (
+              <div className="flex items-center gap-2">
+                <AdminModelLogo modelId={selectedChat.model} size={18} />
+                <span className="text-sm font-medium">{selectedChat.title}</span>
+                <span className="text-xs text-zinc-600">· {getModelName(selectedChat.model)} · {selectedChat.messageCount} сообщ.</span>
+              </div>
+            ) : <span className="text-sm text-zinc-600">Выберите чат</span>}
+            <div className="ml-auto text-[10px] text-zinc-700 bg-white/[0.02] px-2 py-1 rounded-lg">Только чтение</div>
+          </div>
+
+          <div className="flex-1 overflow-y-auto">
+            {selectedChat ? (
+              <div className="max-w-2xl mx-auto py-6 px-4 space-y-5">
+                {messages.map((msg: any) => <div key={msg.id}>{renderMsg(msg)}</div>)}
+                {messages.length === 0 && <div className="text-center py-20 text-xs text-zinc-700">Нет сообщений</div>}
+                <div ref={messagesEndRef} />
+              </div>
+            ) : (
+              <div className="h-full flex items-center justify-center">
+                <div className="text-center">
+                  <Eye className="w-10 h-10 text-violet-400/20 mx-auto mb-4" />
+                  <p className="text-sm text-zinc-500">Выберите чат для просмотра</p>
+                  <p className="text-xs text-zinc-700 mt-1">{chats.length} чатов у пользователя</p>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ===================== MAIN ADMIN PAGE =====================
 export default function AdminPage() {
   const navigate = useNavigate();
   const [authenticated, setAuthenticated] = useState(() => typeof window !== "undefined" && localStorage.getItem("relay_admin") === "true");
@@ -95,7 +330,7 @@ export default function AdminPage() {
   const [banDuration, setBanDuration] = useState("60");
   const [banPermanent, setBanPermanent] = useState(false);
 
-  // View as user
+  // View as user — renders a full panel inside admin
   const [viewingAsUser, setViewingAsUser] = useState<UserData | null>(null);
 
   // God Mode
@@ -108,31 +343,21 @@ export default function AdminPage() {
   const [godInput, setGodInput] = useState("");
   const [godResponseMode, setGodResponseMode] = useState<GodModeType>("auto");
   const [godCollapsedFolders, setGodCollapsedFolders] = useState<Set<string>>(new Set());
-
-  // God mode: image for text messages
   const [godImageFile, setGodImageFile] = useState<File | null>(null);
   const [godImagePreview, setGodImagePreview] = useState<string | null>(null);
   const [godUploadingImage, setGodUploadingImage] = useState(false);
-
-  // God tool: Music
   const [godMusicPending, setGodMusicPending] = useState<string | null>(null);
   const [godMusicFile, setGodMusicFile] = useState<File | null>(null);
   const [godMusicFileName, setGodMusicFileName] = useState<string | null>(null);
   const [godUploadingMusic, setGodUploadingMusic] = useState(false);
-
-  // God tool: Photo
   const [godPhotoPending, setGodPhotoPending] = useState<string | null>(null);
   const [godPhotoFile, setGodPhotoFile] = useState<File | null>(null);
   const [godPhotoPreview, setGodPhotoPreview] = useState<string | null>(null);
   const [godUploadingPhoto, setGodUploadingPhoto] = useState(false);
-
-  // God tool: Search
   const [godSearchPending, setGodSearchPending] = useState<string | null>(null);
   const [godSearchSources, setGodSearchSources] = useState<{ url: string; title: string; description: string }[]>([]);
   const [godSourceUrl, setGodSourceUrl] = useState("");
   const [godFetchingMeta, setGodFetchingMeta] = useState(false);
-
-  // God tool: Code
   const [godCodeAction, setGodCodeAction] = useState<"read" | "created" | "edit">("read");
   const [godCodePath, setGodCodePath] = useState("");
   const [godCodeSuccess, setGodCodeSuccess] = useState(true);
@@ -152,7 +377,7 @@ export default function AdminPage() {
 
   const handleLogin = (e: React.FormEvent) => { e.preventDefault(); if (password === "4321") { setAuthenticated(true); setError(""); localStorage.setItem("relay_admin", "true"); } else setError("Неверный пароль"); };
 
-  // Data loading
+  // ALL DATA LOADING — onValue for real-time sync
   useEffect(() => { if (!authenticated) return; const u = onValue(ref(db, "disabledModels"), (s) => { const v = s.val(); setDisabledModels(v && typeof v === "object" ? v : {}); }); return () => u(); }, [authenticated]);
   useEffect(() => { if (!authenticated) return; const u = onValue(ref(db, "users"), (s) => { const d = s.val(); if (d) { const l: UserData[] = Object.entries(d).map(([uid, val]: [string, any]) => ({ uid, displayName: val.displayName || "Без имени", email: val.email || "—", plan: val.plan || "free", role: val.role || "user", lastLogin: val.lastLogin || 0, createdAt: val.createdAt || 0, banned: val.banned || false, visibleNick: val.visibleNick || "" })); setUsers(l); const t = new Date(); t.setHours(0, 0, 0, 0); setStats(p => ({ ...p, totalUsers: l.length, newUsersToday: l.filter(u2 => u2.createdAt >= t.getTime()).length })); } }); return () => u(); }, [authenticated]);
   useEffect(() => { if (!authenticated) return; const u = onValue(ref(db, "settings"), (s) => { const d = s.val(); if (d) setSettings(p => ({ ...p, ...d })); }); return () => u(); }, [authenticated]);
@@ -168,22 +393,17 @@ export default function AdminPage() {
   const changeTicketStatus = async (id: string, st: "open" | "closed") => { await update(ref(db, `tickets/${id}`), { status: st }); if (selectedTicket?.id === id) setSelectedTicket({ ...selectedTicket, status: st }); };
   const deleteTicket = async (id: string) => { await remove(ref(db, `tickets/${id}`)); if (selectedTicket?.id === id) { setSelectedTicket(null); setTicketMessages([]); } };
 
-  // God Mode data
+  // God Mode data loading
   useEffect(() => { if (!godSelectedUser) { setGodChats([]); setGodFolders([]); return; } const u1 = onValue(ref(db, `chats/${godSelectedUser.uid}`), (s) => { const d = s.val(); if (d) { setGodChats(Object.entries(d).map(([id, v]: [string, any]) => ({ id, title: v.title || "Новый чат", model: v.model || "gpt-5.2-codex", createdAt: v.createdAt || 0, lastMessage: v.lastMessage || 0, messageCount: v.messageCount || 0, folderId: v.folderId || undefined })).sort((a: any, b: any) => b.lastMessage - a.lastMessage)); } else setGodChats([]); }); const u2 = onValue(ref(db, `folders/${godSelectedUser.uid}`), (s) => { const d = s.val(); if (d) { setGodFolders(Object.entries(d).map(([id, v]: [string, any]) => ({ id, name: v.name || "Папка", collapsed: v.collapsed || false }))); } else setGodFolders([]); }); return () => { u1(); u2(); }; }, [godSelectedUser]);
-
   useEffect(() => { if (!godSelectedUser || !godSelectedChat) { setGodMessages([]); return; } const u = onValue(ref(db, `messages/${godSelectedUser.uid}/${godSelectedChat.id}`), (s) => { const d = s.val(); if (d) { setGodMessages(Object.entries(d).map(([id, v]: [string, any]) => ({ id, ...v })).sort((a: any, b: any) => (a.timestamp || 0) - (b.timestamp || 0))); } else setGodMessages([]); }); return () => u(); }, [godSelectedUser, godSelectedChat]);
 
-  // Load persisted god mode
+  // Load persisted god mode when entering chat
   useEffect(() => {
     if (!godSelectedUser || !godSelectedChat) return;
-    get(ref(db, `godmode/${godSelectedUser.uid}/${godSelectedChat.id}/mode`)).then((s) => {
-      const m = s.val();
-      if (m && ["auto", "manual", "admin"].includes(m)) setGodResponseMode(m);
-      else setGodResponseMode("auto");
-    });
     const u = onValue(ref(db, `godmode/${godSelectedUser.uid}/${godSelectedChat.id}`), (s) => {
       const d = s.val();
-      if (d?.mode) setGodResponseMode(d.mode as GodModeType);
+      if (d?.mode && ["auto", "manual", "admin"].includes(d.mode)) setGodResponseMode(d.mode as GodModeType);
+      else setGodResponseMode("auto");
     });
     return () => u();
   }, [godSelectedUser, godSelectedChat]);
@@ -191,9 +411,9 @@ export default function AdminPage() {
   // Check pending tools
   useEffect(() => {
     if (!godSelectedChat) { setGodMusicPending(null); setGodPhotoPending(null); setGodSearchPending(null); return; }
-    const u1 = onValue(ref(db, `godMusicPending/${godSelectedChat.id}`), (s) => { const d = s.val(); setGodMusicPending(d?.messageKey || null); });
-    const u2 = onValue(ref(db, `godPhotoPending/${godSelectedChat.id}`), (s) => { const d = s.val(); setGodPhotoPending(d?.messageKey || null); });
-    const u3 = onValue(ref(db, `godSearchPending/${godSelectedChat.id}`), (s) => { const d = s.val(); setGodSearchPending(d?.messageKey || null); });
+    const u1 = onValue(ref(db, `godMusicPending/${godSelectedChat.id}`), (s) => { setGodMusicPending(s.val()?.messageKey || null); });
+    const u2 = onValue(ref(db, `godPhotoPending/${godSelectedChat.id}`), (s) => { setGodPhotoPending(s.val()?.messageKey || null); });
+    const u3 = onValue(ref(db, `godSearchPending/${godSelectedChat.id}`), (s) => { setGodSearchPending(s.val()?.messageKey || null); });
     return () => { u1(); u2(); u3(); };
   }, [godSelectedChat]);
 
@@ -206,16 +426,14 @@ export default function AdminPage() {
 
   useEffect(() => { godMessagesEndRef.current?.scrollIntoView({ behavior: "smooth" }); }, [godMessages]);
 
-  // MODEL TOGGLE — uses sanitizeKey to avoid Firebase path errors with dots
+  // MODEL TOGGLE
   const handleToggleModel = async (modelId: string) => {
     const key = sanitizeKey(modelId);
     const currentlyDisabled = !!disabledModels[key];
     try {
       if (currentlyDisabled) {
-        // Enable: remove the key
         await set(ref(db, `disabledModels/${key}`), null);
       } else {
-        // Disable: set to true
         await set(ref(db, `disabledModels/${key}`), true);
       }
     } catch (err) {
@@ -235,161 +453,39 @@ export default function AdminPage() {
   const getUptimePercent = (h: UptimeStatus[]) => ((h.filter(x => x === "operational").length / h.length) * 100).toFixed(1);
   const getCurrentStatus = (h: UptimeStatus[]): UptimeStatus => h[h.length - 1];
 
-  // God mode file handlers — convert to base64, store in RTDB
-  const handleGodFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const f = e.target.files?.[0];
-    if (!f || !f.type.startsWith("image/") || f.size > 5 * 1024 * 1024) return;
-    setGodImageFile(f);
-    const r = new FileReader();
-    r.onload = () => setGodImagePreview(r.result as string);
-    r.readAsDataURL(f);
-    if (e.target) e.target.value = "";
-  };
+  const handleGodFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => { const f = e.target.files?.[0]; if (!f || !f.type.startsWith("image/") || f.size > 5 * 1024 * 1024) return; setGodImageFile(f); const r = new FileReader(); r.onload = () => setGodImagePreview(r.result as string); r.readAsDataURL(f); if (e.target) e.target.value = ""; };
   const clearGodImage = () => { setGodImageFile(null); setGodImagePreview(null); };
-
-  const handleGodMusicFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const f = e.target.files?.[0];
-    if (!f || f.size > 15 * 1024 * 1024) return;
-    setGodMusicFile(f);
-    setGodMusicFileName(f.name);
-    if (e.target) e.target.value = "";
-  };
-
-  const handleGodPhotoFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const f = e.target.files?.[0];
-    if (!f || !f.type.startsWith("image/") || f.size > 5 * 1024 * 1024) return;
-    setGodPhotoFile(f);
-    const r = new FileReader();
-    r.onload = () => setGodPhotoPreview(r.result as string);
-    r.readAsDataURL(f);
-    if (e.target) e.target.value = "";
-  };
+  const handleGodMusicFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => { const f = e.target.files?.[0]; if (!f || f.size > 15 * 1024 * 1024) return; setGodMusicFile(f); setGodMusicFileName(f.name); if (e.target) e.target.value = ""; };
+  const handleGodPhotoFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => { const f = e.target.files?.[0]; if (!f || !f.type.startsWith("image/") || f.size > 5 * 1024 * 1024) return; setGodPhotoFile(f); const r = new FileReader(); r.onload = () => setGodPhotoPreview(r.result as string); r.readAsDataURL(f); if (e.target) e.target.value = ""; };
 
   const msgsPath = () => godSelectedUser && godSelectedChat ? `messages/${godSelectedUser.uid}/${godSelectedChat.id}` : null;
   const chatPath = () => godSelectedUser && godSelectedChat ? `chats/${godSelectedUser.uid}/${godSelectedChat.id}` : null;
   const incCount = async () => { const cp = chatPath(); if (cp && godSelectedChat) await update(ref(db, cp), { lastMessage: Date.now(), messageCount: (godSelectedChat.messageCount || 0) + 1 }); };
 
   // Tool: Search
-  const startSearch = async () => {
-    const mp = msgsPath();
-    if (!mp || !godSelectedChat) return;
-    const m = await push(ref(db, mp), { role: "assistant", content: "", model: godSelectedChat.model, timestamp: Date.now(), type: "search_pending" });
-    if (m.key) { await set(ref(db, `godSearchPending/${godSelectedChat.id}`), { messageKey: m.key }); await incCount(); }
-    setGodSearchSources([]);
-  };
+  const startSearch = async () => { const mp = msgsPath(); if (!mp || !godSelectedChat) return; const m = await push(ref(db, mp), { role: "assistant", content: "", model: godSelectedChat.model, timestamp: Date.now(), type: "search_pending" }); if (m.key) { await set(ref(db, `godSearchPending/${godSelectedChat.id}`), { messageKey: m.key }); await incCount(); } setGodSearchSources([]); };
   const addSearchSource = async () => {
     if (!godSourceUrl.trim()) return;
-    const url = godSourceUrl.trim();
-    setGodFetchingMeta(true);
-    let title = url;
-    let description = "";
-    try {
-      const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`;
-      const resp = await fetch(proxyUrl, { signal: AbortSignal.timeout(5000) });
-      const html = await resp.text();
-      const doc = new DOMParser().parseFromString(html, "text/html");
-      const pageTitle = doc.querySelector("title")?.textContent?.trim();
-      if (pageTitle) title = pageTitle;
-      const metaDesc = doc.querySelector('meta[name="description"]')?.getAttribute("content")?.trim();
-      const ogDesc = doc.querySelector('meta[property="og:description"]')?.getAttribute("content")?.trim();
-      description = metaDesc || ogDesc || "";
-    } catch {
-      try { title = new URL(url).hostname; } catch { /* keep url as title */ }
-    }
-    setGodFetchingMeta(false);
-    setGodSearchSources(p => [...p, { url, title, description }]);
-    setGodSourceUrl("");
+    const url = godSourceUrl.trim(); setGodFetchingMeta(true);
+    let title = url; let description = "";
+    try { const resp = await fetch(`https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`, { signal: AbortSignal.timeout(5000) }); const html = await resp.text(); const doc = new DOMParser().parseFromString(html, "text/html"); const pt = doc.querySelector("title")?.textContent?.trim(); if (pt) title = pt; const md = doc.querySelector('meta[name="description"]')?.getAttribute("content")?.trim(); const og = doc.querySelector('meta[property="og:description"]')?.getAttribute("content")?.trim(); description = md || og || ""; } catch { try { title = new URL(url).hostname; } catch {} }
+    setGodFetchingMeta(false); setGodSearchSources(p => [...p, { url, title, description }]); setGodSourceUrl("");
   };
-  const finishSearch = async () => {
-    if (!godSelectedUser || !godSelectedChat || !godSearchPending) return;
-    await update(ref(db, `messages/${godSelectedUser.uid}/${godSelectedChat.id}/${godSearchPending}`), { type: "search_done", sources: godSearchSources, content: "" });
-    await remove(ref(db, `godSearchPending/${godSelectedChat.id}`));
-    setGodSearchSources([]);
-  };
+  const finishSearch = async () => { if (!godSelectedUser || !godSelectedChat || !godSearchPending) return; await update(ref(db, `messages/${godSelectedUser.uid}/${godSelectedChat.id}/${godSearchPending}`), { type: "search_done", sources: godSearchSources, content: "" }); await remove(ref(db, `godSearchPending/${godSelectedChat.id}`)); setGodSearchSources([]); };
 
   // Tool: Code action
-  const sendCodeAction = async () => {
-    if (!godCodePath.trim()) return;
-    const mp = msgsPath();
-    if (!mp || !godSelectedChat) return;
-    await push(ref(db, mp), { role: "assistant", content: "", model: godSelectedChat.model, timestamp: Date.now(), type: "code_action", actions: [{ action: godCodeAction, path: godCodePath.trim(), success: godCodeSuccess }] });
-    await incCount();
-    setGodCodePath("");
-  };
+  const sendCodeAction = async () => { if (!godCodePath.trim()) return; const mp = msgsPath(); if (!mp || !godSelectedChat) return; await push(ref(db, mp), { role: "assistant", content: "", model: godSelectedChat.model, timestamp: Date.now(), type: "code_action", actions: [{ action: godCodeAction, path: godCodePath.trim(), success: godCodeSuccess }] }); await incCount(); setGodCodePath(""); };
 
-  // Tool: Photo — uses base64
-  const startPhotoGeneration = async () => {
-    const mp = msgsPath();
-    if (!mp || !godSelectedChat) return;
-    const m = await push(ref(db, mp), { role: "assistant", content: "", model: godSelectedChat.model, timestamp: Date.now(), type: "photo_pending" });
-    if (m.key) { await set(ref(db, `godPhotoPending/${godSelectedChat.id}`), { messageKey: m.key }); await incCount(); }
-  };
-  const finishPhotoGeneration = async () => {
-    if (!godSelectedUser || !godSelectedChat || !godPhotoPending || !godPhotoFile) return;
-    setGodUploadingPhoto(true);
-    try {
-      const base64 = await fileToBase64(godPhotoFile);
-      await update(ref(db, `messages/${godSelectedUser.uid}/${godSelectedChat.id}/${godPhotoPending}`), { type: "photo", imageUrl: base64, content: "" });
-      await remove(ref(db, `godPhotoPending/${godSelectedChat.id}`));
-      setGodPhotoFile(null); setGodPhotoPreview(null);
-    } catch (err) {
-      console.error(err);
-      alert("Ошибка загрузки: " + (err instanceof Error ? err.message : String(err)));
-    }
-    setGodUploadingPhoto(false);
-  };
+  // Tool: Photo
+  const startPhotoGeneration = async () => { const mp = msgsPath(); if (!mp || !godSelectedChat) return; const m = await push(ref(db, mp), { role: "assistant", content: "", model: godSelectedChat.model, timestamp: Date.now(), type: "photo_pending" }); if (m.key) { await set(ref(db, `godPhotoPending/${godSelectedChat.id}`), { messageKey: m.key }); await incCount(); } };
+  const finishPhotoGeneration = async () => { if (!godSelectedUser || !godSelectedChat || !godPhotoPending || !godPhotoFile) return; setGodUploadingPhoto(true); try { const base64 = await fileToBase64(godPhotoFile); await update(ref(db, `messages/${godSelectedUser.uid}/${godSelectedChat.id}/${godPhotoPending}`), { type: "photo", imageUrl: base64, content: "" }); await remove(ref(db, `godPhotoPending/${godSelectedChat.id}`)); setGodPhotoFile(null); setGodPhotoPreview(null); } catch (err) { console.error(err); alert("Ошибка загрузки"); } setGodUploadingPhoto(false); };
 
-  // Tool: Music — uses base64
-  const startMusicGeneration = async () => {
-    const mp = msgsPath();
-    if (!mp || !godSelectedChat) return;
-    const m = await push(ref(db, mp), { role: "assistant", content: "", model: godSelectedChat.model, timestamp: Date.now(), type: "music_generating" });
-    if (m.key) { await set(ref(db, `godMusicPending/${godSelectedChat.id}`), { messageKey: m.key }); await incCount(); }
-  };
-  const finishMusicGeneration = async () => {
-    if (!godSelectedUser || !godSelectedChat || !godMusicPending || !godMusicFile) return;
-    setGodUploadingMusic(true);
-    try {
-      const base64 = await fileToBase64(godMusicFile);
-      await update(ref(db, `messages/${godSelectedUser.uid}/${godSelectedChat.id}/${godMusicPending}`), { type: "music", audioUrl: base64, content: "🎵 Музыка" });
-      await remove(ref(db, `godMusicPending/${godSelectedChat.id}`));
-      setGodMusicFile(null); setGodMusicFileName(null);
-    } catch (err) {
-      console.error(err);
-      alert("Ошибка загрузки: " + (err instanceof Error ? err.message : String(err)));
-    }
-    setGodUploadingMusic(false);
-  };
+  // Tool: Music
+  const startMusicGeneration = async () => { const mp = msgsPath(); if (!mp || !godSelectedChat) return; const m = await push(ref(db, mp), { role: "assistant", content: "", model: godSelectedChat.model, timestamp: Date.now(), type: "music_generating" }); if (m.key) { await set(ref(db, `godMusicPending/${godSelectedChat.id}`), { messageKey: m.key }); await incCount(); } };
+  const finishMusicGeneration = async () => { if (!godSelectedUser || !godSelectedChat || !godMusicPending || !godMusicFile) return; setGodUploadingMusic(true); try { const base64 = await fileToBase64(godMusicFile); await update(ref(db, `messages/${godSelectedUser.uid}/${godSelectedChat.id}/${godMusicPending}`), { type: "music", audioUrl: base64, content: "🎵 Музыка" }); await remove(ref(db, `godMusicPending/${godSelectedChat.id}`)); setGodMusicFile(null); setGodMusicFileName(null); } catch (err) { console.error(err); alert("Ошибка загрузки"); } setGodUploadingMusic(false); };
 
-  // God send text message — image as base64
-  const godSendMessage = async () => {
-    if ((!godInput.trim() && !godImageFile) || !godSelectedUser || !godSelectedChat) return;
-    const text = godInput.trim(); setGodInput("");
-    let imageUrl: string | undefined;
-    if (godImageFile) {
-      setGodUploadingImage(true);
-      try { imageUrl = await fileToBase64(godImageFile); } catch (err) { console.error(err); }
-      setGodUploadingImage(false); clearGodImage();
-    }
-    const mp = msgsPath();
-    if (!mp) return;
-    const msgData: any = { timestamp: Date.now() };
-    if (text) msgData.content = text;
-    if (imageUrl) msgData.imageUrl = imageUrl;
-    if (godResponseMode === "manual") { msgData.role = "assistant"; msgData.model = godSelectedChat.model; }
-    else if (godResponseMode === "admin") { msgData.role = "admin"; msgData.model = "admin"; }
-    await push(ref(db, mp), msgData);
-    await incCount();
-  };
-
-  const startViewAsUser = async (u: UserData) => {
-    await set(ref(db, `viewAsUser/${u.uid}`), { admin: true, timestamp: Date.now() });
-    setViewingAsUser(u);
-  };
-  const stopViewAsUser = async () => {
-    if (viewingAsUser) await remove(ref(db, `viewAsUser/${viewingAsUser.uid}`));
-    setViewingAsUser(null);
-  };
+  // God send text message
+  const godSendMessage = async () => { if ((!godInput.trim() && !godImageFile) || !godSelectedUser || !godSelectedChat) return; const text = godInput.trim(); setGodInput(""); let imageUrl: string | undefined; if (godImageFile) { setGodUploadingImage(true); try { imageUrl = await fileToBase64(godImageFile); } catch (err) { console.error(err); } setGodUploadingImage(false); clearGodImage(); } const mp = msgsPath(); if (!mp) return; const msgData: any = { timestamp: Date.now() }; if (text) msgData.content = text; if (imageUrl) msgData.imageUrl = imageUrl; if (godResponseMode === "manual") { msgData.role = "assistant"; msgData.model = godSelectedChat.model; } else if (godResponseMode === "admin") { msgData.role = "admin"; msgData.model = "admin"; } await push(ref(db, mp), msgData); await incCount(); };
 
   const godExitChat = () => { setGodSelectedChat(null); setGodMessages([]); setGodMusicPending(null); setGodPhotoPending(null); setGodSearchPending(null); setGodMusicFile(null); setGodMusicFileName(null); setGodPhotoFile(null); setGodPhotoPreview(null); setGodSearchSources([]); };
   const godExitUser = () => { setGodSelectedUser(null); godExitChat(); };
@@ -416,6 +512,11 @@ export default function AdminPage() {
         </div>
       </div>
     );
+  }
+
+  // VIEW AS USER — full panel inside admin, reads target user data from Firebase
+  if (viewingAsUser) {
+    return <ViewAsUserPanel targetUser={viewingAsUser} onExit={() => setViewingAsUser(null)} />;
   }
 
   // GOD MODE
@@ -484,28 +585,29 @@ export default function AdminPage() {
                         </div>
                       ) : msg.role === "admin" ? (
                         <div className="max-w-[80%]">
-                          <div className="flex items-center gap-2 mb-1.5"><div className="w-5 h-5 rounded-md bg-red-600/10 flex items-center justify-center"><Shield className="w-3 h-3 text-red-400" /></div><span className="text-[11px] font-medium text-red-400">Администратор</span></div>
-                          {msg.imageUrl && <div className="mb-2"><img src={String(msg.imageUrl)} alt="" className="max-w-[300px] max-h-[300px] rounded-xl object-cover border border-red-500/10" /></div>}
+                          <div className="flex items-center gap-2 mb-1.5"><Shield className="w-4 h-4 text-red-400" /><span className="text-[11px] font-medium text-red-400">Администратор</span></div>
+                          {msg.imageUrl && <img src={String(msg.imageUrl)} alt="" className="max-w-[300px] max-h-[300px] rounded-xl object-cover border border-red-500/10 mb-2" />}
                           <div className="bg-red-600/5 border border-red-500/10 text-zinc-300 px-4 py-3 rounded-2xl rounded-tl-md text-sm"><MarkdownRenderer content={String(msg.content || "")} /></div>
                         </div>
                       ) : (
                         <div className="max-w-[80%]">
                           <div className="flex items-center gap-2 mb-1.5"><AdminModelLogo modelId={msg.model || ""} size={18} /><span className="text-[11px] font-medium text-zinc-400">{getModelName(String(msg.model || ""))}</span></div>
                           {msg.type === "music_generating" ? (
-                            <div className="flex items-center gap-3 bg-violet-600/5 border border-violet-500/10 rounded-2xl px-5 py-4 max-w-[300px]"><div className="w-10 h-10 rounded-full bg-violet-600/20 flex items-center justify-center shrink-0"><svg className="w-5 h-5 text-violet-400 animate-spin" style={{ animationDuration: "3s" }} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M9 18V5l12-2v13" /><circle cx="6" cy="18" r="3" /><circle cx="18" cy="16" r="3" /></svg></div><div><p className="text-sm font-medium text-violet-400 animate-pulse">Генерация музыки...</p><p className="text-[10px] text-zinc-600">Ожидает загрузки</p></div></div>
+                            <div className="flex items-center gap-3 bg-violet-600/5 border border-violet-500/10 rounded-2xl px-5 py-4 max-w-[300px]"><Music className="w-5 h-5 text-violet-400 animate-spin" style={{ animationDuration: "3s" }} /><div><p className="text-sm text-violet-400 animate-pulse">Генерация музыки...</p></div></div>
                           ) : msg.type === "music" && msg.audioUrl ? (<AdminAudioPlayer url={String(msg.audioUrl)} />
                           ) : msg.type === "search_pending" ? (
-                            <div className="flex items-center gap-3 bg-blue-600/5 border border-blue-500/10 rounded-2xl px-5 py-4 max-w-[300px]"><div className="w-10 h-10 rounded-full bg-blue-600/20 flex items-center justify-center shrink-0"><Search className="w-5 h-5 text-blue-400 animate-search-spin" /></div><div><p className="text-sm font-medium text-blue-400 animate-pulse">Поиск в интернете...</p></div></div>
+                            <div className="flex items-center gap-3 bg-blue-600/5 border border-blue-500/10 rounded-2xl px-5 py-4 max-w-[300px]"><Search className="w-5 h-5 text-blue-400 animate-search-spin" /><p className="text-sm text-blue-400 animate-pulse">Поиск в интернете...</p></div>
                           ) : msg.type === "search_done" ? (
-                            <div><div className="flex items-center gap-3 bg-blue-600/5 border border-blue-500/10 rounded-2xl px-5 py-4 max-w-[300px]"><div className="w-10 h-10 rounded-full bg-blue-600/20 flex items-center justify-center shrink-0"><Search className="w-5 h-5 text-blue-400" /></div><div><p className="text-sm font-medium text-blue-400">Поиск завершён</p></div></div></div>
+                            <div className="flex items-center gap-3 bg-blue-600/5 border border-blue-500/10 rounded-2xl px-5 py-4 max-w-[300px]"><Search className="w-5 h-5 text-blue-400" /><p className="text-sm text-blue-400">Поиск завершён</p></div>
                           ) : msg.type === "photo_pending" ? (
-                            <div className="w-[200px] h-[200px] rounded-2xl bg-zinc-800/50 border border-white/[0.06] flex flex-col items-center justify-center gap-3"><ImageIcon className="w-8 h-8 text-zinc-500" /><p className="text-xs text-zinc-500 animate-pulse">Генерация...</p></div>
+                            <div className="w-[180px] h-[180px] rounded-2xl bg-zinc-800/50 border border-white/[0.06] flex flex-col items-center justify-center gap-3"><ImageIcon className="w-8 h-8 text-zinc-500" /><p className="text-xs text-zinc-500 animate-pulse">Генерация...</p></div>
                           ) : msg.type === "photo" && msg.imageUrl ? (
                             <img src={String(msg.imageUrl)} alt="" className="max-w-[300px] max-h-[300px] rounded-2xl object-cover border border-white/[0.06]" />
-                          ) : msg.type === "code_action" ? (
-                            <div className="space-y-1.5">{(Array.isArray(msg.actions) ? msg.actions : (msg.actions ? Object.values(msg.actions) : [])).map((a: any, i: number) => (<div key={i} className={`flex items-center gap-2.5 px-3 py-2 rounded-xl border ${a.success !== false ? "border-emerald-500/10 bg-emerald-600/5" : "border-red-500/10 bg-red-600/5"}`}><span className="text-[11px] font-medium text-zinc-400 capitalize w-16">{String(a.action || "")}</span><span className="text-[11px] text-zinc-500 font-mono truncate flex-1">{String(a.path || "")}</span><div className={`w-5 h-5 rounded-full flex items-center justify-center ${a.success !== false ? "bg-emerald-500/20" : "bg-red-500/20"}`}>{a.success !== false ? <Check className="w-3 h-3 text-emerald-400" /> : <XIcon className="w-3 h-3 text-red-400" />}</div></div>))}</div>
-                          ) : (
-                            <>{msg.imageUrl && <div className="mb-2"><img src={String(msg.imageUrl)} alt="" className="max-w-[300px] max-h-[300px] rounded-xl object-cover border border-white/[0.06]" /></div>}{msg.audioUrl && <div className="mb-2"><AdminAudioPlayer url={String(msg.audioUrl)} /></div>}<div className="text-zinc-300 text-sm"><MarkdownRenderer content={String(msg.content || "")} /></div></>
+                          ) : msg.type === "code_action" ? (() => {
+                            const acts: any[] = Array.isArray(msg.actions) ? msg.actions : (msg.actions ? Object.values(msg.actions) : []);
+                            return (<div className="space-y-1.5">{acts.map((a: any, i: number) => (<div key={i} className={`flex items-center gap-2 px-3 py-2 rounded-xl border ${a.success !== false ? "border-emerald-500/10 bg-emerald-600/5" : "border-red-500/10 bg-red-600/5"}`}><span className="text-[11px] font-medium text-zinc-400 capitalize w-14">{String(a.action || "")}</span><span className="text-[11px] text-zinc-500 font-mono truncate flex-1">{String(a.path || "")}</span>{a.success !== false ? <Check className="w-3 h-3 text-emerald-400" /> : <XIcon className="w-3 h-3 text-red-400" />}</div>))}</div>);
+                          })() : (
+                            <>{msg.imageUrl && <img src={String(msg.imageUrl)} alt="" className="max-w-[300px] max-h-[300px] rounded-xl object-cover border border-white/[0.06] mb-2" />}{msg.audioUrl && <div className="mb-2"><AdminAudioPlayer url={String(msg.audioUrl)} /></div>}<div className="text-zinc-300 text-sm"><MarkdownRenderer content={String(msg.content || "")} /></div></>
                           )}
                         </div>
                       )}
@@ -515,41 +617,33 @@ export default function AdminPage() {
                 </div>
               </div>
 
-              {/* God mode input with tools */}
+              {/* God mode input */}
               {godResponseMode !== "auto" ? (
                 <div className="p-4 border-t border-white/[0.04] shrink-0">
                   <div className="max-w-2xl mx-auto space-y-3">
-                    {/* Pending tool UIs */}
                     {godSearchPending && (
                       <div className="border border-blue-500/20 bg-blue-600/5 rounded-xl p-4 space-y-3">
                         <div className="flex items-center gap-2"><Search className="w-4 h-4 text-blue-400" /><span className="text-xs font-medium text-blue-400">Поиск — добавьте источники</span></div>
-                        <div className="space-y-2">
-                          <div className="flex items-center gap-2">
-                            <input value={godSourceUrl} onChange={(e) => setGodSourceUrl(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter") addSearchSource(); }} placeholder="Вставьте URL и нажмите Добавить" className="flex-1 px-3 py-2 rounded-lg bg-white/[0.02] border border-white/[0.06] text-xs text-white placeholder-zinc-700 focus:outline-none" />
-                            <button onClick={addSearchSource} disabled={!godSourceUrl.trim() || godFetchingMeta} className="px-3 py-2 rounded-lg bg-blue-600/10 text-blue-400 text-[11px] font-medium hover:bg-blue-600/20 disabled:opacity-40 transition-all whitespace-nowrap flex items-center gap-1.5">{godFetchingMeta ? <><div className="w-3 h-3 border-2 border-blue-900 border-t-blue-400 rounded-full animate-spin" />Загрузка...</> : "+ Добавить"}</button>
-                          </div>
-                          <p className="text-[10px] text-zinc-700">Заголовок и описание загрузятся автоматически</p>
+                        <div className="flex items-center gap-2">
+                          <input value={godSourceUrl} onChange={(e) => setGodSourceUrl(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter") addSearchSource(); }} placeholder="URL" className="flex-1 px-3 py-2 rounded-lg bg-white/[0.02] border border-white/[0.06] text-xs text-white placeholder-zinc-700 focus:outline-none" />
+                          <button onClick={addSearchSource} disabled={!godSourceUrl.trim() || godFetchingMeta} className="px-3 py-2 rounded-lg bg-blue-600/10 text-blue-400 text-[11px] font-medium hover:bg-blue-600/20 disabled:opacity-40 transition-all">{godFetchingMeta ? "..." : "+ Добавить"}</button>
                         </div>
                         {godSearchSources.length > 0 && <div className="space-y-1">{godSearchSources.map((s, i) => (<div key={i} className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-white/[0.02] text-xs text-zinc-400"><span className="truncate flex-1">{s.title}</span><button onClick={() => setGodSearchSources(p => p.filter((_, j) => j !== i))} className="text-zinc-600 hover:text-red-400"><XIcon className="w-3 h-3" /></button></div>))}</div>}
-                        <button onClick={finishSearch} className="w-full py-2 rounded-lg bg-blue-600 text-white text-xs font-medium hover:bg-blue-500 transition-all">Завершить поиск ({godSearchSources.length} источников)</button>
+                        <button onClick={finishSearch} className="w-full py-2 rounded-lg bg-blue-600 text-white text-xs font-medium hover:bg-blue-500 transition-all">Завершить поиск ({godSearchSources.length})</button>
                       </div>
                     )}
-
                     {godMusicPending && (
                       <div className="border border-violet-500/20 bg-violet-600/5 rounded-xl p-4">
                         <div className="flex items-center gap-2 mb-3"><Music className="w-4 h-4 text-violet-400" /><span className="text-xs font-medium text-violet-400">Музыка ожидает загрузки</span></div>
-                        {godMusicFileName ? (<div className="space-y-2"><div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-white/[0.03] border border-white/[0.06]"><Music className="w-3.5 h-3.5 text-violet-400" /><span className="text-xs text-zinc-400 truncate flex-1">{godMusicFileName}</span><button onClick={() => { setGodMusicFile(null); setGodMusicFileName(null); }} className="text-zinc-600 hover:text-red-400"><XIcon className="w-3 h-3" /></button></div><button onClick={finishMusicGeneration} disabled={godUploadingMusic} className="w-full py-2 rounded-lg bg-violet-600 text-white text-xs font-medium hover:bg-violet-500 disabled:opacity-50 transition-all flex items-center justify-center gap-2">{godUploadingMusic ? <><div className="w-3 h-3 border-2 border-violet-900 border-t-white rounded-full animate-spin" />Загрузка...</> : "Отправить музыку"}</button></div>) : (<button onClick={() => godMusicInputRef.current?.click()} className="w-full py-2.5 rounded-lg border border-dashed border-violet-500/30 text-xs text-violet-400 hover:bg-violet-600/5 transition-all">Загрузить аудиофайл</button>)}
+                        {godMusicFileName ? (<div className="space-y-2"><div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-white/[0.03] border border-white/[0.06]"><Music className="w-3.5 h-3.5 text-violet-400" /><span className="text-xs text-zinc-400 truncate flex-1">{godMusicFileName}</span><button onClick={() => { setGodMusicFile(null); setGodMusicFileName(null); }} className="text-zinc-600 hover:text-red-400"><XIcon className="w-3 h-3" /></button></div><button onClick={finishMusicGeneration} disabled={godUploadingMusic} className="w-full py-2 rounded-lg bg-violet-600 text-white text-xs font-medium hover:bg-violet-500 disabled:opacity-50 transition-all">{godUploadingMusic ? "Загрузка..." : "Отправить музыку"}</button></div>) : (<button onClick={() => godMusicInputRef.current?.click()} className="w-full py-2.5 rounded-lg border border-dashed border-violet-500/30 text-xs text-violet-400 hover:bg-violet-600/5 transition-all">Загрузить аудиофайл</button>)}
                       </div>
                     )}
-
                     {godPhotoPending && (
                       <div className="border border-emerald-500/20 bg-emerald-600/5 rounded-xl p-4">
                         <div className="flex items-center gap-2 mb-3"><ImageIcon className="w-4 h-4 text-emerald-400" /><span className="text-xs font-medium text-emerald-400">Фото ожидает загрузки</span></div>
-                        {godPhotoPreview ? (<div className="space-y-2"><div className="relative inline-block"><img src={godPhotoPreview} alt="" className="w-32 h-32 rounded-xl object-cover border border-white/[0.06]" /><button onClick={() => { setGodPhotoFile(null); setGodPhotoPreview(null); }} className="absolute -top-1.5 -right-1.5 w-5 h-5 bg-zinc-800 border border-white/[0.1] rounded-full flex items-center justify-center text-zinc-400 hover:text-white hover:bg-red-600 transition-all"><XIcon className="w-3 h-3" /></button></div><button onClick={finishPhotoGeneration} disabled={godUploadingPhoto} className="w-full py-2 rounded-lg bg-emerald-600 text-white text-xs font-medium hover:bg-emerald-500 disabled:opacity-50 transition-all flex items-center justify-center gap-2">{godUploadingPhoto ? <><div className="w-3 h-3 border-2 border-emerald-900 border-t-white rounded-full animate-spin" />Загрузка...</> : "Отправить фото"}</button></div>) : (<button onClick={() => godPhotoInputRef.current?.click()} className="w-full py-2.5 rounded-lg border border-dashed border-emerald-500/30 text-xs text-emerald-400 hover:bg-emerald-600/5 transition-all">Загрузить изображение</button>)}
+                        {godPhotoPreview ? (<div className="space-y-2"><div className="relative inline-block"><img src={godPhotoPreview} alt="" className="w-32 h-32 rounded-xl object-cover border border-white/[0.06]" /><button onClick={() => { setGodPhotoFile(null); setGodPhotoPreview(null); }} className="absolute -top-1.5 -right-1.5 w-5 h-5 bg-zinc-800 border border-white/[0.1] rounded-full flex items-center justify-center text-zinc-400 hover:text-white hover:bg-red-600 transition-all"><XIcon className="w-3 h-3" /></button></div><button onClick={finishPhotoGeneration} disabled={godUploadingPhoto} className="w-full py-2 rounded-lg bg-emerald-600 text-white text-xs font-medium hover:bg-emerald-500 disabled:opacity-50 transition-all">{godUploadingPhoto ? "Загрузка..." : "Отправить фото"}</button></div>) : (<button onClick={() => godPhotoInputRef.current?.click()} className="w-full py-2.5 rounded-lg border border-dashed border-emerald-500/30 text-xs text-emerald-400 hover:bg-emerald-600/5 transition-all">Загрузить изображение</button>)}
                       </div>
                     )}
-
-                    {/* Tools row */}
                     {!godSearchPending && !godMusicPending && !godPhotoPending && (
                       <div className="flex items-center gap-2 flex-wrap">
                         <button onClick={startSearch} className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[11px] font-medium text-blue-400 border border-blue-500/20 hover:bg-blue-600/10 transition-all"><Search className="w-3.5 h-3.5" /> Поиск</button>
@@ -566,9 +660,7 @@ export default function AdminPage() {
                         </div>
                       </div>
                     )}
-
-                    {/* Text input */}
-                    {godImagePreview && (<div className="flex items-start gap-2"><div className="relative"><img src={godImagePreview} alt="" className="w-16 h-16 rounded-xl object-cover border border-white/[0.06]" /><button onClick={clearGodImage} className="absolute -top-1.5 -right-1.5 w-5 h-5 bg-zinc-800 border border-white/[0.1] rounded-full flex items-center justify-center text-zinc-400 hover:text-white hover:bg-red-600 transition-all"><XIcon className="w-3 h-3" /></button></div>{godUploadingImage && <span className="text-[10px] text-zinc-500 py-2">Загрузка...</span>}</div>)}
+                    {godImagePreview && (<div className="flex items-start gap-2"><div className="relative"><img src={godImagePreview} alt="" className="w-16 h-16 rounded-xl object-cover border border-white/[0.06]" /><button onClick={clearGodImage} className="absolute -top-1.5 -right-1.5 w-5 h-5 bg-zinc-800 border border-white/[0.1] rounded-full flex items-center justify-center text-zinc-400 hover:text-white hover:bg-red-600 transition-all"><XIcon className="w-3 h-3" /></button></div></div>)}
                     <div className={`flex items-end gap-2 border rounded-2xl px-4 py-3 transition-all ${godResponseMode === "manual" ? "border-violet-500/20 bg-violet-600/5" : "border-red-500/20 bg-red-600/5"}`}>
                       {godResponseMode === "manual" ? <Bot className="w-3.5 h-3.5 text-violet-400 shrink-0" /> : <Shield className="w-3.5 h-3.5 text-red-400 shrink-0" />}
                       <button onClick={() => godFileInputRef.current?.click()} className="p-1.5 rounded-lg shrink-0 text-zinc-500 hover:text-zinc-300 transition-all"><ImageIcon className="w-4 h-4" /></button>
@@ -586,31 +678,6 @@ export default function AdminPage() {
             </div>
           )}
         </div>
-      </div>
-    );
-  }
-
-  // VIEW AS USER MODE
-  if (viewingAsUser) {
-    return (
-      <div className="h-screen bg-[#050507] text-zinc-100 flex flex-col">
-        <div className="shrink-0 bg-violet-600/10 border-b border-violet-500/20 px-4 py-3 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <Eye className="w-4 h-4 text-violet-400" />
-            <div>
-              <p className="text-xs font-medium text-violet-300">Просмотр от лица пользователя</p>
-              <p className="text-[10px] text-violet-400/60">{viewingAsUser.visibleNick || viewingAsUser.displayName} · {viewingAsUser.email}</p>
-            </div>
-          </div>
-          <button onClick={stopViewAsUser} className="flex items-center gap-2 px-4 py-2 rounded-xl bg-violet-600 text-white text-xs font-medium hover:bg-violet-500 transition-all">
-            <XIcon className="w-3.5 h-3.5" /> Выйти из просмотра
-          </button>
-        </div>
-        <iframe
-          src={`${window.location.origin}/#/chat`}
-          className="flex-1 w-full border-none"
-          title="User view"
-        />
       </div>
     );
   }
@@ -639,7 +706,7 @@ export default function AdminPage() {
         {activeTab === "dashboard" && (<div className="grid grid-cols-2 md:grid-cols-4 gap-4">{[{ label: "Посещений", value: stats.totalVisits, icon: TrendingUp, change: null }, { label: "Пользователей", value: stats.totalUsers, icon: Users, change: stats.newUsersToday }, { label: "Сообщений", value: stats.totalMessages, icon: MessageCircle, change: stats.newMessagesToday }, { label: "Чатов", value: stats.totalChats, icon: FolderOpen, change: stats.newChatsToday }].map((s) => (<div key={s.label} className="border border-white/[0.04] bg-white/[0.01] rounded-2xl p-5"><div className="flex items-center justify-between mb-3"><s.icon className="w-4 h-4 text-violet-400" />{s.change !== null && s.change > 0 && <span className="text-[10px] font-medium text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full">+{s.change} сегодня</span>}</div><div className="text-2xl font-bold mb-0.5">{s.value}</div><div className="text-xs text-zinc-600">{s.label}</div></div>))}</div>)}
 
         {activeTab === "users" && (<div className="space-y-4"><div className="flex items-center gap-3"><div className="relative flex-1 max-w-sm"><Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-zinc-600" /><input type="text" value={searchUser} onChange={(e) => setSearchUser(e.target.value)} placeholder="Поиск..." className="w-full pl-9 pr-3 py-2 rounded-xl bg-white/[0.02] border border-white/[0.06] text-sm placeholder-zinc-700 focus:outline-none focus:border-violet-500/40" /></div><span className="text-xs text-zinc-600">{filteredUsers.length} найдено</span><div className="ml-auto"><button onClick={() => setGodMode(true)} className="flex items-center gap-2 px-4 py-2 rounded-xl border border-red-500/20 bg-red-600/5 text-red-400 text-xs font-medium hover:bg-red-600/10 transition-all"><Eye className="w-3.5 h-3.5" /> Режим бога</button></div></div>
-          <div className="border border-white/[0.04] rounded-2xl overflow-hidden"><table className="w-full"><thead><tr className="border-b border-white/[0.04]">{["Пользователь", "Email", "Тариф", "Статус", ""].map((h) => (<th key={h} className="text-left text-[10px] text-zinc-600 font-medium px-4 py-3 uppercase tracking-wider">{h}</th>))}</tr></thead><tbody>{filteredUsers.map((u) => (<tr key={u.uid} className="border-b border-white/[0.02] hover:bg-white/[0.01] transition-colors"><td className="px-4 py-3"><p className="text-xs font-medium">{u.visibleNick || u.displayName}</p><p className="text-[10px] text-zinc-700 font-mono">{u.uid.substring(0, 12)}…</p></td><td className="px-4 py-3 text-xs text-zinc-500">{u.email}</td><td className="px-4 py-3"><select value={u.plan} onChange={(e) => changePlan(u.uid, e.target.value)} className="appearance-none pl-2 pr-6 py-1 rounded-lg bg-white/[0.03] border border-white/[0.06] text-[11px] text-zinc-300 focus:outline-none cursor-pointer"><option value="free" className="bg-[#111114]">Free</option><option value="pro" className="bg-[#111114]">Pro</option><option value="ultra" className="bg-[#111114]">Ultra</option></select></td><td className="px-4 py-3"><span className={`text-[11px] font-medium ${u.banned ? "text-red-400" : "text-emerald-500"}`}>{u.banned ? "Заблокирован" : "Активен"}</span></td><td className="px-4 py-3"><div className="flex items-center gap-1"><button onClick={() => startViewAsUser(u)} className="p-1.5 rounded-lg hover:bg-white/[0.03] text-zinc-600 hover:text-violet-400 transition-colors" title="Смотреть от лица"><Eye className="w-3.5 h-3.5" /></button>{u.banned ? <button onClick={() => unbanUser(u.uid)} className="p-1.5 rounded-lg hover:bg-white/[0.03] text-emerald-500 hover:text-emerald-400 transition-colors" title="Разбанить"><Ban className="w-3.5 h-3.5" /></button> : <button onClick={() => openBanDialog(u.uid, u.visibleNick || u.displayName)} className="p-1.5 rounded-lg hover:bg-white/[0.03] text-zinc-600 hover:text-yellow-400 transition-colors" title="Забанить"><Ban className="w-3.5 h-3.5" /></button>}<button onClick={() => deleteUser(u.uid)} className="p-1.5 rounded-lg hover:bg-white/[0.03] text-zinc-600 hover:text-red-400 transition-colors" title="Удалить"><Trash2 className="w-3.5 h-3.5" /></button></div></td></tr>))}</tbody></table>{filteredUsers.length === 0 && <div className="py-10 text-center text-xs text-zinc-700">Не найдено</div>}</div></div>)}
+          <div className="border border-white/[0.04] rounded-2xl overflow-hidden"><table className="w-full"><thead><tr className="border-b border-white/[0.04]">{["Пользователь", "Email", "Тариф", "Статус", ""].map((h) => (<th key={h} className="text-left text-[10px] text-zinc-600 font-medium px-4 py-3 uppercase tracking-wider">{h}</th>))}</tr></thead><tbody>{filteredUsers.map((u) => (<tr key={u.uid} className="border-b border-white/[0.02] hover:bg-white/[0.01] transition-colors"><td className="px-4 py-3"><p className="text-xs font-medium">{u.visibleNick || u.displayName}</p><p className="text-[10px] text-zinc-700 font-mono">{u.uid.substring(0, 12)}…</p></td><td className="px-4 py-3 text-xs text-zinc-500">{u.email}</td><td className="px-4 py-3"><select value={u.plan} onChange={(e) => changePlan(u.uid, e.target.value)} className="appearance-none pl-2 pr-6 py-1 rounded-lg bg-white/[0.03] border border-white/[0.06] text-[11px] text-zinc-300 focus:outline-none cursor-pointer"><option value="free" className="bg-[#111114]">Free</option><option value="pro" className="bg-[#111114]">Pro</option><option value="ultra" className="bg-[#111114]">Ultra</option></select></td><td className="px-4 py-3"><span className={`text-[11px] font-medium ${u.banned ? "text-red-400" : "text-emerald-500"}`}>{u.banned ? "Заблокирован" : "Активен"}</span></td><td className="px-4 py-3"><div className="flex items-center gap-1"><button onClick={() => setViewingAsUser(u)} className="p-1.5 rounded-lg hover:bg-white/[0.03] text-zinc-600 hover:text-violet-400 transition-colors" title="Смотреть от лица"><Eye className="w-3.5 h-3.5" /></button>{u.banned ? <button onClick={() => unbanUser(u.uid)} className="p-1.5 rounded-lg hover:bg-white/[0.03] text-emerald-500 hover:text-emerald-400 transition-colors" title="Разбанить"><Ban className="w-3.5 h-3.5" /></button> : <button onClick={() => openBanDialog(u.uid, u.visibleNick || u.displayName)} className="p-1.5 rounded-lg hover:bg-white/[0.03] text-zinc-600 hover:text-yellow-400 transition-colors" title="Забанить"><Ban className="w-3.5 h-3.5" /></button>}<button onClick={() => deleteUser(u.uid)} className="p-1.5 rounded-lg hover:bg-white/[0.03] text-zinc-600 hover:text-red-400 transition-colors" title="Удалить"><Trash2 className="w-3.5 h-3.5" /></button></div></td></tr>))}</tbody></table>{filteredUsers.length === 0 && <div className="py-10 text-center text-xs text-zinc-700">Не найдено</div>}</div></div>)}
 
         {activeTab === "tickets" && (<div className="space-y-4"><div className="flex items-center gap-3 mb-4"><h3 className="text-sm font-medium">Тикеты</h3><div className="flex items-center gap-1 bg-white/[0.02] border border-white/[0.06] rounded-xl p-0.5 ml-auto">{(["all", "open", "closed"] as const).map((f) => (<button key={f} onClick={() => setTicketFilter(f)} className={`px-3 py-1.5 rounded-lg text-[11px] font-medium transition-all ${ticketFilter === f ? "bg-violet-600/10 text-violet-400" : "text-zinc-600 hover:text-zinc-400"}`}>{f === "all" ? "Все" : f === "open" ? "Открытые" : "Закрытые"}</button>))}</div></div>
           <div className="flex gap-4" style={{ height: "calc(100vh - 220px)" }}>
