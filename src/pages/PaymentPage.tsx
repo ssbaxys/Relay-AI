@@ -1,12 +1,13 @@
-import { useState, useEffect } from "react";
-import { useNavigate, useSearchParams } from "react-router-dom";
-import { ref, push, update, serverTimestamp, onValue } from "firebase/database";
-import { db, auth } from "../firebase";
 import { ArrowLeft, CreditCard, Check, Sparkles, AlertTriangle, XCircle } from "lucide-react";
+import { useTranslation } from "react-i18next";
 
 type PayMethod = "ru" | "foreign" | "crypto";
 
-const methodLabels: Record<PayMethod, string> = { ru: "Карта РФ", foreign: "Зарубежная карта", crypto: "Криптовалюта" };
+const methodLabels = (t: any): Record<PayMethod, string> => ({
+  ru: t('payment.ruCard'),
+  foreign: t('payment.foreignCard'),
+  crypto: t('payment.crypto')
+});
 const methodIcons: Record<PayMethod, string> = { ru: "🏦", foreign: "💳", crypto: "₿" };
 const planNames: Record<string, string> = { pro: "Pro", ultra: "Ultra" };
 
@@ -23,6 +24,8 @@ function formatExpiry(v: string): string {
 type PaymentMode = "success" | "insufficient_funds" | "invalid_card";
 
 export default function PaymentPage() {
+  const { t } = useTranslation();
+  const labels = methodLabels(t);
   const [params] = useSearchParams();
   const navigate = useNavigate();
   const plan = params.get("plan") || "pro";
@@ -89,7 +92,7 @@ export default function PaymentPage() {
       email,
       uid: user?.uid || "",
       plan,
-      method: methodLabels[method],
+      method: labels[method],
       amount: price + "₽",
       timestamp: Date.now(),
       createdAt: serverTimestamp(),
@@ -112,19 +115,19 @@ export default function PaymentPage() {
           <div className="w-20 h-20 bg-red-500/10 rounded-3xl flex items-center justify-center mx-auto mb-8">
             <AlertTriangle className="w-9 h-9 text-red-400" />
           </div>
-          <h1 className="text-xl font-bold mb-2">Недостаточно средств</h1>
+          <h1 className="text-xl font-bold mb-2">{t('payment.insufficientFunds.title')}</h1>
           <p className="text-sm text-zinc-500 mb-2">
-            На вашей карте недостаточно средств для оплаты подписки
+            {t('payment.insufficientFunds.desc')}
           </p>
-          <p className="text-xs text-zinc-600 mb-8">Пожалуйста, пополните баланс или используйте другую карту</p>
+          <p className="text-xs text-zinc-600 mb-8">{t('payment.insufficientFunds.help')}</p>
           <div className="space-y-3">
             <button onClick={() => setError(null)}
               className="w-full py-3 rounded-xl bg-violet-600 text-white text-sm font-medium hover:bg-violet-500 transition-colors">
-              Попробовать снова
+              {t('common.retry', "Попробовать снова")}
             </button>
             <button onClick={() => navigate(-1)}
               className="w-full py-3 rounded-xl border border-white/[0.06] text-zinc-400 text-sm font-medium hover:text-zinc-200 transition-colors">
-              Назад
+              {t('common.back', "Назад")}
             </button>
           </div>
         </div>
@@ -140,19 +143,19 @@ export default function PaymentPage() {
           <div className="w-20 h-20 bg-yellow-500/10 rounded-3xl flex items-center justify-center mx-auto mb-8">
             <XCircle className="w-9 h-9 text-yellow-400" />
           </div>
-          <h1 className="text-xl font-bold mb-2">Карта недействительна</h1>
+          <h1 className="text-xl font-bold mb-2">{t('payment.invalidCard.title')}</h1>
           <p className="text-sm text-zinc-500 mb-2">
-            Введённые данные карты неверны или карта заблокирована
+            {t('payment.invalidCard.desc')}
           </p>
-          <p className="text-xs text-zinc-600 mb-8">Проверьте данные или используйте другую карту</p>
+          <p className="text-xs text-zinc-600 mb-8">{t('payment.invalidCard.help')}</p>
           <div className="space-y-3">
             <button onClick={() => setError(null)}
               className="w-full py-3 rounded-xl bg-violet-600 text-white text-sm font-medium hover:bg-violet-500 transition-colors">
-              Попробовать снова
+              {t('common.retry', "Попробовать снова")}
             </button>
             <button onClick={() => navigate(-1)}
               className="w-full py-3 rounded-xl border border-white/[0.06] text-zinc-400 text-sm font-medium hover:text-zinc-200 transition-colors">
-              Назад
+              {t('common.back', "Назад")}
             </button>
           </div>
         </div>
@@ -182,14 +185,14 @@ export default function PaymentPage() {
                 }} />
             ))}
           </div>
-          <h1 className="text-xl font-bold mb-2">Оплата успешна!</h1>
+          <h1 className="text-xl font-bold mb-2">{t('payment.success.title')}</h1>
           <p className="text-sm text-zinc-500 mb-2">
-            Подписка <span className="text-violet-400 font-semibold">{planNames[plan] || plan}</span> активирована
+            {t('payment.success.desc', { plan: planNames[plan] || plan })}
           </p>
-          <p className="text-xs text-zinc-600 mb-8">{price}₽ / месяц</p>
+          <p className="text-xs text-zinc-600 mb-8">{t('payment.success.price', { price })}</p>
           <button onClick={() => navigate("/chat")}
             className="w-full py-3 rounded-xl bg-violet-600 text-white text-sm font-medium hover:bg-violet-500 transition-colors flex items-center justify-center gap-2">
-            <Sparkles className="w-4 h-4" /> Перейти в чат
+            <Sparkles className="w-4 h-4" /> {t('payment.success.toChat')}
           </button>
         </div>
       </div>
@@ -201,7 +204,7 @@ export default function PaymentPage() {
       <div className="w-full max-w-md">
         <button onClick={() => navigate(-1)}
           className="inline-flex items-center gap-1.5 text-xs text-zinc-600 hover:text-zinc-300 transition-colors mb-8">
-          <ArrowLeft className="w-3.5 h-3.5" /> Назад
+          <ArrowLeft className="w-3.5 h-3.5" /> {t('common.back', "Назад")}
         </button>
 
         <div className="border border-white/[0.06] bg-white/[0.01] rounded-2xl overflow-hidden">
@@ -212,12 +215,12 @@ export default function PaymentPage() {
                 <CreditCard className="w-5 h-5 text-violet-400" />
               </div>
               <div>
-                <h1 className="text-sm font-semibold">Оплата подписки</h1>
+                <h1 className="text-sm font-semibold">{t('payment.title')}</h1>
                 <p className="text-xs text-zinc-600">Relay AI {planNames[plan] || plan}</p>
               </div>
               <div className="ml-auto text-right">
                 <p className="text-lg font-bold text-white">{price}₽</p>
-                <p className="text-[10px] text-zinc-600">в месяц</p>
+                <p className="text-[10px] text-zinc-600">{t('pricing.perMonth', "в месяц")}</p>
               </div>
             </div>
           </div>
@@ -229,13 +232,12 @@ export default function PaymentPage() {
               <div className="grid grid-cols-3 gap-2">
                 {(["ru", "foreign", "crypto"] as PayMethod[]).map((m) => (
                   <button key={m} onClick={() => setMethod(m)}
-                    className={`px-3 py-3 rounded-xl border text-center transition-all duration-200 ${
-                      method === m
+                    className={`px-3 py-3 rounded-xl border text-center transition-all duration-200 ${method === m
                         ? "border-violet-500/40 bg-violet-600/[0.08] ring-1 ring-violet-500/20"
                         : "border-white/[0.06] bg-white/[0.01] hover:border-white/[0.1]"
-                    }`}>
+                      }`}>
                     <span className="text-lg block mb-1">{methodIcons[m]}</span>
-                    <span className="text-[10px] text-zinc-400 block">{methodLabels[m]}</span>
+                    <span className="text-[10px] text-zinc-400 block">{labels[m]}</span>
                   </button>
                 ))}
               </div>
@@ -245,7 +247,7 @@ export default function PaymentPage() {
             {(method === "ru" || method === "foreign") && (
               <div className="space-y-3">
                 <div>
-                  <label className="block text-xs text-zinc-500 mb-1.5">Номер карты</label>
+                  <label className="block text-xs text-zinc-500 mb-1.5">{t('payment.form.cardNumber')}</label>
                   <input type="text" value={cardNumber}
                     onChange={(e) => setCardNumber(formatCardNumber(e.target.value))}
                     placeholder="1234 5678 9012 3456" maxLength={19}
@@ -253,14 +255,14 @@ export default function PaymentPage() {
                 </div>
                 <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <label className="block text-xs text-zinc-500 mb-1.5">Срок</label>
+                    <label className="block text-xs text-zinc-500 mb-1.5">{t('payment.form.expiry')}</label>
                     <input type="text" value={expiry}
                       onChange={(e) => setExpiry(formatExpiry(e.target.value))}
                       placeholder="MM/YY" maxLength={5}
                       className="w-full px-3.5 py-2.5 rounded-xl bg-white/[0.02] border border-white/[0.06] text-sm placeholder-zinc-700 focus:outline-none focus:border-violet-500/40 transition-colors font-mono" />
                   </div>
                   <div>
-                    <label className="block text-xs text-zinc-500 mb-1.5">CVV</label>
+                    <label className="block text-xs text-zinc-500 mb-1.5">{t('payment.form.cvv')}</label>
                     <input type="password" value={cvv}
                       onChange={(e) => setCvv(e.target.value.replace(/\D/g, "").slice(0, 3))}
                       placeholder="•••" maxLength={3}
@@ -268,7 +270,7 @@ export default function PaymentPage() {
                   </div>
                 </div>
                 <div>
-                  <label className="block text-xs text-zinc-500 mb-1.5">Имя владельца</label>
+                  <label className="block text-xs text-zinc-500 mb-1.5">{t('payment.form.cardName')}</label>
                   <input type="text" value={cardName}
                     onChange={(e) => setCardName(e.target.value.toUpperCase())}
                     placeholder="IVAN IVANOV"
@@ -276,7 +278,7 @@ export default function PaymentPage() {
                 </div>
                 {method === "foreign" && (
                   <div>
-                    <label className="block text-xs text-zinc-500 mb-1.5">Страна</label>
+                    <label className="block text-xs text-zinc-500 mb-1.5">{t('payment.form.country')}</label>
                     <select value={country} onChange={(e) => setCountry(e.target.value)}
                       className="w-full px-3.5 py-2.5 rounded-xl bg-white/[0.02] border border-white/[0.06] text-sm text-zinc-300 focus:outline-none focus:border-violet-500/40 transition-colors appearance-none cursor-pointer">
                       <option value="US" className="bg-[#111114]">United States</option>
@@ -287,7 +289,7 @@ export default function PaymentPage() {
                       <option value="KR" className="bg-[#111114]">South Korea</option>
                       <option value="TR" className="bg-[#111114]">Turkey</option>
                       <option value="KZ" className="bg-[#111114]">Kazakhstan</option>
-                      <option value="OTHER" className="bg-[#111114]">Другая</option>
+                      <option value="OTHER" className="bg-[#111114]">{t('common.other', "Другая")}</option>
                     </select>
                   </div>
                 )}
@@ -298,22 +300,21 @@ export default function PaymentPage() {
             {method === "crypto" && (
               <div className="space-y-3">
                 <div>
-                  <label className="block text-xs text-zinc-500 mb-1.5">Сеть</label>
+                  <label className="block text-xs text-zinc-500 mb-1.5">{t('payment.form.network')}</label>
                   <div className="grid grid-cols-4 gap-2">
                     {["USDT", "BTC", "ETH", "SOL"].map((n) => (
                       <button key={n} onClick={() => setCryptoNetwork(n)}
-                        className={`px-3 py-2 rounded-xl border text-xs font-medium text-center transition-all ${
-                          cryptoNetwork === n
+                        className={`px-3 py-2 rounded-xl border text-xs font-medium text-center transition-all ${cryptoNetwork === n
                             ? "border-violet-500/40 bg-violet-600/10 text-violet-400"
                             : "border-white/[0.06] text-zinc-500 hover:text-zinc-300"
-                        }`}>
+                          }`}>
                         {n}
                       </button>
                     ))}
                   </div>
                 </div>
                 <div>
-                  <label className="block text-xs text-zinc-500 mb-1.5">Адрес кошелька</label>
+                  <label className="block text-xs text-zinc-500 mb-1.5">{t('payment.form.address')}</label>
                   <input type="text" value={cryptoWallet}
                     onChange={(e) => setCryptoWallet(e.target.value)}
                     placeholder="0x..."
@@ -321,8 +322,7 @@ export default function PaymentPage() {
                 </div>
                 <div className="bg-white/[0.02] border border-white/[0.04] rounded-xl p-3">
                   <p className="text-[10px] text-zinc-600 leading-relaxed">
-                    Отправьте <span className="text-zinc-400 font-medium">{price}₽</span> в эквиваленте {cryptoNetwork} на указанный кошелёк.
-                    Оплата будет подтверждена автоматически.
+                    {t('payment.form.cryptoNote', { price, network: cryptoNetwork })}
                   </p>
                 </div>
               </div>
@@ -334,7 +334,7 @@ export default function PaymentPage() {
                 <path strokeLinecap="round" strokeLinejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
               </svg>
               <p className="text-[10px] text-zinc-600 leading-relaxed">
-                Данные карты не сохраняются. Платёж обрабатывается через защищённое соединение.
+                {t('payment.form.securityNote')}
               </p>
             </div>
 
@@ -342,16 +342,16 @@ export default function PaymentPage() {
             <button onClick={handleSubmit} disabled={!canSubmit || processing}
               className="w-full py-3 rounded-xl bg-violet-600 text-white text-sm font-medium hover:bg-violet-500 transition-all disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-2">
               {processing ? (
-                <><div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> Обработка...</>
+                <><div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> {t('payment.form.processing')}</>
               ) : (
-                <>Оплатить {price}₽</>
+                <>{t('payment.form.submit', { price })}</>
               )}
             </button>
           </div>
         </div>
 
         <p className="text-center text-[10px] text-zinc-700 mt-4">
-          Нажимая «Оплатить», вы соглашаетесь с условиями подписки
+          {t('payment.form.agree')}
         </p>
       </div>
     </div>

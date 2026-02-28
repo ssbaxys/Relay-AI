@@ -3,16 +3,17 @@ import { Link, useNavigate } from "react-router-dom";
 import { ref, onValue } from "firebase/database";
 import { db } from "../firebase";
 import { ArrowLeft, CheckCircle2, Clock, Lock } from "lucide-react";
+import { useTranslation } from "react-i18next";
 
 type UptimeStatus = "operational" | "degraded" | "down" | "maintenance";
 
-const UPTIME_COMPONENTS = [
-  { name: "API Gateway", key: "api_gateway" },
-  { name: "AI Models Router", key: "ai_router" },
-  { name: "Веб-приложение", key: "web_app" },
-  { name: "База данных", key: "database" },
-  { name: "Аутентификация", key: "auth" },
-  { name: "CDN & Networking", key: "cdn" },
+const UPTIME_COMPONENTS = (t: any) => [
+  { name: t('uptime.components.api_gateway'), key: "api_gateway" },
+  { name: t('uptime.components.ai_router'), key: "ai_router" },
+  { name: t('uptime.components.web_app'), key: "web_app" },
+  { name: t('uptime.components.database'), key: "database" },
+  { name: t('uptime.components.auth'), key: "auth" },
+  { name: t('uptime.components.cdn'), key: "cdn" },
 ];
 
 const STATUS_COLORS: Record<UptimeStatus, string> = {
@@ -22,12 +23,12 @@ const STATUS_COLORS: Record<UptimeStatus, string> = {
   maintenance: "bg-zinc-500",
 };
 
-const STATUS_LABELS: Record<UptimeStatus, string> = {
-  operational: "Работает",
-  degraded: "Деградация",
-  down: "Не работает",
-  maintenance: "Тех. работы",
-};
+const STATUS_LABELS = (t: any): Record<UptimeStatus, string> => ({
+  operational: t('uptime.status.operational'),
+  degraded: t('uptime.status.degraded'),
+  down: t('uptime.status.down'),
+  maintenance: t('uptime.status.maintenance'),
+});
 
 const STATUS_TEXT_COLORS: Record<UptimeStatus, string> = {
   operational: "text-emerald-400",
@@ -41,6 +42,7 @@ function getDefaultHours(): UptimeStatus[] {
 }
 
 export default function UptimePage() {
+  const { t, i18n } = useTranslation();
   const navigate = useNavigate();
   const [showAdminLogin, setShowAdminLogin] = useState(false);
   const [adminPass, setAdminPass] = useState("");
@@ -50,8 +52,12 @@ export default function UptimePage() {
   const [maintenanceMessage, setMaintenanceMessage] = useState("Мы проводим плановые технические работы для улучшения сервиса.");
   const [maintenanceEstimate, setMaintenanceEstimate] = useState("2 часа");
   const [currentTime, setCurrentTime] = useState(new Date());
+
+  const components = UPTIME_COMPONENTS(t);
+  const statusLabels = STATUS_LABELS(t);
+
   const [componentUptimes, setComponentUptimes] = useState<{ name: string; key: string; hours: UptimeStatus[] }[]>(
-    UPTIME_COMPONENTS.map(c => ({ ...c, hours: getDefaultHours() }))
+    components.map(c => ({ ...c, hours: getDefaultHours() }))
   );
   const [loaded, setLoaded] = useState(false);
 
@@ -79,7 +85,7 @@ export default function UptimePage() {
     const unsub = onValue(ref(db, "uptime"), (snap) => {
       const data = snap.val();
       if (data) {
-        const loaded = UPTIME_COMPONENTS.map(c => {
+        const loaded = components.map(c => {
           const rawHours = data[c.key];
           let hours: UptimeStatus[];
           if (rawHours && Array.isArray(rawHours)) {
@@ -138,7 +144,7 @@ export default function UptimePage() {
             <span className="font-semibold text-sm">Relay AI</span>
           </Link>
           <Link to="/" className="text-xs text-zinc-600 hover:text-zinc-300 transition-colors flex items-center gap-1">
-            <ArrowLeft className="w-3 h-3" /> Назад
+            <ArrowLeft className="w-3 h-3" /> {t('common.back')}
           </Link>
         </div>
       </nav>
@@ -150,7 +156,7 @@ export default function UptimePage() {
             <>
               <div className="flex items-center gap-2 text-yellow-500 mb-4">
                 <Clock className="w-4 h-4" />
-                <span className="text-xs font-medium uppercase tracking-wider">Технические работы</span>
+                <span className="text-xs font-medium uppercase tracking-wider">{t('uptime.maintenance')}</span>
               </div>
               <h1 className="text-2xl font-bold mb-3">Сервис на обслуживании</h1>
               <p className="text-sm text-zinc-500 leading-relaxed mb-4">{maintenanceMessage}</p>
@@ -160,44 +166,41 @@ export default function UptimePage() {
             <>
               <div className="flex items-center gap-2 text-yellow-500 mb-4">
                 <Clock className="w-4 h-4" />
-                <span className="text-xs font-medium uppercase tracking-wider">Обнаружены проблемы</span>
+                <span className="text-xs font-medium uppercase tracking-wider">{t('uptime.partialIssues')}</span>
               </div>
-              <h1 className="text-2xl font-bold mb-3">Частичные проблемы</h1>
-              <p className="text-sm text-zinc-500">Некоторые компоненты работают с перебоями</p>
+              <h1 className="text-2xl font-bold mb-3">{t('uptime.partialIssues')}</h1>
+              <p className="text-sm text-zinc-500">{t('uptime.subtitleIssues')}</p>
             </>
           ) : (
             <>
               <div className="flex items-center gap-2 text-emerald-400 mb-4">
                 <CheckCircle2 className="w-4 h-4" />
-                <span className="text-xs font-medium uppercase tracking-wider">Все системы работают</span>
+                <span className="text-xs font-medium uppercase tracking-wider">{t('uptime.allSystems')}</span>
               </div>
-              <h1 className="text-2xl font-bold mb-2">Uptime</h1>
-              <p className="text-sm text-zinc-500">Все компоненты работают нормально</p>
+              <h1 className="text-2xl font-bold mb-2">{t('uptime.title')}</h1>
+              <p className="text-sm text-zinc-500">{t('uptime.subtitle')}</p>
             </>
           )}
         </div>
 
         <p className="text-[11px] text-zinc-700 font-mono mb-8">
-          {currentTime.toLocaleString("ru-RU", { dateStyle: "long", timeStyle: "medium" })}
+          {currentTime.toLocaleString(i18n.language === 'ru' ? 'ru-RU' : 'en-US', { dateStyle: "long", timeStyle: "medium" })}
         </p>
 
         {/* Overall status banner */}
-        <div className={`rounded-2xl p-4 mb-8 flex items-center gap-3 ${
-          overallOperational && !maintenanceEnabled
+        <div className={`rounded-2xl p-4 mb-8 flex items-center gap-3 ${overallOperational && !maintenanceEnabled
             ? "bg-emerald-500/[0.05] border border-emerald-500/10"
             : "bg-yellow-500/[0.05] border border-yellow-500/10"
-        }`}>
-          <span className={`w-2 h-2 rounded-full ${
-            overallOperational && !maintenanceEnabled ? "bg-emerald-500" : "bg-yellow-500 animate-pulse"
-          }`} />
-          <span className={`text-sm font-medium ${
-            overallOperational && !maintenanceEnabled ? "text-emerald-400" : "text-yellow-400"
           }`}>
+          <span className={`w-2 h-2 rounded-full ${overallOperational && !maintenanceEnabled ? "bg-emerald-500" : "bg-yellow-500 animate-pulse"
+            }`} />
+          <span className={`text-sm font-medium ${overallOperational && !maintenanceEnabled ? "text-emerald-400" : "text-yellow-400"
+            }`}>
             {maintenanceEnabled
-              ? "Сервис находится на обслуживании"
+              ? t('uptime.maintenanceDesc')
               : overallOperational
-              ? "Все системы работают нормально"
-              : "Некоторые компоненты требуют внимания"
+                ? t('uptime.allSystems')
+                : t('uptime.subtitleIssues')
             }
           </span>
         </div>
@@ -214,7 +217,7 @@ export default function UptimePage() {
                     <span className="text-sm font-medium">{comp.name}</span>
                     <div className="flex items-center gap-1.5">
                       <span className={`w-1.5 h-1.5 rounded-full ${STATUS_COLORS[status]} ${status !== "operational" ? "animate-pulse" : ""}`} />
-                      <span className={`text-[11px] font-medium ${STATUS_TEXT_COLORS[status]}`}>{STATUS_LABELS[status]}</span>
+                      <span className={`text-[11px] font-medium ${STATUS_TEXT_COLORS[status]}`}>{statusLabels[status]}</span>
                     </div>
                   </div>
                   <span className="text-xs text-zinc-500 font-medium">{uptimePercent}%</span>
@@ -225,13 +228,13 @@ export default function UptimePage() {
                     <div
                       key={i}
                       className={`flex-1 h-6 rounded-[2px] ${STATUS_COLORS[hourStatus]} opacity-40 hover:opacity-70 transition-opacity`}
-                      title={`${90 - i}ч назад: ${STATUS_LABELS[hourStatus]}`}
+                      title={t('uptime.history.ago', { count: 90 - i }) + `: ${statusLabels[hourStatus]}`}
                     />
                   ))}
                 </div>
                 <div className="flex justify-between text-[10px] text-zinc-700">
-                  <span>90 часов назад</span>
-                  <span>Сейчас</span>
+                  <span>{t('uptime.history.hoursAgo')}</span>
+                  <span>{t('uptime.history.now')}</span>
                 </div>
               </div>
             );
@@ -243,7 +246,7 @@ export default function UptimePage() {
           {(["operational", "degraded", "down", "maintenance"] as UptimeStatus[]).map(s => (
             <div key={s} className="flex items-center gap-1.5">
               <div className={`w-2.5 h-2.5 rounded-sm ${STATUS_COLORS[s]} opacity-50`} />
-              <span className="text-[10px] text-zinc-600">{STATUS_LABELS[s]}</span>
+              <span className="text-[10px] text-zinc-600">{statusLabels[s]}</span>
             </div>
           ))}
         </div>
@@ -251,24 +254,24 @@ export default function UptimePage() {
         {/* Incidents */}
         <div className="border border-white/[0.04] bg-white/[0.01] rounded-2xl overflow-hidden">
           <div className="px-5 py-3 border-b border-white/[0.04]">
-            <h2 className="text-xs font-medium text-zinc-500 uppercase tracking-wider">Инциденты</h2>
+            <h2 className="text-xs font-medium text-zinc-500 uppercase tracking-wider">{t('uptime.incidents')}</h2>
           </div>
           <div className="divide-y divide-white/[0.02]">
             {maintenanceEnabled && (
               <div className="px-5 py-4">
                 <div className="flex items-center gap-2 mb-1">
                   <span className="w-1.5 h-1.5 bg-yellow-500 rounded-full animate-pulse" />
-                  <span className="text-sm font-medium text-yellow-400">Плановые тех. работы</span>
+                  <span className="text-sm font-medium text-yellow-400">{t('uptime.maintenance')}</span>
                 </div>
                 <p className="text-xs text-zinc-600 ml-3.5">{maintenanceMessage}</p>
-                <p className="text-[10px] text-zinc-700 ml-3.5 mt-1">Сейчас · ~{maintenanceEstimate}</p>
+                <p className="text-[10px] text-zinc-700 ml-3.5 mt-1">{t('uptime.history.now')} · ~{maintenanceEstimate}</p>
               </div>
             )}
             <div className="px-5 py-4">
               <div className="flex items-center gap-2 mb-1">
                 <span className="w-1.5 h-1.5 bg-emerald-500 rounded-full" />
                 <span className="text-sm font-medium text-zinc-300">Обновление инфраструктуры</span>
-                <span className="text-[9px] font-medium text-emerald-400 bg-emerald-500/10 px-1.5 py-0.5 rounded">РЕШЕНО</span>
+                <span className="text-[9px] font-medium text-emerald-400 bg-emerald-500/10 px-1.5 py-0.5 rounded">{t('uptime.resolved')}</span>
               </div>
               <p className="text-xs text-zinc-600 ml-3.5">Плановое обновление серверов. Все системы стабильны.</p>
               <p className="text-[10px] text-zinc-700 ml-3.5 mt-1">15 янв 2025 · 45 мин</p>
@@ -277,7 +280,7 @@ export default function UptimePage() {
               <div className="flex items-center gap-2 mb-1">
                 <span className="w-1.5 h-1.5 bg-emerald-500 rounded-full" />
                 <span className="text-sm font-medium text-zinc-300">Задержка ответов API</span>
-                <span className="text-[9px] font-medium text-emerald-400 bg-emerald-500/10 px-1.5 py-0.5 rounded">РЕШЕНО</span>
+                <span className="text-[9px] font-medium text-emerald-400 bg-emerald-500/10 px-1.5 py-0.5 rounded">{t('uptime.resolved')}</span>
               </div>
               <p className="text-xs text-zinc-600 ml-3.5">Повышенная задержка у некоторых моделей. Устранено.</p>
               <p className="text-[10px] text-zinc-700 ml-3.5 mt-1">10 янв 2025 · 20 мин</p>
@@ -286,7 +289,7 @@ export default function UptimePage() {
         </div>
 
         <div className="mt-12 text-center space-y-4">
-          <p className="text-xs text-zinc-700 mb-3">Заметили проблему?</p>
+          <p className="text-xs text-zinc-700 mb-3">{t('uptime.noticeIssue')}</p>
           <a href="mailto:support@relay-ai.com" className="text-xs text-zinc-500 border border-white/[0.06] px-4 py-2 rounded-xl hover:border-violet-500/20 hover:text-violet-300 transition-all inline-block">
             support@relay-ai.com
           </a>
@@ -295,33 +298,33 @@ export default function UptimePage() {
           <div className="pt-6 border-t border-white/[0.04] mt-8">
             {hasAdminAccess ? (
               <Link to="/admin" className="inline-flex items-center gap-2 text-xs text-violet-400 hover:text-violet-300 transition-colors">
-                <Lock className="w-3 h-3" /> Админ панель
+                <Lock className="w-3 h-3" /> {t('uptime.adminPanel')}
               </Link>
             ) : (
               <>
                 {!showAdminLogin ? (
                   <button onClick={() => setShowAdminLogin(true)} className="text-xs text-zinc-600 hover:text-zinc-400 transition-colors">
-                    Вы администратор?
+                    {t('uptime.isAdmin')}
                   </button>
                 ) : (
                   <div className="max-w-xs mx-auto border border-white/[0.06] bg-white/[0.01] rounded-xl p-4 space-y-3">
-                    <p className="text-xs text-zinc-500">Введите пароль администратора</p>
+                    <p className="text-xs text-zinc-500">{t('uptime.enterAdminPass')}</p>
                     <div className="flex gap-2">
                       <input type="password" value={adminPass} onChange={(e) => setAdminPass(e.target.value)}
                         onKeyDown={(e) => {
                           if (e.key === "Enter") {
                             if (adminPass === "4321") { localStorage.setItem("relay_admin", "true"); navigate("/admin"); }
-                            else { setAdminError("Неверный пароль"); }
+                            else { setAdminError(t('admin.wrongPassword', "Неверный пароль")); }
                           }
                         }}
-                        placeholder="Пароль" autoFocus
+                        placeholder={t('uptime.password')} autoFocus
                         className="flex-1 px-3 py-2 rounded-lg bg-white/[0.02] border border-white/[0.06] text-xs text-white placeholder-zinc-700 focus:outline-none focus:border-violet-500/30" />
                       <button onClick={() => {
-                          if (adminPass === "4321") { localStorage.setItem("relay_admin", "true"); navigate("/admin"); }
-                          else { setAdminError("Неверный пароль"); }
-                        }}
+                        if (adminPass === "4321") { localStorage.setItem("relay_admin", "true"); navigate("/admin"); }
+                        else { setAdminError(t('admin.wrongPassword', "Неверный пароль")); }
+                      }}
                         className="px-4 py-2 rounded-lg bg-violet-600 text-white text-xs font-medium hover:bg-violet-500 transition-colors">
-                        Войти
+                        {t('uptime.login')}
                       </button>
                     </div>
                     {adminError && <p className="text-[10px] text-red-400">{adminError}</p>}

@@ -15,32 +15,38 @@ const UPTIME_KEYS = ["api_gateway", "ai_router", "web_app", "database", "auth", 
 const models = [
   { name: "GPT-5.2 Codex", provider: "OpenAI", tag: "Code", logo: "https://img.icons8.com/fluency-systems-regular/48/chatgpt.png", logoFilter: "invert(1) brightness(2)" },
   { name: "Claude Opus 4.6", provider: "Anthropic", tag: "Analysis", logo: "https://img.icons8.com/fluency/48/claude-ai.png", logoFilter: "" },
-  { name: "Gemini 3 Pro", provider: "Google", tag: "Multimodal", logo: "https://img.icons8.com/color/48/google-logo.png", logoFilter: "" },
+  { name: "Gemini 3.1 Pro", provider: "Google", tag: "Multimodal", logo: "https://img.icons8.com/color/48/google-logo.png", logoFilter: "" },
+  { name: "Mistral Large", provider: "Mistral", tag: "Efficient", logo: "https://mistral.ai/images/logo.svg", logoFilter: "invert(1)" },
+  { name: "DeepSeek V3.2", provider: "DeepSeek", tag: "Reasoning", logo: "https://www.deepseek.com/favicon.ico", logoFilter: "" },
+  { name: "Qwen-3-Max", provider: "Alibaba", tag: "Powerful", logo: "https://chat.qwenlm.ai/favicon.ico", logoFilter: "" },
 ];
 
-const pricing = [
+const pricingPlans = (t: any) => [
   {
-    name: "Free", price: "0₽", period: "навсегда",
-    features: ["5 запросов в день", "GPT-4o Mini, Gemini Flash", "Веб-интерфейс", "Базовая поддержка"],
-    cta: "Начать бесплатно", highlighted: false,
+    id: "free",
+    name: t('pricing.free.name'), price: t('pricing.free.price'), period: t('pricing.forever'),
+    features: t('pricing.free.features', { returnObjects: true }),
+    cta: t('pricing.free.cta'), highlighted: false,
   },
   {
-    name: "Pro", price: "499₽", period: "в месяц",
-    features: ["Безлимитные запросы", "Все 100+ моделей", "API доступ", "Приоритетная скорость", "Поддержка 24/7", "История без ограничений"],
-    cta: "Выбрать Pro", highlighted: true,
+    id: "pro",
+    name: t('pricing.pro.name'), price: t('pricing.pro.price'), period: t('pricing.perMonth'),
+    features: t('pricing.pro.features', { returnObjects: true }),
+    cta: t('pricing.pro.cta'), highlighted: true,
   },
   {
-    name: "Ultra", price: "1 299₽", period: "в месяц",
-    features: ["Всё из Pro", "Выделенные серверы", "SLA 99.9%", "Персональный менеджер", "Кастомные модели", "Приоритетный роутинг"],
-    cta: "Выбрать Ultra", highlighted: false,
+    id: "ultra",
+    name: t('pricing.ultra.name'), price: t('pricing.ultra.price'), period: t('pricing.perMonth'),
+    features: t('pricing.ultra.features', { returnObjects: true }),
+    cta: t('pricing.ultra.cta'), highlighted: false,
   },
 ];
 
-const features = [
-  { icon: Layers, title: "Лучшие модели", desc: "OpenAI GPT-5.2, Anthropic Claude Opus 4.6 и Google Gemini 3 Pro через единый интерфейс." },
-  { icon: Zap, title: "Мгновенная скорость", desc: "Оптимизированная маршрутизация с задержкой менее 50мс. Серверы по всему миру." },
-  { icon: Globe, title: "Единый API", desc: "Один ключ для всех моделей. Без отдельной регистрации у каждого провайдера." },
-  { icon: Shield, title: "Безопасность", desc: "End-to-end шифрование и полное соответствие стандартам защиты данных." },
+const featureItems = [
+  { icon: Layers, key: "Layers" },
+  { icon: Zap, key: "Zap" },
+  { icon: Globe, key: "Globe" },
+  { icon: Shield, key: "Shield" },
 ];
 
 export default function HomePage() {
@@ -98,6 +104,8 @@ export default function HomePage() {
     });
     return () => unsub();
   }, []);
+
+  const pricing = pricingPlans(t);
 
   return (
     <div className="min-h-screen bg-[#050507] text-zinc-100">
@@ -201,11 +209,11 @@ export default function HomePage() {
       <section className="pb-24 px-6 text-white">
         <div className="max-w-5xl mx-auto">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {features.map((f) => (
-              <div key={f.title} className="border border-white/[0.04] bg-white/[0.01] rounded-2xl p-6 md:p-8 hover:border-violet-500/20 transition-all group backdrop-blur-sm">
+            {featureItems.map((f) => (
+              <div key={f.key} className="border border-white/[0.04] bg-white/[0.01] rounded-2xl p-6 md:p-8 hover:border-violet-500/20 transition-all group backdrop-blur-sm">
                 <f.icon className="w-6 h-6 text-violet-400 mb-4 group-hover:scale-110 transition-transform" />
-                <h3 className="font-semibold text-lg mb-2">{t(`features.${f.title}.title`, f.title)}</h3>
-                <p className="text-sm text-zinc-500 leading-relaxed font-light">{t(`features.${f.title}.desc`, f.desc)}</p>
+                <h3 className="font-semibold text-lg mb-2">{t(`features.${f.key}.title`)}</h3>
+                <p className="text-sm text-zinc-500 leading-relaxed font-light">{t(`features.${f.key}.desc`)}</p>
               </div>
             ))}
           </div>
@@ -245,11 +253,11 @@ export default function HomePage() {
           </div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {pricing.map((p) => (
-              <div key={p.name} className={`rounded-3xl p-8 flex flex-col transition-all relative overflow-hidden group ${p.highlighted
-                  ? "bg-violet-600 shadow-2xl shadow-violet-600/20 scale-105 z-10"
-                  : "border border-white/[0.04] bg-white/[0.01] hover:border-white/[0.1] backdrop-blur-sm"
+              <div key={p.id} className={`rounded-3xl p-8 flex flex-col transition-all relative overflow-hidden group ${p.highlighted
+                ? "bg-violet-600 shadow-2xl shadow-violet-600/20 scale-105 z-10"
+                : "border border-white/[0.04] bg-white/[0.01] hover:border-white/[0.1] backdrop-blur-sm"
                 }`}>
-                {p.highlighted && <div className="absolute top-0 right-0 p-4"><span className="text-[10px] font-bold bg-white text-violet-700 px-3 py-1 rounded-full uppercase tracking-tighter">Best Deal</span></div>}
+                {p.highlighted && <div className="absolute top-0 right-0 p-4"><span className="text-[10px] font-bold bg-white text-violet-700 px-3 py-1 rounded-full uppercase tracking-tighter">{t('pricing.bestDeal')}</span></div>}
                 <div className="mb-8">
                   <h3 className={`text-xl font-bold mb-4 ${p.highlighted ? "text-white" : "text-zinc-200"}`}>{p.name}</h3>
                   <div className="flex items-baseline gap-1">
@@ -258,7 +266,7 @@ export default function HomePage() {
                   </div>
                 </div>
                 <ul className="space-y-4 mb-10 flex-1">
-                  {p.features.map((f) => (
+                  {Array.isArray(p.features) && p.features.map((f: string) => (
                     <li key={f} className={`flex items-start gap-3 text-sm ${p.highlighted ? "text-violet-50" : "text-zinc-400"} font-light`}>
                       <div className={`mt-0.5 p-0.5 rounded-full ${p.highlighted ? "bg-white text-violet-600" : "bg-violet-500/20 text-violet-400"}`}>
                         <Check className="w-3 h-3" />
@@ -268,13 +276,13 @@ export default function HomePage() {
                   ))}
                 </ul>
                 <Link to={
-                  p.name === "Free"
+                  p.id === "free"
                     ? (user ? "/chat" : "/sign")
-                    : (user ? `/payment?plan=${p.name.toLowerCase()}&price=${p.price.replace(/[^\d]/g, "")}` : "/sign")
+                    : (user ? `/payment?plan=${p.id}&price=${p.price.replace(/[^\d]/g, "")}` : "/sign")
                 }
                   className={`block text-center py-3.5 rounded-2xl text-sm font-semibold transition-all shadow-xl active:scale-95 ${p.highlighted
-                      ? "bg-white text-violet-700 hover:bg-zinc-100 shadow-white/10"
-                      : "bg-white/5 text-white hover:bg-white/10 border border-white/10 shadow-black/20"
+                    ? "bg-white text-violet-700 hover:bg-zinc-100 shadow-white/10"
+                    : "bg-white/5 text-white hover:bg-white/10 border border-white/10 shadow-black/20"
                     }`}>
                   {p.cta}
                 </Link>
