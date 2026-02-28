@@ -100,7 +100,7 @@ function AudioPlayer({ url }: { url: string }) {
         {playing ? <Pause className="w-4 h-4 text-white fill-white" /> : <Play className="w-4 h-4 text-white fill-white ml-0.5" />}
       </button>
       <div className="flex-1 min-w-0">
-        <div className="cursor-pointer rounded-full h-1.5 bg-white/[0.06] mb-1.5" onClick={(e) => { if (!aRef.current || !dur) return; const r = e.currentTarget.getBoundingClientRect(); aRef.current.currentTime = ((e.clientX - r.left) / r.width) * dur; }}>
+        <div className="cursor-pointer rounded-full h-1.5 bg-white/[0.06] mb-1.5" onClick={(e: any) => { if (!aRef.current || !dur) return; const r = e.currentTarget.getBoundingClientRect(); aRef.current.currentTime = ((e.clientX - r.left) / r.width) * dur; }}>
           <div className="h-full bg-violet-500 rounded-full transition-all duration-100" style={{ width: `${progress}%` }} />
         </div>
         <div className="flex justify-between text-[10px] text-zinc-600 font-mono"><span>{formatDur(cur)}</span><span>{formatDur(dur)}</span></div>
@@ -149,8 +149,8 @@ function CodeActionDisplay({ msg }: { msg: any }) {
   const [expandedIdx, setExpandedIdx] = useState<number | null>(null);
   const rawAct = msg.actions;
   const actions: any[] = Array.isArray(rawAct) ? rawAct : (rawAct && typeof rawAct === "object" ? Object.values(rawAct) : []);
-  const pastLabels: Record<string, string> = { read: t('chat.code.readed'), create: t('chat.code.created'), edit: t('chat.code.edited'), delete: t('chat.code.deleted') };
-  const presentLabels: Record<string, string> = { read: t('chat.code.read'), create: t('chat.code.create'), edit: t('chat.code.edit'), delete: t('chat.code.delete') };
+  const pastLabels: { [key: string]: string } = { read: t('chat.code.readed'), create: t('chat.code.created'), edit: t('chat.code.edited'), delete: t('chat.code.deleted') };
+  const presentLabels: { [key: string]: string } = { read: t('chat.code.read'), create: t('chat.code.create'), edit: t('chat.code.edit'), delete: t('chat.code.delete') };
   return (
     <div className="space-y-1.5 max-w-[420px]">
       {actions.map((a: any, i: number) => {
@@ -209,7 +209,7 @@ function SettingsModal({ onClose }: { onClose: () => void }) {
             <div className="w-8 h-8 rounded-xl bg-emerald-500/20 flex items-center justify-center">
               <Settings className="w-4 h-4 text-emerald-400" />
             </div>
-            <h3 className="text-sm font-semibold text-white">{t('settings.title')}</h3>
+            <h3 className="text-sm font-semibold">{t('settings.title')}</h3>
           </div>
           <button onClick={onClose} className="p-2 rounded-xl hover:bg-white/[0.05] text-zinc-500 transition-all"><X className="w-4 h-4" /></button>
         </div>
@@ -347,7 +347,7 @@ export default function ChatPage() {
   const { user } = useAuth();
   const navigate = useNavigate();
 
-  const [disabledModels, setDisabledModels] = useState<Record<string, boolean>>({});
+  const [disabledModels, setDisabledModels] = useState<{ [key: string]: boolean }>({});
   const [selectedModel, setSelectedModel] = useState(allModels[0]);
   const [showModelPicker, setShowModelPicker] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
@@ -415,7 +415,7 @@ export default function ChatPage() {
       const d = snap.val();
       if (d && d.bannedAt) {
         if (d.duration > 0) { const exp = d.bannedAt + d.duration * 60000; if (Date.now() >= exp) { remove(ref(db, `bans/${user.uid}`)); setBanInfo(null); return; } }
-        setBanInfo({ reason: d.reason || "Не указана", duration: d.duration || 0, bannedAt: d.bannedAt });
+        setBanInfo({ reason: d.reason || t('ban.noReason'), duration: d.duration || 0, bannedAt: d.bannedAt });
       } else setBanInfo(null);
     });
     return () => unsub();
@@ -449,7 +449,7 @@ export default function ChatPage() {
   // Firebase listeners
   useEffect(() => { const unsub = onValue(ref(db, "disabledModels"), (snap) => { const v = snap.val(); setDisabledModels(v && typeof v === "object" ? v : {}); }); return () => unsub(); }, []);
   useEffect(() => { if (isModelDisabledCheck(selectedModel.id) && enabledModels.length > 0) setSelectedModel(enabledModels[0]); }, [disabledModels, selectedModel.id, enabledModels, isModelDisabledCheck]);
-  useEffect(() => { const unsub = onValue(ref(db, "settings"), (snap) => { const d = snap.val(); if (d) { setMaintenance(!!d.maintenance); setMaintenanceMessage(d.maintenanceMessage || "Мы проводим плановые технические работы."); setMaintenanceEstimate(d.maintenanceEstimate || ""); } else setMaintenance(false); }); return () => unsub(); }, []);
+  useEffect(() => { const unsub = onValue(ref(db, "settings"), (snap) => { const d = snap.val(); if (d) { setMaintenance(!!d.maintenance); setMaintenanceMessage(d.maintenanceMessage || t('maintenance.defaultMsg')); setMaintenanceEstimate(d.maintenanceEstimate || ""); } else setMaintenance(false); }); return () => unsub(); }, [t]);
   useEffect(() => { if (!user || !currentChatId) { setGodModeActive(null); return; } const unsub = onValue(ref(db, `godmode/${user.uid}/${currentChatId}`), (snap) => { const d = snap.val(); if (d && d.mode && d.mode !== "auto") setGodModeActive(d.mode); else setGodModeActive(null); }); return () => unsub(); }, [user, currentChatId]);
   // Listen for admin viewing as this user
   useEffect(() => { if (!user) return; const unsub = onValue(ref(db, `viewAsUser/${user.uid}`), (snap) => { setViewAsUser(!!snap.val()); }); return () => unsub(); }, [user]);
@@ -523,8 +523,8 @@ export default function ChatPage() {
     }
     if (!isFirst && chatId) {
       const cc = chatSessions.find(c => c.id === chatId);
-      if (cc && (cc.title === "Новый чат" || cc.title === "New Chat" || cc.title === t('chat.newChat')) && cc.messageCount === 0) {
-        await update(ref(db, `chats/${user.uid}/${chatId}`), { title: text.length > 50 ? text.substring(0, 47) + "..." : text });
+      if (cc && (cc.title === "New Chat" || cc.title === t('chat.newChat')) && cc.messageCount === 0) {
+        await update(ref(db, `chats/${user?.uid}/${chatId}`), { title: text.length > 50 ? text.substring(0, 47) + "..." : text });
       }
     }
 
@@ -542,7 +542,7 @@ export default function ChatPage() {
 
     setIsGenerating(true); generationAbortRef.current = false;
     const doRespond = async () => {
-      if (generationAbortRef.current) { setIsGenerating(false); generationAbortRef.current = false; return; }
+      if (generationAbortRef.current) { setIsGenerating(false); generationAbortAbortRef.current = false; return; }
       const responseText = responses[Math.floor(Math.random() * responses.length)];
       const msgRef = await push(msgsRef, { role: "assistant", content: responseText, model: selectedModel.id, timestamp: Date.now() });
       await update(chatRef, { lastMessage: Date.now(), messageCount: (cc2?.messageCount || 0) + 2 });
@@ -560,13 +560,13 @@ export default function ChatPage() {
   useEffect(() => { const h = (e: MouseEvent) => { if (profileRef.current && !profileRef.current.contains(e.target as Node)) setShowProfile(false); }; if (showProfile) document.addEventListener("mousedown", h); return () => document.removeEventListener("mousedown", h); }, [showProfile]);
 
   const saveVisibleNick = async () => { if (!user || !visibleNickInput.trim()) return; await update(ref(db, `users/${user.uid}`), { visibleNick: visibleNickInput.trim() }); setEditingVisibleNick(false); };
-  const handleAdminAccess = () => { if (adminInput === "4321") { localStorage.setItem("relay_admin", "true"); navigate("/admin"); } else { setAdminError("Неверный пароль"); } };
-  const handleMaintenanceAdmin = () => { if (maintenanceAdminPass === "4321") { localStorage.setItem("relay_admin", "true"); navigate("/admin"); } else { setMaintenanceAdminError(t('maintenance.invalidPassword', "Неверный пароль")); } };
+  const handleAdminAccess = () => { if (adminInput === "4321") { localStorage.setItem("relay_admin", "true"); navigate("/admin"); } else { setAdminError(t('admin.invalidPassword')); } };
+  const handleMaintenanceAdmin = () => { if (maintenanceAdminPass === "4321") { localStorage.setItem("relay_admin", "true"); navigate("/admin"); } else { setMaintenanceAdminError(t('maintenance.invalidPassword')); } };
 
   const renderChatItem = (s: ChatSession) => (
     <div key={s.id} draggable onDragStart={() => handleDragStart(s.id)} onDragOver={(e) => handleDragOverChat(e, s.id)}
       onDrop={() => handleDropOnChat(s.id)} onDragEnd={handleDragEnd}
-      onContextMenu={(e) => { e.preventDefault(); setChatContextMenu({ chatId: s.id, x: e.clientX, y: e.clientY }); }}
+      onContextMenu={(e: any) => { e.preventDefault(); setChatContextMenu({ chatId: s.id, x: e.clientX, y: e.clientY }); }}
       className={`group flex items-center gap-2 px-3 py-2 rounded-lg text-sm cursor-pointer transition-all duration-200 ${currentChatId === s.id ? "bg-violet-600/10 text-violet-300" : "text-zinc-500 hover:bg-white/[0.03] hover:text-zinc-300"} ${dragOverTarget === s.id ? "ring-1 ring-violet-500/40 bg-violet-600/5" : ""} ${draggedChatId === s.id ? "opacity-40" : ""}`}
       onClick={() => { if (renamingChatId === s.id) return; setCurrentChatId(s.id); setTypingMessageId(null); setTypingText(""); }}>
       <GripVertical className="w-3 h-3 shrink-0 opacity-0 group-hover:opacity-30 cursor-grab transition-opacity duration-200" />
@@ -577,8 +577,8 @@ export default function ChatPage() {
           className="flex-1 bg-transparent text-xs text-zinc-200 focus:outline-none border-b border-violet-500/40 py-0.5" autoFocus onClick={(e) => e.stopPropagation()} />
       ) : (<span className="truncate flex-1 text-xs">{s.title}</span>)}
       <div className="opacity-0 group-hover:opacity-100 flex items-center gap-0.5 transition-all duration-200 shrink-0">
-        <button onClick={(e) => { e.stopPropagation(); setRenamingChatId(s.id); setRenameValue(s.title); }} className="p-1 hover:text-violet-400 transition-colors"><Pencil className="w-2.5 h-2.5" /></button>
-        <button onClick={(e) => { e.stopPropagation(); deleteChat(s.id); }} className="p-1 hover:text-red-400 transition-colors"><Trash2 className="w-2.5 h-2.5" /></button>
+        <button onClick={(e: any) => { e.stopPropagation(); setRenamingChatId(s.id); setRenameValue(s.title); }} className="p-1 hover:text-violet-400 transition-colors"><Pencil className="w-2.5 h-2.5" /></button>
+        <button onClick={(e: any) => { e.stopPropagation(); deleteChat(s.id); }} className="p-1 hover:text-red-400 transition-colors"><Trash2 className="w-2.5 h-2.5" /></button>
       </div>
     </div>
   );
@@ -695,21 +695,21 @@ export default function ChatPage() {
       <div className="h-screen bg-[#050507] text-zinc-100 flex items-center justify-center px-6">
         <div className="text-center max-w-md">
           <div className="w-14 h-14 bg-yellow-500/10 rounded-2xl flex items-center justify-center mx-auto mb-6"><Wrench className="w-6 h-6 text-yellow-500" /></div>
-          <h1 className="text-xl font-semibold mb-2">Технические работы</h1>
+          <h1 className="text-xl font-semibold mb-2">{t('maintenance.title')}</h1>
           <p className="text-sm text-zinc-500 mb-4 leading-relaxed">{maintenanceMessage}</p>
-          {maintenanceEstimate && <p className="text-xs text-zinc-600 mb-6">Ожидаемое время: <span className="text-zinc-400">{maintenanceEstimate}</span></p>}
+          {maintenanceEstimate && <p className="text-xs text-zinc-600 mb-6">{t('maintenance.estimate', { time: maintenanceEstimate })}</p>}
           <div className="flex items-center justify-center gap-3 mb-8">
-            <Link to="/" className="px-4 py-2 rounded-xl border border-white/[0.06] text-xs text-zinc-400 hover:text-zinc-200 transition-all">На главную</Link>
-            <Link to="/uptime" className="px-4 py-2 rounded-xl bg-violet-600 text-white text-xs font-medium hover:bg-violet-500 transition-all">Статус систем</Link>
+            <Link to="/" className="px-4 py-2 rounded-xl border border-white/[0.06] text-xs text-zinc-400 hover:text-zinc-200 transition-all">{t('maintenance.toHome')}</Link>
+            <Link to="/uptime" className="px-4 py-2 rounded-xl bg-violet-600 text-white text-xs font-medium hover:bg-violet-500 transition-all">{t('maintenance.systemStatus')}</Link>
           </div>
-          {hasAdminAccess ? <Link to="/admin" className="inline-flex items-center gap-2 text-xs text-violet-400 hover:text-violet-300 transition-colors"><Lock className="w-3 h-3" /> Админ панель</Link> : (
+          {hasAdminAccess ? <Link to="/admin" className="inline-flex items-center gap-2 text-xs text-violet-400 hover:text-violet-300 transition-colors"><Lock className="w-3 h-3" /> {t('chat.profile.adminPanel')}</Link> : (
             <div className="mt-4">
-              {!showAdminLogin ? <button onClick={() => setShowAdminLogin(true)} className="text-xs text-zinc-600 hover:text-zinc-400 transition-colors">Вы администратор?</button> : (
+              {!showAdminLogin ? <button onClick={() => setShowAdminLogin(true)} className="text-xs text-zinc-600 hover:text-zinc-400 transition-colors">{t('maintenance.areYouAdmin')}</button> : (
                 <div className="max-w-xs mx-auto border border-white/[0.06] bg-white/[0.01] rounded-xl p-4 space-y-3">
-                  <p className="text-xs text-zinc-500">Введите пароль</p>
+                  <p className="text-xs text-zinc-500">{t('maintenance.enterPassword')}</p>
                   <div className="flex gap-2">
-                    <input type="password" value={maintenanceAdminPass} onChange={(e) => setMaintenanceAdminPass(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter") handleMaintenanceAdmin(); }} placeholder="Пароль" autoFocus className="flex-1 px-3 py-2 rounded-lg bg-white/[0.02] border border-white/[0.06] text-xs text-white placeholder-zinc-700 focus:outline-none focus:border-violet-500/30" />
-                    <button onClick={handleMaintenanceAdmin} className="px-4 py-2 rounded-lg bg-violet-600 text-white text-xs font-medium hover:bg-violet-500 transition-colors">Войти</button>
+                    <input type="password" value={maintenanceAdminPass} onChange={(e) => setMaintenanceAdminPass(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter") handleMaintenanceAdmin(); }} placeholder={t('admin.passwordPlaceholder')} autoFocus className="flex-1 px-3 py-2 rounded-lg bg-white/[0.02] border border-white/[0.06] text-xs text-white placeholder-zinc-700 focus:outline-none focus:border-violet-500/30" />
+                    <button onClick={handleMaintenanceAdmin} className="px-4 py-2 rounded-lg bg-violet-600 text-white text-xs font-medium hover:bg-violet-500 transition-colors">{t('admin.loginBtn')}</button>
                   </div>
                   {maintenanceAdminError && <p className="text-[10px] text-red-400">{maintenanceAdminError}</p>}
                 </div>

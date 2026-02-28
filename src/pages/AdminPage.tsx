@@ -20,9 +20,9 @@ type UptimeStatus = "operational" | "degraded" | "down" | "maintenance";
 type GodModeType = "auto" | "manual" | "admin";
 
 const UPTIME_COMPONENTS = [
-  { name: "API Gateway", key: "api_gateway" }, { name: "AI Models Router", key: "ai_router" },
-  { name: "Web App", key: "web_app" }, { name: "Database", key: "database" },
-  { name: "Auth", key: "auth" }, { name: "CDN & Networking", key: "cdn" },
+  { name: "UPTIME_API", key: "api_gateway" }, { name: "UPTIME_ROUTER", key: "ai_router" },
+  { name: "UPTIME_WEB", key: "web_app" }, { name: "UPTIME_DB", key: "database" },
+  { name: "UPTIME_AUTH", key: "auth" }, { name: "UPTIME_CDN", key: "cdn" },
 ];
 const STATUS_COLORS: Record<UptimeStatus, string> = { operational: "bg-emerald-500", degraded: "bg-yellow-500", down: "bg-red-500", maintenance: "bg-zinc-500" };
 const STATUS_OPTIONS: UptimeStatus[] = ["operational", "degraded", "down", "maintenance"];
@@ -109,7 +109,7 @@ function ViewAsUserPanel({ targetUser, onExit }: { targetUser: UserData; onExit:
       const d = s.val();
       if (d) {
         setFolders(Object.entries(d).map(([id, v]: [string, any]) => ({
-          id, name: v.name || "Folder", createdAt: v.createdAt || 0, collapsed: v.collapsed || false
+          id, name: v.name || t('admin.folder'), createdAt: v.createdAt || 0, collapsed: v.collapsed || false
         })));
       } else setFolders([]);
     });
@@ -289,8 +289,8 @@ function ViewAsUserPanel({ targetUser, onExit }: { targetUser: UserData; onExit:
                 <span className="text-sm font-medium">{selectedChat.title}</span>
                 <span className="text-xs text-zinc-600">· {getModelName(selectedChat.model)} · {selectedChat.messageCount} {t('admin.messages').toLowerCase()}</span>
               </div>
-            ) : <span className="text-sm text-zinc-600">{t('chat.selectChat')}</span>}
-            <div className="ml-auto text-[10px] text-zinc-700 bg-white/[0.02] px-2 py-1 rounded-lg">Read Only</div>
+            ) : <span className="text-sm text-zinc-600">{t('chat.searchChats')}</span>}
+            <div className="ml-auto text-[10px] text-zinc-700 bg-white/[0.02] px-2 py-1 rounded-lg">{t('admin.readOnly')}</div>
           </div>
 
           <div className="flex-1 overflow-y-auto">
@@ -393,11 +393,11 @@ export default function AdminPage() {
   const [ticketFilter, setTicketFilter] = useState<"all" | "open" | "closed">("all");
   const ticketEndRef = useRef<HTMLDivElement>(null);
 
-  const handleLogin = (e: React.FormEvent) => { e.preventDefault(); if (password === "4321") { setAuthenticated(true); setError(""); localStorage.setItem("relay_admin", "true"); } else setError("Неверный пароль"); };
+  const handleLogin = (e: React.FormEvent) => { e.preventDefault(); if (password === "4321") { setAuthenticated(true); setError(""); localStorage.setItem("relay_admin", "true"); } else setError(t('admin.invalidPassword')); };
 
   // ALL DATA LOADING — onValue for real-time sync
   useEffect(() => { if (!authenticated) return; const u = onValue(ref(db, "disabledModels"), (s) => { const v = s.val(); setDisabledModels(v && typeof v === "object" ? v : {}); }); return () => u(); }, [authenticated]);
-  useEffect(() => { if (!authenticated) return; const u = onValue(ref(db, "users"), (s) => { const d = s.val(); if (d) { const l: UserData[] = Object.entries(d).map(([uid, val]: [string, any]) => ({ uid, displayName: val.displayName || "Без имени", email: val.email || "—", plan: val.plan || "free", role: val.role || "user", lastLogin: val.lastLogin || 0, createdAt: val.createdAt || 0, banned: val.banned || false, visibleNick: val.visibleNick || "", language: val.language || "en" })); setUsers(l); const t = new Date(); t.setHours(0, 0, 0, 0); setStats(p => ({ ...p, totalUsers: l.length, newUsersToday: l.filter(u2 => u2.createdAt >= t.getTime()).length })); } }); return () => u(); }, [authenticated]);
+  useEffect(() => { if (!authenticated) return; const u = onValue(ref(db, "users"), (s) => { const d = s.val(); if (d) { const l: UserData[] = Object.entries(d).map(([uid, val]: [string, any]) => ({ uid, displayName: val.displayName || t('admin.noName'), email: val.email || "—", plan: val.plan || "free", role: val.role || "user", lastLogin: val.lastLogin || 0, createdAt: val.createdAt || 0, banned: val.banned || false, visibleNick: val.visibleNick || "", language: val.language || "en" })); setUsers(l); const t = new Date(); t.setHours(0, 0, 0, 0); setStats(p => ({ ...p, totalUsers: l.length, newUsersToday: l.filter(u2 => u2.createdAt >= t.getTime()).length })); } }); return () => u(); }, [authenticated]);
   useEffect(() => { if (!authenticated) return; const u = onValue(ref(db, "settings"), (s) => { const d = s.val(); if (d) setSettings(p => ({ ...p, ...d })); }); return () => u(); }, [authenticated]);
   useEffect(() => { if (!authenticated) return; const u = onValue(ref(db, "chats"), (s) => { const d = s.val(); if (d) { let t = 0, n = 0; const td = new Date(); td.setHours(0, 0, 0, 0); Object.values(d).forEach((uc: any) => { Object.values(uc).forEach((c: any) => { t++; if (c.createdAt >= td.getTime()) n++; }); }); setStats(p => ({ ...p, totalChats: t, newChatsToday: n })); } }); return () => u(); }, [authenticated]);
   useEffect(() => { if (!authenticated) return; const u = onValue(ref(db, "messages"), (s) => { const d = s.val(); if (d) { let t = 0, n = 0; const td = new Date(); td.setHours(0, 0, 0, 0); Object.values(d).forEach((uc: any) => { Object.values(uc).forEach((cm: any) => { Object.values(cm).forEach((m: any) => { t++; if (m.timestamp >= td.getTime()) n++; }); }); }); setStats(p => ({ ...p, totalMessages: t, newMessagesToday: n })); } }); return () => u(); }, [authenticated]);
@@ -413,7 +413,7 @@ export default function AdminPage() {
   const deleteTicket = async (id: string) => { await remove(ref(db, `tickets/${id}`)); if (selectedTicket?.id === id) { setSelectedTicket(null); setTicketMessages([]); } };
 
   // God Mode data loading
-  useEffect(() => { if (!godSelectedUser) { setGodChats([]); setGodFolders([]); return; } const u1 = onValue(ref(db, `chats/${godSelectedUser.uid}`), (s) => { const d = s.val(); if (d) { setGodChats(Object.entries(d).map(([id, v]: [string, any]) => ({ id, title: v.title || "Новый чат", model: v.model || "gpt-5.2-codex", createdAt: v.createdAt || 0, lastMessage: v.lastMessage || 0, messageCount: v.messageCount || 0, folderId: v.folderId || undefined })).sort((a: any, b: any) => b.lastMessage - a.lastMessage)); } else setGodChats([]); }); const u2 = onValue(ref(db, `folders/${godSelectedUser.uid}`), (s) => { const d = s.val(); if (d) { setGodFolders(Object.entries(d).map(([id, v]: [string, any]) => ({ id, name: v.name || "Папка", collapsed: v.collapsed || false }))); } else setGodFolders([]); }); return () => { u1(); u2(); }; }, [godSelectedUser]);
+  useEffect(() => { if (!godSelectedUser) { setGodChats([]); setGodFolders([]); return; } const u1 = onValue(ref(db, `chats/${godSelectedUser.uid}`), (s) => { const d = s.val(); if (d) { setGodChats(Object.entries(d).map(([id, v]: [string, any]) => ({ id, title: v.title || t('chat.newChat'), model: v.model || "gpt-5.2-codex", createdAt: v.createdAt || 0, lastMessage: v.lastMessage || 0, messageCount: v.messageCount || 0, folderId: v.folderId || undefined })).sort((a: any, b: any) => b.lastMessage - a.lastMessage)); } else setGodChats([]); }); const u2 = onValue(ref(db, `folders/${godSelectedUser.uid}`), (s) => { const d = s.val(); if (d) { setGodFolders(Object.entries(d).map(([id, v]: [string, any]) => ({ id, name: v.name || t('admin.folder'), collapsed: v.collapsed || false }))); } else setGodFolders([]); }); return () => { u1(); u2(); }; }, [godSelectedUser]);
   useEffect(() => { if (!godSelectedUser || !godSelectedChat) { setGodMessages([]); return; } const u = onValue(ref(db, `messages/${godSelectedUser.uid}/${godSelectedChat.id}`), (s) => { const d = s.val(); if (d) { setGodMessages(Object.entries(d).map(([id, v]: [string, any]) => ({ id, ...v })).sort((a: any, b: any) => (a.timestamp || 0) - (b.timestamp || 0))); } else setGodMessages([]); }); return () => u(); }, [godSelectedUser, godSelectedChat]);
 
   // Load persisted god mode when entering chat
@@ -568,11 +568,11 @@ export default function AdminPage() {
 
   // Tool: Photo
   const startPhotoGeneration = async () => { const mp = msgsPath(); if (!mp || !godSelectedChat) return; const m = await push(ref(db, mp), { role: "assistant", content: "", model: godSelectedChat.model, timestamp: Date.now(), type: "photo_pending" }); if (m.key) { await set(ref(db, `godPhotoPending/${godSelectedChat.id}`), { messageKey: m.key }); await incCount(); } };
-  const finishPhotoGeneration = async () => { if (!godSelectedUser || !godSelectedChat || !godPhotoPending || !godPhotoFile) return; setGodUploadingPhoto(true); try { const base64 = await fileToBase64(godPhotoFile); await update(ref(db, `messages/${godSelectedUser.uid}/${godSelectedChat.id}/${godPhotoPending}`), { type: "photo", imageUrl: base64, content: "" }); await remove(ref(db, `godPhotoPending/${godSelectedChat.id}`)); setGodPhotoFile(null); setGodPhotoPreview(null); } catch (err) { console.error(err); alert("Ошибка загрузки"); } setGodUploadingPhoto(false); };
+  const finishPhotoGeneration = async () => { if (!godSelectedUser || !godSelectedChat || !godPhotoPending || !godPhotoFile) return; setGodUploadingPhoto(true); try { const base64 = await fileToBase64(godPhotoFile); await update(ref(db, `messages/${godSelectedUser.uid}/${godSelectedChat.id}/${godPhotoPending}`), { type: "photo", imageUrl: base64, content: "" }); await remove(ref(db, `godPhotoPending/${godSelectedChat.id}`)); setGodPhotoFile(null); setGodPhotoPreview(null); } catch (err) { console.error(err); alert(t('admin.uploadError')); } setGodUploadingPhoto(false); };
 
   // Tool: Music
   const startMusicGeneration = async () => { const mp = msgsPath(); if (!mp || !godSelectedChat) return; const m = await push(ref(db, mp), { role: "assistant", content: "", model: godSelectedChat.model, timestamp: Date.now(), type: "music_generating" }); if (m.key) { await set(ref(db, `godMusicPending/${godSelectedChat.id}`), { messageKey: m.key }); await incCount(); } };
-  const finishMusicGeneration = async () => { if (!godSelectedUser || !godSelectedChat || !godMusicPending || !godMusicFile) return; setGodUploadingMusic(true); try { const base64 = await fileToBase64(godMusicFile); await update(ref(db, `messages/${godSelectedUser.uid}/${godSelectedChat.id}/${godMusicPending}`), { type: "music", audioUrl: base64, content: "🎵 Музыка" }); await remove(ref(db, `godMusicPending/${godSelectedChat.id}`)); setGodMusicFile(null); setGodMusicFileName(null); } catch (err) { console.error(err); alert("Ошибка загрузки"); } setGodUploadingMusic(false); };
+  const finishMusicGeneration = async () => { if (!godSelectedUser || !godSelectedChat || !godMusicPending || !godMusicFile) return; setGodUploadingMusic(true); try { const base64 = await fileToBase64(godMusicFile); await update(ref(db, `messages/${godSelectedUser.uid}/${godSelectedChat.id}/${godMusicPending}`), { type: "music", audioUrl: base64, content: `🎵 ${t('admin.musicLabel')}` }); await remove(ref(db, `godMusicPending/${godSelectedChat.id}`)); setGodMusicFile(null); setGodMusicFileName(null); } catch (err) { console.error(err); alert(t('admin.uploadError')); } setGodUploadingMusic(false); };
 
   // God send text message
   const godSendMessage = async () => { if ((!godInput.trim() && !godImageFile) || !godSelectedUser || !godSelectedChat) return; const text = godInput.trim(); setGodInput(""); let imageUrl: string | undefined; if (godImageFile) { setGodUploadingImage(true); try { imageUrl = await fileToBase64(godImageFile); } catch (err) { console.error(err); } setGodUploadingImage(false); clearGodImage(); } const mp = msgsPath(); if (!mp) return; const msgData: any = { timestamp: Date.now() }; if (text) msgData.content = text; if (imageUrl) msgData.imageUrl = imageUrl; if (godResponseMode === "manual") { msgData.role = "assistant"; msgData.model = godSelectedChat.model; } else if (godResponseMode === "admin") { msgData.role = "admin"; msgData.model = "admin"; } await push(ref(db, mp), msgData); await incCount(); };
@@ -753,7 +753,7 @@ export default function AdminPage() {
                           {(["read", "create", "edit", "delete"] as const).map(m => (
                             <button key={m} onClick={() => { setGodCodeMode(m); setGodCodeContent(""); setGodSelectedFile(null); setGodCodePath(""); }}
                               className={`flex-1 px-2 py-1.5 rounded-md text-[10px] font-medium transition-all ${godCodeMode === m ? "bg-orange-500/15 text-orange-400" : "text-zinc-600 hover:text-zinc-400"}`}>
-                              {m === "read" ? "Read" : m === "create" ? "Create" : m === "edit" ? "Edit" : "Delete"}
+                              {m === "read" ? t('admin.codeActionRead') : m === "create" ? t('admin.codeActionCreate') : m === "edit" ? t('admin.codeActionEdit') : t('admin.codeActionDelete')}
                             </button>
                           ))}
                         </div>
@@ -796,7 +796,7 @@ export default function AdminPage() {
                         )}
                         {godCodeMode === "read" && (
                           <div className="space-y-2">
-                            {!godSelectedFile ? <p className="text-[10px] text-zinc-600">Выберите файл из списка выше</p> : (
+                            {!godSelectedFile ? <p className="text-[10px] text-zinc-600">{t('admin.selectFile')}</p> : (
                               <div className="space-y-2">
                                 <div className="flex items-center gap-2 px-2.5 py-1.5 rounded-lg bg-white/[0.03] border border-white/[0.04]">
                                   <Code className="w-3 h-3 text-orange-400" />
