@@ -1,5 +1,9 @@
+import { useState, useEffect } from "react";
 import { ArrowLeft, CreditCard, Check, Sparkles, AlertTriangle, XCircle } from "lucide-react";
 import { useTranslation } from "react-i18next";
+import { useNavigate, useSearchParams } from "react-router-dom";
+import { ref, onValue, push, update, serverTimestamp } from "firebase/database";
+import { auth, db } from "../firebase";
 
 type PayMethod = "ru" | "foreign" | "crypto";
 
@@ -233,8 +237,8 @@ export default function PaymentPage() {
                 {(["ru", "foreign", "crypto"] as PayMethod[]).map((m) => (
                   <button key={m} onClick={() => setMethod(m)}
                     className={`px-3 py-3 rounded-xl border text-center transition-all duration-200 ${method === m
-                        ? "border-violet-500/40 bg-violet-600/[0.08] ring-1 ring-violet-500/20"
-                        : "border-white/[0.06] bg-white/[0.01] hover:border-white/[0.1]"
+                      ? "border-violet-500/40 bg-violet-600/[0.08] ring-1 ring-violet-500/20"
+                      : "border-white/[0.06] bg-white/[0.01] hover:border-white/[0.1]"
                       }`}>
                     <span className="text-lg block mb-1">{methodIcons[m]}</span>
                     <span className="text-[10px] text-zinc-400 block">{labels[m]}</span>
@@ -305,8 +309,8 @@ export default function PaymentPage() {
                     {["USDT", "BTC", "ETH", "SOL"].map((n) => (
                       <button key={n} onClick={() => setCryptoNetwork(n)}
                         className={`px-3 py-2 rounded-xl border text-xs font-medium text-center transition-all ${cryptoNetwork === n
-                            ? "border-violet-500/40 bg-violet-600/10 text-violet-400"
-                            : "border-white/[0.06] text-zinc-500 hover:text-zinc-300"
+                          ? "border-violet-500/40 bg-violet-600/10 text-violet-400"
+                          : "border-white/[0.06] text-zinc-500 hover:text-zinc-300"
                           }`}>
                         {n}
                       </button>
