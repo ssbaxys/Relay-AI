@@ -183,3 +183,53 @@ textarea {
 .animate-search-spin {
   animation: searchSpin 1.5s ease-in-out infinite;
 }
+
+/* Responsive Utilities */
+@media (max-width: 640px) {
+  .container-padding {
+    padding-left: 1rem;
+    padding-right: 1rem;
+  }
+  
+  .hero-title {
+    font-size: 2.5rem;
+    line-height: 1.1;
+  }
+
+  .mobile-hide {
+    display: none;
+  }
+
+  /* Improve touch targets */
+  button, a {
+    min-height: 44px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  /* Glassmorphism mobile optimization */
+  .backdrop-blur-xl {
+    backdrop-filter: blur(8px); /* Less expensive on mobile */
+  }
+}
+
+/* Custom Scrollbar for Chat */
+.chat-scrollbar::-webkit-scrollbar {
+  width: 4px;
+}
+.chat-scrollbar::-webkit-scrollbar-thumb {
+  background: rgba(139, 92, 246, 0.2);
+}
+
+/* Premium Gradients */
+.text-gradient {
+  background: linear-gradient(135deg, #a78bfa 0%, #f472b6 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.border-gradient {
+  border-image: linear-gradient(to right, rgba(139, 92, 246, 0.2), rgba(244, 114, 182, 0.2)) 1;
+}
+

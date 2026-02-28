@@ -5,6 +5,8 @@ import { ArrowRight, Check, Zap, Shield, Globe, Layers } from "lucide-react";
 import { ref, onValue } from "firebase/database";
 import { db } from "../firebase";
 import Dither from "../components/Dither";
+import { useTranslation } from "react-i18next";
+import { LanguageSwitcher } from "../components/LanguageSwitcher";
 
 type UptimeStatus = "operational" | "degraded" | "down" | "maintenance";
 
@@ -43,6 +45,7 @@ const features = [
 
 export default function HomePage() {
   const { user } = useAuth();
+  const { t } = useTranslation();
   const [userCount, setUserCount] = useState<string>("0");
   const [avgUptime, setAvgUptime] = useState<string>("99.9%");
 
@@ -100,31 +103,36 @@ export default function HomePage() {
     <div className="min-h-screen bg-[#050507] text-zinc-100">
       {/* Nav */}
       <nav className="fixed top-0 left-0 right-0 z-50 bg-[#050507]/60 backdrop-blur-xl border-b border-white/[0.04]">
-        <div className="max-w-6xl mx-auto px-6 h-14 flex items-center justify-between">
+        <div className="max-w-6xl mx-auto px-4 md:px-6 h-14 flex items-center justify-between">
           <Link to="/" className="flex items-center gap-2.5">
             <div className="w-7 h-7 bg-violet-600 rounded-lg flex items-center justify-center">
               <span className="text-white font-bold text-xs">R</span>
             </div>
-            <span className="font-semibold text-sm tracking-tight">Relay AI</span>
+            <span className="font-semibold text-sm tracking-tight text-white">Relay AI</span>
           </Link>
-          <div className="hidden md:flex items-center gap-8 text-[13px] text-zinc-500">
-            <a href="#models" className="hover:text-zinc-100 transition-colors">Модели</a>
-            <a href="#pricing" className="hover:text-zinc-100 transition-colors">Цены</a>
-            <Link to="/uptime" className="hover:text-zinc-100 transition-colors">Uptime</Link>
+          <div className="hidden lg:flex items-center gap-8 text-[13px] text-zinc-500">
+            <a href="#models" className="hover:text-zinc-100 transition-colors uppercase tracking-widest font-semibold">{t('nav.models', 'Модели')}</a>
+            <a href="#pricing" className="hover:text-zinc-100 transition-colors uppercase tracking-widest font-semibold">{t('nav.pricing', 'Цены')}</a>
+            <Link to="/uptime" className="hover:text-zinc-100 transition-colors uppercase tracking-widest font-semibold">{t('nav.uptime', 'Uptime')}</Link>
           </div>
-          <div className="flex items-center gap-3">
-            {user ? (
-              <Link to="/chat" className="flex items-center gap-2 text-[13px] font-medium bg-violet-600 text-white px-4 py-2 rounded-lg hover:bg-violet-500 transition-colors">
-                Открыть чат <ArrowRight className="w-3.5 h-3.5" />
-              </Link>
-            ) : (
-              <>
-                <Link to="/sign" className="text-[13px] text-zinc-400 hover:text-zinc-100 transition-colors">Войти</Link>
-                <Link to="/sign" className="text-[13px] font-medium bg-violet-600 text-white px-4 py-2 rounded-lg hover:bg-violet-500 transition-colors">
-                  Начать
+          <div className="flex items-center gap-2 md:gap-4">
+            <LanguageSwitcher />
+            <div className="flex items-center gap-2 md:gap-3">
+              {user ? (
+                <Link to="/chat" className="flex items-center gap-2 text-[12px] md:text-[13px] font-medium bg-violet-600 text-white px-3 md:px-4 py-1.5 md:py-2 rounded-lg hover:bg-violet-500 transition-all shadow-lg shadow-violet-600/20 active:scale-95">
+                  <span className="hidden xs:inline">{t('nav.chat', 'Открыть чат')}</span>
+                  <span className="xs:hidden">Chat</span>
+                  <ArrowRight className="w-3.5 h-3.5" />
                 </Link>
-              </>
-            )}
+              ) : (
+                <>
+                  <Link to="/sign" className="text-[12px] md:text-[13px] text-zinc-400 hover:text-zinc-100 transition-colors">{t('nav.login', 'Войти')}</Link>
+                  <Link to="/sign" className="text-[12px] md:text-[13px] font-medium bg-violet-600 text-white px-3 md:px-4 py-1.5 md:py-2 rounded-lg hover:bg-violet-500 transition-all shadow-lg shadow-violet-600/20 active:scale-95">
+                    {t('nav.getStarted', 'Начать')}
+                  </Link>
+                </>
+              )}
+            </div>
           </div>
         </div>
       </nav>
@@ -145,26 +153,28 @@ export default function HomePage() {
           />
         </div>
         <div className="absolute inset-0 bg-gradient-to-b from-[#050507]/40 via-[#050507]/20 to-[#050507] z-[1]" />
-        
+
         <div className="relative z-[2] text-center px-6 max-w-3xl mx-auto">
-          <div className="inline-flex items-center gap-2 text-xs text-zinc-400 border border-white/[0.06] bg-white/[0.02] rounded-full px-4 py-1.5 mb-8">
+          <div className="inline-flex items-center gap-2 text-[10px] md:text-xs text-zinc-400 border border-white/[0.06] bg-white/[0.02] rounded-full px-4 py-1.5 mb-8 backdrop-blur-md">
             <span className="w-1.5 h-1.5 bg-violet-500 rounded-full animate-pulse" />
-            Лучшие AI модели доступны
+            {t('home.badge', 'Лучшие AI модели доступны')}
           </div>
-          <h1 className="text-5xl sm:text-6xl md:text-7xl font-bold tracking-tight leading-[1.05] mb-6">
-            Все AI модели
+          <h1 className="text-4xl sm:text-6xl md:text-7xl font-bold tracking-tight leading-[1.05] mb-6 text-white">
+            {t('home.titleLine1', 'Все AI модели')}
             <br />
-            <span className="text-violet-400">в одном месте</span>
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-violet-400 to-fuchsia-400">
+              {t('home.titleLine2', 'в одном месте')}
+            </span>
           </h1>
-          <p className="text-zinc-400 text-lg max-w-xl mx-auto mb-10 leading-relaxed font-light">
-            Единая платформа для работы с GPT-5.2 Codex, Claude Opus 4.6 и Gemini 3 Pro.
+          <p className="text-zinc-400 text-base md:text-lg max-w-xl mx-auto mb-10 leading-relaxed font-light">
+            {t('home.subtitle', 'Единая платформа для работы с GPT-5.2 Codex, Claude Opus 4.6 и Gemini 3 Pro.')}
           </p>
           <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
-            <Link to={user ? "/chat" : "/sign"} className="flex items-center gap-2 bg-violet-600 text-white px-7 py-3.5 rounded-xl font-medium text-sm hover:bg-violet-500 transition-all hover:shadow-lg hover:shadow-violet-600/20">
-              Начать бесплатно <ArrowRight className="w-4 h-4" />
+            <Link to={user ? "/chat" : "/sign"} className="w-full sm:w-auto flex items-center justify-center gap-2 bg-violet-600 text-white px-8 py-3.5 rounded-xl font-medium text-sm hover:bg-violet-500 transition-all hover:shadow-lg hover:shadow-violet-600/20 active:scale-95">
+              {t('home.getStarted', 'Начать бесплатно')} <ArrowRight className="w-4 h-4" />
             </Link>
-            <a href="#models" className="flex items-center gap-2 text-zinc-400 border border-white/[0.06] px-7 py-3.5 rounded-xl text-sm hover:border-white/[0.12] hover:text-zinc-200 transition-all">
-              Модели
+            <a href="#models" className="w-full sm:w-auto flex items-center justify-center gap-2 text-zinc-400 border border-white/[0.06] px-8 py-3.5 rounded-xl text-sm hover:border-white/[0.12] hover:text-zinc-200 transition-all backdrop-blur-sm">
+              {t('home.models', 'Модели')}
             </a>
           </div>
         </div>
@@ -172,30 +182,30 @@ export default function HomePage() {
 
       {/* Stats — dynamic */}
       <section className="py-20 px-6">
-        <div className="max-w-4xl mx-auto grid grid-cols-2 md:grid-cols-4 gap-6">
+        <div className="max-w-4xl mx-auto grid grid-cols-2 md:grid-cols-4 gap-8 md:gap-6">
           {[
-            { value: "3", label: "AI модели" },
-            { value: userCount, label: "Пользователей" },
-            { value: avgUptime, label: "Uptime" },
-            { value: "<50ms", label: "Задержка" },
+            { value: "3", label: t('stats.models', 'AI модели') },
+            { value: userCount, label: t('stats.users', 'Пользователей') },
+            { value: avgUptime, label: t('stats.uptime', 'Uptime') },
+            { value: "<50ms", label: t('stats.latency', 'Задержка') },
           ].map((s) => (
-            <div key={s.label} className="text-center">
-              <div className="text-3xl font-bold mb-1 text-white">{s.value}</div>
-              <div className="text-xs text-zinc-500">{s.label}</div>
+            <div key={s.label} className="text-center group">
+              <div className="text-3xl md:text-4xl font-bold mb-1 text-white group-hover:text-violet-400 transition-colors">{s.value}</div>
+              <div className="text-[10px] md:text-xs text-zinc-500 uppercase tracking-widest">{s.label}</div>
             </div>
           ))}
         </div>
       </section>
 
       {/* Features */}
-      <section className="pb-24 px-6">
+      <section className="pb-24 px-6 text-white">
         <div className="max-w-5xl mx-auto">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {features.map((f) => (
-              <div key={f.title} className="border border-white/[0.04] bg-white/[0.01] rounded-2xl p-6 hover:border-violet-500/20 transition-all group">
-                <f.icon className="w-5 h-5 text-violet-400 mb-4 group-hover:text-violet-300 transition-colors" />
-                <h3 className="font-semibold text-[15px] mb-2">{f.title}</h3>
-                <p className="text-sm text-zinc-500 leading-relaxed">{f.desc}</p>
+              <div key={f.title} className="border border-white/[0.04] bg-white/[0.01] rounded-2xl p-6 md:p-8 hover:border-violet-500/20 transition-all group backdrop-blur-sm">
+                <f.icon className="w-6 h-6 text-violet-400 mb-4 group-hover:scale-110 transition-transform" />
+                <h3 className="font-semibold text-lg mb-2">{t(`features.${f.title}.title`, f.title)}</h3>
+                <p className="text-sm text-zinc-500 leading-relaxed font-light">{t(`features.${f.title}.desc`, f.desc)}</p>
               </div>
             ))}
           </div>
@@ -203,21 +213,23 @@ export default function HomePage() {
       </section>
 
       {/* Models */}
-      <section id="models" className="pb-24 px-6">
+      <section id="models" className="pb-24 px-6 text-white">
         <div className="max-w-5xl mx-auto">
-          <div className="mb-10">
-            <h2 className="text-2xl font-bold mb-2">Доступные модели</h2>
-            <p className="text-zinc-500 text-sm">Лучшие модели от ведущих провайдеров</p>
+          <div className="mb-12 text-center md:text-left">
+            <h2 className="text-3xl font-bold mb-3">{t('models.title', 'Доступные модели')}</h2>
+            <p className="text-zinc-500 text-sm font-light">{t('models.subtitle', 'Лучшие модели от ведущих провайдеров')}</p>
           </div>
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             {models.map((m) => (
-              <div key={m.name} className="border border-white/[0.04] bg-white/[0.01] rounded-xl p-5 hover:border-violet-500/20 transition-all group">
-                <div className="flex items-center justify-between mb-4">
-                  <img src={m.logo} alt={m.name} width={24} height={24} style={{ filter: m.logoFilter || "none" }} />
-                  <span className="text-[10px] text-violet-400/60 bg-violet-500/[0.06] px-2 py-0.5 rounded-full font-medium">{m.tag}</span>
+              <div key={m.name} className="border border-white/[0.04] bg-white/[0.01] rounded-2xl p-6 hover:border-violet-500/20 transition-all group backdrop-blur-sm flex flex-col items-center sm:items-start text-center sm:text-left">
+                <div className="flex items-center justify-between w-full mb-6">
+                  <div className="p-3 bg-white/[0.03] rounded-xl border border-white/[0.06] group-hover:border-violet-500/30 transition-colors">
+                    <img src={m.logo} alt={m.name} width={28} height={28} style={{ filter: m.logoFilter || "none" }} />
+                  </div>
+                  <span className="text-[10px] text-violet-400 bg-violet-500/10 px-3 py-1 rounded-full font-medium border border-violet-500/20">{m.tag}</span>
                 </div>
-                <h3 className="font-medium text-sm group-hover:text-violet-300 transition-colors mb-0.5">{m.name}</h3>
-                <p className="text-[11px] text-zinc-600">{m.provider}</p>
+                <h3 className="font-semibold text-base group-hover:text-violet-300 transition-colors mb-1">{m.name}</h3>
+                <p className="text-xs text-zinc-600 font-light">{m.provider}</p>
               </div>
             ))}
           </div>
@@ -225,47 +237,45 @@ export default function HomePage() {
       </section>
 
       {/* Pricing */}
-      <section id="pricing" className="pb-24 px-6">
+      <section id="pricing" className="pb-24 px-6 text-white">
         <div className="max-w-5xl mx-auto">
-          <div className="mb-10">
-            <h2 className="text-2xl font-bold mb-2">Тарифы</h2>
-            <p className="text-zinc-500 text-sm">Простые и прозрачные цены</p>
+          <div className="mb-12 text-center md:text-left">
+            <h2 className="text-3xl font-bold mb-3">{t('pricing.title', 'Тарифы')}</h2>
+            <p className="text-zinc-500 text-sm font-light">{t('pricing.subtitle', 'Простые и прозрачные цены')}</p>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {pricing.map((p) => (
-              <div key={p.name} className={`rounded-2xl p-6 flex flex-col transition-all ${
-                p.highlighted 
-                  ? "bg-violet-600 text-white ring-1 ring-violet-500" 
-                  : "border border-white/[0.04] bg-white/[0.01]"
-              }`}>
-                <div className="mb-6">
-                  <div className="flex items-center justify-between mb-4">
-                    <h3 className="font-semibold">{p.name}</h3>
-                    {p.highlighted && <span className="text-[10px] font-medium bg-white/20 px-2.5 py-0.5 rounded-full">Популярный</span>}
-                  </div>
+              <div key={p.name} className={`rounded-3xl p-8 flex flex-col transition-all relative overflow-hidden group ${p.highlighted
+                  ? "bg-violet-600 shadow-2xl shadow-violet-600/20 scale-105 z-10"
+                  : "border border-white/[0.04] bg-white/[0.01] hover:border-white/[0.1] backdrop-blur-sm"
+                }`}>
+                {p.highlighted && <div className="absolute top-0 right-0 p-4"><span className="text-[10px] font-bold bg-white text-violet-700 px-3 py-1 rounded-full uppercase tracking-tighter">Best Deal</span></div>}
+                <div className="mb-8">
+                  <h3 className={`text-xl font-bold mb-4 ${p.highlighted ? "text-white" : "text-zinc-200"}`}>{p.name}</h3>
                   <div className="flex items-baseline gap-1">
-                    <span className="text-3xl font-bold">{p.price}</span>
-                    <span className={`text-sm ${p.highlighted ? "text-violet-200" : "text-zinc-600"}`}>/{p.period}</span>
+                    <span className="text-4xl font-bold">{p.price}</span>
+                    <span className={`text-sm ${p.highlighted ? "text-violet-200" : "text-zinc-500"}`}>/{p.period}</span>
                   </div>
                 </div>
-                <ul className="space-y-3 mb-8 flex-1">
+                <ul className="space-y-4 mb-10 flex-1">
                   {p.features.map((f) => (
-                    <li key={f} className={`flex items-center gap-2.5 text-sm ${p.highlighted ? "text-violet-100" : "text-zinc-500"}`}>
-                      <Check className={`w-3.5 h-3.5 shrink-0 ${p.highlighted ? "text-white" : "text-violet-500"}`} />
+                    <li key={f} className={`flex items-start gap-3 text-sm ${p.highlighted ? "text-violet-50" : "text-zinc-400"} font-light`}>
+                      <div className={`mt-0.5 p-0.5 rounded-full ${p.highlighted ? "bg-white text-violet-600" : "bg-violet-500/20 text-violet-400"}`}>
+                        <Check className="w-3 h-3" />
+                      </div>
                       {f}
                     </li>
                   ))}
                 </ul>
                 <Link to={
-                    p.name === "Free"
-                      ? (user ? "/chat" : "/sign")
-                      : (user ? `/payment?plan=${p.name.toLowerCase()}&price=${p.price.replace(/[^\d]/g, "")}` : "/sign")
-                  }
-                  className={`block text-center py-2.5 rounded-xl text-sm font-medium transition-all ${
-                    p.highlighted
-                      ? "bg-white text-violet-700 hover:bg-violet-50"
-                      : "border border-white/[0.06] text-zinc-300 hover:border-violet-500/30 hover:text-white"
-                  }`}>
+                  p.name === "Free"
+                    ? (user ? "/chat" : "/sign")
+                    : (user ? `/payment?plan=${p.name.toLowerCase()}&price=${p.price.replace(/[^\d]/g, "")}` : "/sign")
+                }
+                  className={`block text-center py-3.5 rounded-2xl text-sm font-semibold transition-all shadow-xl active:scale-95 ${p.highlighted
+                      ? "bg-white text-violet-700 hover:bg-zinc-100 shadow-white/10"
+                      : "bg-white/5 text-white hover:bg-white/10 border border-white/10 shadow-black/20"
+                    }`}>
                   {p.cta}
                 </Link>
               </div>
@@ -275,18 +285,43 @@ export default function HomePage() {
       </section>
 
       {/* Footer */}
-      <footer className="border-t border-white/[0.04] px-6 py-10">
-        <div className="max-w-6xl mx-auto flex flex-col md:flex-row items-center justify-between gap-6">
-          <div className="flex items-center gap-2.5">
-            <div className="w-6 h-6 bg-violet-600 rounded-md flex items-center justify-center">
-              <span className="text-white font-bold text-[10px]">R</span>
+      <footer className="border-t border-white/[0.04] px-6 py-12 bg-[#050507]">
+        <div className="max-w-6xl mx-auto">
+          <div className="flex flex-col md:flex-row items-center justify-between gap-8 mb-12">
+            <div className="flex flex-col items-center md:items-start gap-4">
+              <Link to="/" className="flex items-center gap-2.5">
+                <div className="w-8 h-8 bg-violet-600 rounded-lg flex items-center justify-center shadow-lg shadow-violet-600/20">
+                  <span className="text-white font-bold text-sm">R</span>
+                </div>
+                <span className="font-bold text-lg text-white tracking-tight">Relay AI</span>
+              </Link>
+              <p className="text-xs text-zinc-600 font-light max-w-[200px] text-center md:text-left leading-relaxed">
+                {t('footer.description', 'Ваш проводник в мир современного искусственного интеллекта.')}
+              </p>
             </div>
-            <span className="text-sm text-zinc-600">© 2025 Relay AI</span>
+            <div className="grid grid-cols-2 sm:flex sm:items-center gap-8 md:gap-12 text-[14px]">
+              <div className="flex flex-col gap-3">
+                <span className="text-[11px] font-bold text-zinc-700 uppercase tracking-widest mb-1">Продукт</span>
+                <a href="#models" className="text-zinc-500 hover:text-white transition-colors">{t('nav.models', 'Модели')}</a>
+                <a href="#pricing" className="text-zinc-500 hover:text-white transition-colors">{t('nav.pricing', 'Цены')}</a>
+                <Link to="/uptime" className="text-zinc-500 hover:text-white transition-colors">{t('nav.uptime', 'Uptime')}</Link>
+              </div>
+              <div className="flex flex-col gap-3">
+                <span className="text-[11px] font-bold text-zinc-700 uppercase tracking-widest mb-1">Компания</span>
+                <Link to="/terms" className="text-zinc-500 hover:text-white transition-colors">{t('nav.terms', 'Условия')}</Link>
+                <a href="mailto:support@relay-ai.com" className="text-zinc-500 hover:text-white transition-colors">{t('nav.support', 'Поддержка')}</a>
+                <a href="#" className="text-zinc-500 hover:text-white transition-colors">Twitter</a>
+              </div>
+            </div>
           </div>
-          <div className="flex items-center gap-6 text-[13px] text-zinc-600">
-            <Link to="/terms" className="hover:text-zinc-300 transition-colors">Условия</Link>
-            <Link to="/uptime" className="hover:text-zinc-300 transition-colors">Uptime</Link>
-            <a href="mailto:support@relay-ai.com" className="hover:text-zinc-300 transition-colors">Поддержка</a>
+          <div className="pt-8 border-t border-white/[0.02] flex flex-col md:flex-row items-center justify-between gap-4">
+            <span className="text-[11px] text-zinc-700 uppercase tracking-widest">© 2025 Relay AI. All rights reserved.</span>
+            <div className="flex items-center gap-2 opacity-30 grayscale hover:grayscale-0 transition-all">
+              <img src="https://img.icons8.com/color/48/visa.png" width={24} />
+              <img src="https://img.icons8.com/color/48/mastercard.png" width={24} />
+              <img src="https://img.icons8.com/color/48/google-pay.png" width={24} />
+              <img src="https://img.icons8.com/color/48/apple-pay.png" width={24} />
+            </div>
           </div>
         </div>
       </footer>
