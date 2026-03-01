@@ -247,7 +247,7 @@ function CodeActionDisplay({ msg }: { msg: any }) {
   );
 }
 
-function SettingsModal({ onClose }: { onClose: () => void }) {
+function SettingsModal({ settings, onUpdate, onClose }: { settings: any; onUpdate: (s: any) => void; onClose: () => void }) {
   const { t } = useTranslation();
   return (
     <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/60 backdrop-blur-sm px-4" onClick={onClose}>
@@ -270,18 +270,27 @@ function SettingsModal({ onClose }: { onClose: () => void }) {
           <div className="space-y-3">
             <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider px-1">{t('settings.theme')}</label>
             <div className="grid grid-cols-3 gap-2">
-              <button className="flex flex-col items-center gap-2 p-3 rounded-2xl bg-white/[0.03] border border-white/[0.06] hover:border-violet-500/50 transition-all group">
-                <div className="w-8 h-8 rounded-lg bg-zinc-900 flex items-center justify-center"><Sparkles className="w-4 h-4 text-zinc-600 group-hover:text-violet-400" /></div>
-                <span className="text-[10px] font-medium text-zinc-400">{t('settings.dark')}</span>
+              <button onClick={() => onUpdate({ ...settings, theme: 'dark' })} className={`flex flex-col items-center gap-2 p-3 rounded-2xl bg-white/[0.03] border transition-all group ${settings.theme === 'dark' ? 'border-violet-500 bg-violet-500/10' : 'border-white/[0.06] hover:border-violet-500/50'}`}>
+                <div className="w-8 h-8 rounded-lg bg-zinc-900 flex items-center justify-center"><Sparkles className={`w-4 h-4 ${settings.theme === 'dark' ? 'text-violet-400' : 'text-zinc-600 group-hover:text-violet-400'}`} /></div>
+                <span className={`text-[10px] font-medium ${settings.theme === 'dark' ? 'text-violet-400' : 'text-zinc-400'}`}>{t('settings.dark')}</span>
               </button>
-              <button className="flex flex-col items-center gap-2 p-3 rounded-2xl bg-white/[0.03] border border-white/[0.06] hover:border-violet-500/50 transition-all group opacity-50 cursor-not-allowed">
-                <div className="w-8 h-8 rounded-lg bg-zinc-100 flex items-center justify-center"><CloudSun className="w-4 h-4 text-zinc-400" /></div>
-                <span className="text-[10px] font-medium text-zinc-400">{t('settings.light')}</span>
+              <button onClick={() => onUpdate({ ...settings, theme: 'light' })} className={`flex flex-col items-center gap-2 p-3 rounded-2xl bg-white/[0.03] border transition-all group ${settings.theme === 'light' ? 'border-violet-500 bg-violet-500/10' : 'border-white/[0.06] hover:border-violet-500/50'}`}>
+                <div className="w-8 h-8 rounded-lg bg-zinc-100 flex items-center justify-center"><CloudSun className={`w-4 h-4 ${settings.theme === 'light' ? 'text-violet-500' : 'text-zinc-400'}`} /></div>
+                <span className={`text-[10px] font-medium ${settings.theme === 'light' ? 'text-violet-400' : 'text-zinc-400'}`}>{t('settings.light')}</span>
               </button>
-              <button className="flex flex-col items-center gap-2 p-3 rounded-2xl bg-white/[0.03] border border-white/[0.06] hover:border-violet-500/50 transition-all group">
-                <div className="w-8 h-8 rounded-lg bg-zinc-800 flex items-center justify-center"><Settings className="w-4 h-4 text-zinc-600 group-hover:text-violet-400" /></div>
-                <span className="text-[10px] font-medium text-zinc-400">{t('settings.system')}</span>
+              <button onClick={() => onUpdate({ ...settings, theme: 'system' })} className={`flex flex-col items-center gap-2 p-3 rounded-2xl bg-white/[0.03] border transition-all group ${settings.theme === 'system' ? 'border-violet-500 bg-violet-500/10' : 'border-white/[0.06] hover:border-violet-500/50'}`}>
+                <div className="w-8 h-8 rounded-lg bg-zinc-800 flex items-center justify-center"><Settings className={`w-4 h-4 ${settings.theme === 'system' ? 'text-violet-400' : 'text-zinc-600 group-hover:text-violet-400'}`} /></div>
+                <span className={`text-[10px] font-medium ${settings.theme === 'system' ? 'text-violet-400' : 'text-zinc-400'}`}>{t('settings.system')}</span>
               </button>
+            </div>
+          </div>
+
+          <div className="space-y-3">
+            <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider px-1">{t('settings.fontSize') || 'Font Size'}</label>
+            <div className="grid grid-cols-3 gap-2">
+              <button onClick={() => onUpdate({ ...settings, fontSize: 'small' })} className={`py-2 rounded-xl text-xs font-medium border transition-all ${settings.fontSize === 'small' ? 'border-violet-500 bg-violet-500/10 text-violet-400' : 'border-white/[0.06] text-zinc-400 hover:border-violet-500/50'}`}>Small</button>
+              <button onClick={() => onUpdate({ ...settings, fontSize: 'medium' })} className={`py-2 rounded-xl text-sm font-medium border transition-all ${settings.fontSize === 'medium' ? 'border-violet-500 bg-violet-500/10 text-violet-400' : 'border-white/[0.06] text-zinc-400 hover:border-violet-500/50'}`}>Medium</button>
+              <button onClick={() => onUpdate({ ...settings, fontSize: 'large' })} className={`py-2 rounded-xl text-base font-medium border transition-all ${settings.fontSize === 'large' ? 'border-violet-500 bg-violet-500/10 text-violet-400' : 'border-white/[0.06] text-zinc-400 hover:border-violet-500/50'}`}>Large</button>
             </div>
           </div>
         </div>
@@ -448,6 +457,43 @@ export default function ChatPage() {
   const [tokensUsed, setTokensUsed] = useState(0);
   const [tokensResetDate, setTokensResetDate] = useState(0);
   const [showTokenModal, setShowTokenModal] = useState(false);
+  const [userSettings, setUserSettings] = useState({ theme: "dark", fontSize: "medium" });
+  const [systemSettings, setSystemSettings] = useState<any>(null);
+
+  useEffect(() => {
+    if (!user) return;
+    const unsub = onValue(ref(db, `users/${user.uid}/userSettings`), (snap) => {
+      const val = snap.val();
+      if (val) setUserSettings({ theme: val.theme || "dark", fontSize: val.fontSize || "medium" });
+    });
+    return () => unsub();
+  }, [user]);
+
+  useEffect(() => {
+    const root = document.documentElement;
+    if (userSettings.theme === "light") {
+      root.classList.add("theme-light");
+    } else if (userSettings.theme === "system") {
+      if (window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches) {
+        root.classList.add("theme-light");
+      } else {
+        root.classList.remove("theme-light");
+      }
+    } else {
+      root.classList.remove("theme-light");
+    }
+
+    root.classList.remove("text-size-small", "text-size-large");
+    if (userSettings.fontSize === "small") root.classList.add("text-size-small");
+    if (userSettings.fontSize === "large") root.classList.add("text-size-large");
+  }, [userSettings.theme, userSettings.fontSize]);
+
+  const updateUserSettings = (newSettings: any) => {
+    setUserSettings(newSettings);
+    if (user) {
+      set(ref(db, `users/${user.uid}/userSettings`), newSettings);
+    }
+  };
 
   const generationAbortRef = useRef(false);
   const abortControllerRef = useRef<AbortController | null>(null);
@@ -501,7 +547,7 @@ export default function ChatPage() {
   // Firebase listeners
   useEffect(() => { const unsub = onValue(ref(db, "disabledModels"), (snap) => { const v = snap.val(); setDisabledModels(v && typeof v === "object" ? v : {}); }); return () => unsub(); }, []);
   useEffect(() => { if (isModelDisabledCheck(selectedModel.id) && enabledModels.length > 0) setSelectedModel(enabledModels[0]); }, [disabledModels, selectedModel.id, enabledModels, isModelDisabledCheck]);
-  useEffect(() => { const unsub = onValue(ref(db, "settings"), (snap) => { const d = snap.val(); if (d) { setMaintenance(!!d.maintenance); setMaintenanceMessage(d.maintenanceMessage || t('maintenance.defaultMsg')); setMaintenanceEstimate(d.maintenanceEstimate || ""); } else setMaintenance(false); }); return () => unsub(); }, [t]);
+  useEffect(() => { const unsub = onValue(ref(db, "settings"), (snap) => { const d = snap.val(); if (d) { setSystemSettings(d); setMaintenance(!!d.maintenance); setMaintenanceMessage(d.maintenanceMessage || t('maintenance.defaultMsg')); setMaintenanceEstimate(d.maintenanceEstimate || ""); } else { setSystemSettings(null); setMaintenance(false); } }); return () => unsub(); }, [t]);
   useEffect(() => { if (!user || !currentChatId) { setGodModeActive(null); return; } const unsub = onValue(ref(db, `godmode/${user.uid}/${currentChatId}`), (snap) => { const d = snap.val(); if (d && d.mode && d.mode !== "auto") setGodModeActive(d.mode); else setGodModeActive(null); }); return () => unsub(); }, [user, currentChatId]);
   // Listen for admin viewing as this user
   useEffect(() => { if (!user) return; const unsub = onValue(ref(db, `viewAsUser/${user.uid}`), (snap) => { setViewAsUser(!!snap.val()); }); return () => unsub(); }, [user]);
@@ -834,7 +880,7 @@ export default function ChatPage() {
 
   const isModelDisabled = isModelDisabledCheck(selectedModel.id);
   const noModelsAvailable = enabledModels.length === 0;
-  const tokenLimit = getTokenLimit(profileData.plan);
+  const tokenLimit = profileData.plan === 'free' ? (systemSettings?.freeTokenLimit || 50000) : getTokenLimit(profileData.plan);
   const tokenPercent = Math.min((tokensUsed / tokenLimit) * 100, 100);
   const tokensExhausted = tokensUsed >= tokenLimit;
   const tokenResetMs = tokensResetDate ? Math.max(0, (tokensResetDate + 24 * 60 * 60 * 1000) - Date.now()) : 0;
@@ -988,7 +1034,7 @@ export default function ChatPage() {
                 {/* Tokens UI */}
                 {profileData.plan !== "ultra" && !hasAdminAccess && (
                   <div>
-                    <div className="flex items-center justify-between mb-1.5"><label className="block text-[10px] text-zinc-600 uppercase tracking-wider">{t('chat.tokens.used')}</label><span className="text-[10px] font-mono text-zinc-500">{tokensUsed.toLocaleString("en-US")} / {tokenLimit.toLocaleString("en-US")}</span></div>
+                    <div className="flex items-center justify-between mb-1.5"><label className="block text-[10px] text-zinc-600 uppercase tracking-wider">{t('chat.tokens.left') || 'Tokens Left'}</label><span className="text-[10px] font-mono text-zinc-500">{Math.max(0, tokenLimit - tokensUsed).toLocaleString("en-US")}</span></div>
                     <div className="h-2 bg-white/[0.04] rounded-full overflow-hidden mb-1.5">
                       <div className={`h-full transition-all duration-300 ${tokensExhausted ? "bg-red-500" : tokenPercent > 85 ? "bg-amber-400" : "bg-violet-500"}`} style={{ width: `${tokenPercent}%` }} />
                     </div>
@@ -1057,54 +1103,7 @@ export default function ChatPage() {
           </div>
         )}
 
-        {/* Settings Modal */}
-        {showSettings && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm px-4" onClick={() => setShowSettings(false)}>
-            <div onClick={(e: React.MouseEvent) => e.stopPropagation()} className="w-full max-w-sm bg-[#111114] border border-white/[0.06] rounded-2xl shadow-2xl overflow-hidden animate-fade-in-up">
-              <div className="p-6 pb-4 border-b border-white/[0.04]">
-                <div className="flex items-center justify-between"><h2 className="text-sm font-semibold">{t('chat.userMenu.settings')}</h2><button onClick={() => setShowSettings(false)} className="p-1 rounded-lg hover:bg-white/[0.05] text-zinc-500 transition-all"><X className="w-4 h-4" /></button></div>
-              </div>
-              <div className="p-6 space-y-6">
-                <div className="space-y-3">
-                  <div className="flex items-center gap-2 mb-1">
-                    <Globe className="w-3.5 h-3.5 text-violet-400" />
-                    <label className="text-[10px] text-zinc-600 uppercase tracking-wider">{t('settings.language')}</label>
-                  </div>
-                  <div className="grid grid-cols-2 gap-2">
-                    {['en', 'ru', 'es', 'fr', 'de', 'zh'].map((lng: string) => (
-                      <button
-                        key={lng}
-                        onClick={() => {
-                          i18n.changeLanguage(lng);
-                          if (user) update(ref(db, `users/${user.uid}`), { language: lng });
-                        }}
-                        className={`flex items-center justify-between px-3 py-2.5 rounded-xl border transition-all ${i18n.language === lng ? "bg-violet-600/10 border-violet-500/30 text-violet-300" : "bg-white/[0.02] border-white/[0.06] text-zinc-400 hover:border-white/[0.1]"}`}
-                      >
-                        <span className="text-xs font-medium">{t(`common.languages.${lng}`)}</span>
-                        {i18n.language === lng && <Check className="w-3 h-3 text-violet-400" />}
-                      </button>
-                    ))}
-                  </div>
-                </div>
 
-                <div className="space-y-3 pt-2 border-t border-white/[0.04]">
-                  <div className="flex items-center gap-2 mb-1">
-                    <Sparkles className="w-3.5 h-3.5 text-violet-400" />
-                    <label className="text-[10px] text-zinc-600 uppercase tracking-wider">{t('settings.theme')}</label>
-                  </div>
-                  <div className="flex gap-2 p-1 bg-white/[0.02] border border-white/[0.06] rounded-xl">
-                    <button className="flex-1 flex items-center justify-center gap-2 py-2 rounded-lg bg-violet-600/10 text-violet-300 text-xs font-medium">
-                      <Square className="w-3 h-3 fill-current" /> {t('settings.dark')}
-                    </button>
-                    <button className="flex-1 flex items-center justify-center gap-2 py-2 rounded-lg text-zinc-600 text-xs font-medium cursor-not-allowed">
-                      <Square className="w-3 h-3" /> {t('settings.light')}
-                    </button>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
 
         {/* Main */}
         <div className="flex-1 flex flex-col min-w-0 bg-[#070709]">
@@ -1122,6 +1121,18 @@ export default function ChatPage() {
           </div>
 
           <div className="flex-1 overflow-y-auto">
+            {systemSettings?.announcement && (
+              <div className="mx-4 mt-4 p-3 bg-violet-500/10 border border-violet-500/20 rounded-xl relative hover:bg-violet-500/15 transition-colors">
+                <div className="flex gap-3 items-center">
+                  <div className="shrink-0 w-8 h-8 bg-violet-500/20 rounded-lg flex items-center justify-center">
+                    <AlertTriangle className="w-4 h-4 text-violet-400" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm text-violet-200 break-words">{systemSettings.announcement}</p>
+                  </div>
+                </div>
+              </div>
+            )}
             {noModelsAvailable ? (
               <div className="h-full flex items-center justify-center px-6"><div className="text-center"><div className="w-14 h-14 bg-zinc-800 rounded-2xl flex items-center justify-center mx-auto mb-4"><AlertTriangle className="w-6 h-6 text-zinc-500" /></div><h2 className="text-lg font-semibold mb-2">{t('chat.noModelsTitle')}</h2><p className="text-sm text-zinc-500">{t('chat.noModelsDesc')}</p></div></div>
             ) : isModelDisabled ? (
@@ -1163,8 +1174,8 @@ export default function ChatPage() {
                   onInput={(e) => { const el = e.target as HTMLTextAreaElement; el.style.height = "20px"; el.style.height = Math.min(el.scrollHeight, 128) + "px"; }} />
                 <div className="flex items-center gap-2 shrink-0">
                   {charCount > 0 && <span className={`text-[10px] tabular-nums ${charOverLimit ? "text-red-400" : "text-zinc-700"}`}>{charCount}/{MAX_CHARS}</span>}
-                  {isGenerating || godModeActive === "manual" ? (
-                    <div className="w-8 h-8 rounded-full bg-white flex items-center justify-center cursor-default" title={godModeActive === "manual" ? t('chat.waitingOperator') : t('chat.generating')}>
+                  {isGenerating ? (
+                    <div className="w-8 h-8 rounded-full bg-white flex items-center justify-center cursor-default" title={t('chat.generating')}>
                       <Square className="w-3 h-3 text-zinc-900 fill-zinc-900" />
                     </div>
                   ) : (
@@ -1181,7 +1192,7 @@ export default function ChatPage() {
                     <div className={`h-full rounded-full transition-all duration-500 ${tokenPercent > 90 ? 'bg-gradient-to-r from-red-500 to-amber-500' : tokenPercent > 70 ? 'bg-gradient-to-r from-amber-500 to-yellow-500' : 'bg-gradient-to-r from-violet-500 to-indigo-500'}`} style={{ width: `${tokenPercent}%` }} />
                   </div>
                   <span className={`text-[9px] tabular-nums shrink-0 ${tokenPercent > 90 ? 'text-red-400' : tokenPercent > 70 ? 'text-amber-400' : 'text-zinc-600'}`}>
-                    {tokensUsed >= 1000 ? `${(tokensUsed / 1000).toFixed(0)}K` : tokensUsed} / {tokenLimit >= 1000000 ? `${(tokenLimit / 1000000).toFixed(0)}M` : tokenLimit >= 1000 ? `${(tokenLimit / 1000).toFixed(0)}K` : tokenLimit}
+                    {Math.max(0, tokenLimit - tokensUsed)} {tokenLimit >= 1000000 ? `${(tokenLimit / 1000000).toFixed(0)}M` : tokenLimit >= 1000 ? `${(tokenLimit / 1000).toFixed(0)}K` : tokenLimit}
                   </span>
                 </div>
               )}
@@ -1189,7 +1200,7 @@ export default function ChatPage() {
           </div>
         </div>
       </div>
-      {showSettings && <SettingsModal onClose={() => setShowSettings(false)} />}
+      {showSettings && <SettingsModal settings={userSettings} onUpdate={updateUserSettings} onClose={() => setShowSettings(false)} />}
       {showTokenModal && <TokenExhaustedModal />}
     </div>
   );

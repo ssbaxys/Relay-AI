@@ -371,3 +371,26 @@ textarea {
 .glow-effect:hover::before {
   opacity: 1;
 }
+
+/* User Settings Theme & Font Size */
+.theme-light {
+  filter: invert(1) hue-rotate(180deg) contrast(0.95);
+  background: white !important;
+}
+
+/* Ensure images, media, and logos retain their original colors in light mode */
+.theme-light img,
+.theme-light video,
+.theme-light svg,
+.theme-light .model-logo,
+.theme-light [class*="bg-gradient"] {
+  filter: invert(1) hue-rotate(180deg) contrast(1.05);
+}
+
+.text-size-small {
+  font-size: 0.9em;
+}
+
+.text-size-large {
+  font-size: 1.1em;
+}
