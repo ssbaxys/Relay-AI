@@ -1032,7 +1032,7 @@ export default function ChatPage() {
                 <div><label className="block text-[10px] text-zinc-600 uppercase tracking-wider mb-1">{t('chat.profile.systemNick')}</label><p className="text-sm text-zinc-300 font-mono">{profileData.systemNick}</p></div>
 
                 {/* Tokens UI */}
-                {profileData.plan !== "ultra" && !hasAdminAccess && (
+                {true && (
                   <div>
                     <div className="flex items-center justify-between mb-1.5"><label className="block text-[10px] text-zinc-600 uppercase tracking-wider">{t('chat.tokens.left') || 'Tokens Left'}</label><span className="text-[10px] font-mono text-zinc-500">{Math.max(0, tokenLimit - tokensUsed).toLocaleString("en-US")}</span></div>
                     <div className="h-2 bg-white/[0.04] rounded-full overflow-hidden mb-1.5">

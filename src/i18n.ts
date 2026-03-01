@@ -129,14 +129,40 @@ const resources = {
         }
       },
       "uptime": {
+        "title": "System Status",
+        "subtitle": "Current status of Relay AI services",
+        "allSystems": "All systems operating normally",
+        "resolved": "Resolved",
+        "adminPanel": "Admin Panel",
+        "noticeIssue": "Noticed an issue? Contact us",
+        "incidents": "Recent Incidents",
+        "status": {
+          "operational": "Operational",
+          "degraded": "Degraded",
+          "down": "Down",
+          "maintenance": "Maintenance"
+        },
+        "history": {
+          "ago": "{{count}}h ago",
+          "hoursAgo": "90h ago",
+          "now": "Now"
+        },
         "components": {
           "api_gateway": "API Gateway",
           "ai_router": "AI Router",
           "web_app": "Web App",
           "database": "Database",
-          "auth": "Auth Service",
-          "cdn": "CDN Nodes"
-        }
+          "auth": "Auth",
+          "cdn": "CDN & Network"
+        },
+        "maintenance": "Technical Maintenance",
+        "maintenanceDesc": "We are conducting scheduled maintenance to improve the service.",
+        "partialIssues": "Partial Issues",
+        "subtitleIssues": "Some services are experiencing issues",
+        "isAdmin": "Admin?",
+        "enterAdminPass": "Enter admin password",
+        "password": "Password",
+        "login": "Login"
       },
       "models": {
         "title": "Available Models",
@@ -761,6 +787,24 @@ const resources = {
         }
       },
       "uptime": {
+        "title": "Статус системы",
+        "subtitle": "Текущее состояние сервисов Relay AI",
+        "allSystems": "Все системы работают в штатном режиме",
+        "resolved": "Решено",
+        "adminPanel": "Админ-панель",
+        "noticeIssue": "Заметили проблему? Напишите нам",
+        "incidents": "Последние инциденты",
+        "status": {
+          "operational": "Работает",
+          "degraded": "Замедлено",
+          "down": "Не работает",
+          "maintenance": "Обслуживание"
+        },
+        "history": {
+          "ago": "{{count}}ч назад",
+          "hoursAgo": "90ч назад",
+          "now": "Сейчас"
+        },
         "components": {
           "api_gateway": "API Шлюз",
           "ai_router": "ИИ Роутер",
@@ -768,7 +812,15 @@ const resources = {
           "database": "База данных",
           "auth": "Авторизация",
           "cdn": "CDN узлы"
-        }
+        },
+        "maintenance": "Техническое обслуживание",
+        "maintenanceDesc": "Сервис на обслуживании",
+        "partialIssues": "Частичные сбои",
+        "subtitleIssues": "Некоторые сервисы могут работать нестабильно",
+        "isAdmin": "Админ?",
+        "enterAdminPass": "Введите пароль",
+        "password": "Пароль",
+        "login": "Войти"
       },
       "models": {
         "title": "Доступные модели",
@@ -1330,14 +1382,40 @@ const resources = {
         "Shield": { "title": "Seguridad", "desc": "Cifrado de extremo a extremo y cumplimiento de estándares de protección." }
       },
       "uptime": {
+        "title": "Estado del sistema",
+        "subtitle": "Estado actual de los servicios de Relay AI",
+        "allSystems": "Todos los sistemas operativos normalmente",
+        "resolved": "Resuelto",
+        "adminPanel": "Panel de control",
+        "noticeIssue": "¿Notaste un problema? Contáctanos",
+        "incidents": "Incidentes recientes",
+        "status": {
+          "operational": "Operativo",
+          "degraded": "Degradado",
+          "down": "Caído",
+          "maintenance": "Mantenimiento"
+        },
+        "history": {
+          "ago": "Hace {{count}}h",
+          "hoursAgo": "Hace 90h",
+          "now": "Ahora"
+        },
         "components": {
-          "api_gateway": "Puerta de enlace API",
-          "ai_router": "Enrutador IA",
-          "web_app": "Aplicación Web",
+          "api_gateway": "API Gateway",
+          "ai_router": "AI Router",
+          "web_app": "Web App",
           "database": "Base de datos",
           "auth": "Autenticación",
           "cdn": "Nodos CDN"
-        }
+        },
+        "maintenance": "Mantenimiento Técnico",
+        "maintenanceDesc": "Estamos realizando mantenimiento periódico.",
+        "partialIssues": "Problemas parciales",
+        "subtitleIssues": "Algunos servicios están experimentando problemas",
+        "isAdmin": "¿Administrador?",
+        "enterAdminPass": "Introduce la contraseña",
+        "password": "Contraseña",
+        "login": "Iniciar sesión"
       },
       "models": {
         "title": "Modelos Disponibles",
@@ -1349,7 +1427,7 @@ const resources = {
         "titleLine2": "en un solo lugar",
         "subtitle": "Plataforma unificada para trabajar con GPT-5.2, Claude 4.6, Gemini 3.1 y más.",
         "getStarted": "Empezar Gratis",
-        "models": "Modelos"
+        "models": "Modèles"
       },
       "pricing": {
         "title": "Precios",
@@ -1803,14 +1881,40 @@ const resources = {
         "Shield": { "title": "Sécurité", "desc": "Chiffrement de bout en bout et conformité aux normes de protection." }
       },
       "uptime": {
+        "title": "Statut du système",
+        "subtitle": "État actuel des services Relay AI",
+        "allSystems": "Tous les systèmes sont opérationnels",
+        "resolved": "Résolu",
+        "adminPanel": "Panneau d'administration",
+        "noticeIssue": "Un problème remarqué ? Contactez-nous",
+        "incidents": "Incidents récents",
+        "status": {
+          "operational": "Opérationnel",
+          "degraded": "Dégradé",
+          "down": "En panne",
+          "maintenance": "Maintenance"
+        },
+        "history": {
+          "ago": "Il y a {{count}}h",
+          "hoursAgo": "Il y a 90h",
+          "now": "Maintenant"
+        },
         "components": {
           "api_gateway": "Passerelle API",
           "ai_router": "Routeur IA",
-          "web_app": "Application Web",
+          "web_app": "Web App",
           "database": "Base de données",
           "auth": "Authentification",
           "cdn": "Nœuds CDN"
-        }
+        },
+        "maintenance": "Maintenance Technique",
+        "maintenanceDesc": "Nous effectuons une maintenance programmée.",
+        "partialIssues": "Problèmes partiels",
+        "subtitleIssues": "Certains services rencontrent des problèmes",
+        "isAdmin": "Administrateur ?",
+        "enterAdminPass": "Entrer le mot de passe",
+        "password": "Mot de passe",
+        "login": "Connexion"
       },
       "models": {
         "title": "Modèles Disponibles",
@@ -2219,14 +2323,40 @@ const resources = {
           "Shield": { "title": "Sicherheit", "desc": "End-to-End-Verschlüsselung und Einhaltung von Schutzstandards." }
         },
         "uptime": {
+          "title": "Systemstatus",
+          "subtitle": "Aktueller Status der Relay AI-Dienste",
+          "allSystems": "Alle Systeme arbeiten normal",
+          "resolved": "Gelöst",
+          "adminPanel": "Admin-Bereich",
+          "noticeIssue": "Problem bemerkt? Kontaktiere uns",
+          "incidents": "Aktuelle Vorfälle",
+          "status": {
+            "operational": "Betriebsbereit",
+            "degraded": "Eingeschränkt",
+            "down": "Ausgefallen",
+            "maintenance": "Wartung"
+          },
+          "history": {
+            "ago": "Vor {{count}}h",
+            "hoursAgo": "Vor 90h",
+            "now": "Jetzt"
+          },
           "components": {
-            "api_gateway": "API-Gateway",
+            "api_gateway": "API Gateway",
             "ai_router": "KI-Router",
             "web_app": "Web-App",
             "database": "Datenbank",
-            "auth": "Authentifizierung",
+            "auth": "Auth-Dienst",
             "cdn": "CDN-Knoten"
-          }
+          },
+          "maintenance": "Wartung",
+          "maintenanceDesc": "Wir führen geplante Wartungsarbeiten durch.",
+          "partialIssues": "Teilweise Probleme",
+          "subtitleIssues": "Einige Dienste haben Probleme",
+          "isAdmin": "Administrator?",
+          "enterAdminPass": "Passwort eingeben",
+          "password": "Passwort",
+          "login": "Anmelden"
         },
         "models": {
           "title": "Verfügbare Modelle",
@@ -2631,14 +2761,40 @@ const resources = {
           "Shield": { "title": "安全保障", "desc": "端到端加密，符合保护标准。" }
         },
         "uptime": {
+          "title": "系统状态",
+          "subtitle": "Relay AI 服务当前状态",
+          "allSystems": "所有系统运行正常",
+          "resolved": "已解决",
+          "adminPanel": "管理面板",
+          "noticeIssue": "发现问题？联系我们",
+          "incidents": "近期事件",
+          "status": {
+            "operational": "运行中",
+            "degraded": "性能下降",
+            "down": "宕机",
+            "maintenance": "维护中"
+          },
+          "history": {
+            "ago": "{{count}}小时前",
+            "hoursAgo": "90小时前",
+            "now": "现在"
+          },
           "components": {
             "api_gateway": "API 网关",
-            "ai_router": "AI 路由器",
-            "web_app": "网页应用",
+            "ai_router": "AI 路由",
+            "web_app": "Web 应用",
             "database": "数据库",
-            "auth": "授权服务",
+            "auth": "身份验证",
             "cdn": "CDN 节点"
-          }
+          },
+          "maintenance": "技术维护",
+          "maintenanceDesc": "我们正在进行定期维护。",
+          "partialIssues": "部分故障",
+          "subtitleIssues": "部分服务遇到问题",
+          "isAdmin": "管理员？",
+          "enterAdminPass": "输入密码",
+          "password": "密码",
+          "login": "登录"
         },
         "models": {
           "title": "可用模型",
