@@ -640,14 +640,12 @@ export default function ChatPage() {
     if (isModelDisabledCheck(selectedModel.id)) return;
     const text = input.trim().substring(0, MAX_CHARS);
 
-    // Token quota check (skip for admins)
-    if (!hasAdminAccess) {
-      const limit = getTokenLimit(profileData.plan);
-      const tokenCost = text.length; // 1 char = 1 token
-      if (tokensUsed + tokenCost > limit) {
-        setShowTokenModal(true);
-        return;
-      }
+    // Token quota check
+    const limit = getTokenLimit(profileData.plan);
+    const tokenCost = text.length; // 1 char = 1 token
+    if (tokensUsed + tokenCost > limit) {
+      setShowTokenModal(true);
+      return;
     }
 
     setInput("");
@@ -675,11 +673,9 @@ export default function ChatPage() {
     const cc2 = chatSessions.find(c => c.id === chatId);
     await update(chatRef, { lastMessage: Date.now(), messageCount: (cc2?.messageCount || 0) + 1 });
 
-    // Deduct tokens (skip for admins)
-    if (!hasAdminAccess) {
-      const newUsed = tokensUsed + text.length;
-      await update(ref(db, `users/${user.uid}/tokens`), { used: newUsed });
-    }
+    // Deduct tokens
+    const newUsed = tokensUsed + text.length;
+    await update(ref(db, `users/${user.uid}/tokens`), { used: newUsed });
 
     // Don't auto-respond if god mode manual/admin is active
     if (godModeActive === "manual" || godModeActive === "admin") return;
@@ -698,11 +694,9 @@ export default function ChatPage() {
       await update(chatRef, { lastMessage: Date.now(), messageCount: (cc2?.messageCount || 0) + 2 });
       if (msgRef.key) animateTyping(responseText, msgRef.key);
 
-      // Deduct tokens for AI response (skip for admins)
-      if (!hasAdminAccess) {
-        const newUsed = tokensUsed + text.length + responseText.length;
-        await update(ref(db, `users/${user.uid}/tokens`), { used: newUsed });
-      }
+      // Deduct tokens for AI response
+      const newUsedResponse = tokensUsed + text.length + responseText.length;
+      await update(ref(db, `users/${user.uid}/tokens`), { used: newUsedResponse });
     };
     doRespond();
   };
