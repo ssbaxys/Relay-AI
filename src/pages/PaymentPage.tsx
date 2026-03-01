@@ -74,8 +74,7 @@ export default function PaymentPage() {
     setProcessing(true);
     setError(null);
 
-    // Simulate processing
-    await new Promise(r => setTimeout(r, 2000));
+
 
     // Check payment mode from admin settings
     if (paymentMode === "insufficient_funds") {

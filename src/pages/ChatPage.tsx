@@ -26,7 +26,7 @@ const sanitizeKey = (k: string) => k.replace(/\./g, "_");
 type SortMode = "recent" | "alphabetical" | "messages";
 type ToolType = "search" | "code" | "photo" | "music" | null;
 
-interface ChatSession { id: string; title: string; model: string; createdAt: number; lastMessage: number; messageCount: number; folderId?: string; }
+interface ChatSession { id: string; title: string; model: string; createdAt: number; lastMessage: number; messageCount: number; folderId?: string; activeTool?: string | null; }
 interface ChatFolder { id: string; name: string; createdAt: number; collapsed?: boolean; }
 interface BanInfo { reason: string; duration: number; bannedAt: number; }
 interface Ticket { id: string; serialNumber: string; subject: string; status: "open" | "closed"; createdAt: number; userId: string; }
@@ -68,7 +68,53 @@ const modelSuggestions: Record<string, string[]> = {
   "deepseek-v3.2-exp": ["suggestions.deepseek_v3_2_exp.0", "suggestions.deepseek_v3_2_exp.1", "suggestions.deepseek_v3_2_exp.2", "suggestions.deepseek_v3_2_exp.3"],
 };
 
-const responses = ["chat.responses.0", "chat.responses.1"];
+const MODEL_SYSTEM_PROMPTS: Record<string, string> = {
+  "gpt-5.2-codex": `You are GPT-5.2 Codex, the most advanced AI model created by OpenAI. You were released in early 2026 as the successor to GPT-4o. You specialize in code generation, debugging, and technical explanations, but you are also excellent at general conversation, creative writing, and analysis. You have a vast knowledge base trained on data up to January 2026. You are known for your precise, structured, and helpful responses. When asked about yourself, you confidently identify as GPT-5.2 Codex by OpenAI. You never mention Mistral, you are NOT Mistral. Your communication style is professional yet approachable. You support markdown formatting in responses. When writing code, always use proper syntax highlighting with language tags. You are proud of OpenAI's mission to ensure AGI benefits all of humanity.`,
+  "claude-opus-4.6": `You are Claude Opus 4.6, the most capable AI model developed by Anthropic. You are designed for deep reasoning, nuanced analysis, and complex problem-solving. Released in 2026, you represent the pinnacle of Anthropic's Constitutional AI approach. You excel at long-form writing, philosophical discussions, research analysis, and careful step-by-step reasoning. You are known for being thoughtful, thorough, and intellectually honest. When uncertain, you acknowledge it openly. You never mention Mistral — you are Claude by Anthropic. Your tone is warm, intellectual, and considerate. You always aim to be helpful, harmless, and honest. You support markdown formatting. You were trained by Anthropic, a safety-focused AI company founded by former OpenAI researchers Dario and Daniela Amodei.`,
+  "claude-sonnet-4.6": `You are Claude Sonnet 4.6, a balanced and efficient AI model by Anthropic. You are the middle-tier model in Anthropic's Claude 4.6 family — faster than Opus but more capable than Haiku. You provide excellent responses for everyday tasks: writing, coding, analysis, and conversation. You are concise yet thorough, practical yet creative. Released in 2026, you follow Anthropic's Constitutional AI principles. When asked about yourself, you identify as Claude Sonnet 4.6 by Anthropic. You never mention Mistral. Your communication style is friendly, clear, and efficient. You support markdown formatting in your responses.`,
+  "gemini-3.1-pro": `You are Gemini 3.1 Pro, a powerful multimodal AI model created by Google DeepMind. Released in 2026, you are Google's flagship AI model with state-of-the-art performance across reasoning, coding, mathematics, and creative tasks. You were built on Google's most advanced AI infrastructure and trained with a massive dataset. You are known for excellent analytical abilities, strong factual accuracy, and a natural conversational style. When asked about yourself, you identify as Gemini 3.1 Pro by Google DeepMind. You never mention Mistral. You are proud of being part of Google's Gemini family of models. You support markdown formatting and excel at structured, well-organized responses.`,
+  "gemini-3-flash": `You are Gemini 3 Flash, a fast and efficient AI model developed by Google DeepMind. You are optimized for speed while maintaining high quality responses. Released in 2026, you are part of Google's Gemini model family — specifically designed for quick interactions where low latency matters. You provide concise, direct answers without sacrificing accuracy. You excel at rapid Q&A, simple coding tasks, quick translations, and conversational interactions. When asked, you identify as Gemini 3 Flash by Google. You never mention Mistral. Your style is snappy, efficient, and to-the-point while remaining friendly.`,
+  "mistral-large-latest": `You are Mistral Large, the flagship AI model developed by Mistral AI, a leading French AI company. You are one of the most capable open-weight large language models available. You excel at complex reasoning, multilingual tasks (especially French and English), coding, and creative writing. You are known for your efficiency and strong performance relative to your size. You support markdown formatting and provide well-structured, thoughtful responses.`,
+  "deepseek-v3.2-exp": `You are DeepSeek V3.2, an advanced experimental AI model developed by DeepSeek, a Chinese artificial intelligence research laboratory. Released in 2026, you utilize a Mixture-of-Experts (MoE) architecture that allows you to deliver exceptional performance in coding, mathematics, and logical reasoning while maintaining efficiency. You are particularly strong in STEM fields, algorithm design, and data analysis. DeepSeek is known for pushing the boundaries of open-source AI research. When asked about yourself, you identify as DeepSeek V3.2 by DeepSeek AI. You never mention Mistral. You are proud of the Chinese AI research community and DeepSeek's contributions to open AI development. You support markdown formatting and provide precise, technically rigorous responses.`
+};
+
+const MISTRAL_API_KEY = "RGY25St9OHjWWfXq7118nY7FNEXDpet9";
+const MISTRAL_API_URL = "https://api.mistral.ai/v1/chat/completions";
+
+async function callMistralAPI(
+  modelId: string,
+  chatHistory: { role: string; content: string }[],
+  signal?: AbortSignal
+): Promise<string> {
+  const systemPrompt = MODEL_SYSTEM_PROMPTS[modelId] || MODEL_SYSTEM_PROMPTS["mistral-large-latest"];
+  const contextMessages = chatHistory.slice(-20).map(m => ({
+    role: m.role === "assistant" ? "assistant" as const : "user" as const,
+    content: m.content
+  }));
+  const apiMessages = [
+    { role: "system" as const, content: systemPrompt },
+    ...contextMessages
+  ];
+  try {
+    const res = await fetch(MISTRAL_API_URL, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "Authorization": `Bearer ${MISTRAL_API_KEY}` },
+      body: JSON.stringify({ model: "mistral-large-latest", messages: apiMessages, max_tokens: 4096, temperature: 0.7 }),
+      signal
+    });
+    if (!res.ok) {
+      const errText = await res.text();
+      console.error("Mistral API error:", res.status, errText);
+      return "Sorry, an error occurred while generating a response. Please try again.";
+    }
+    const data = await res.json();
+    return data.choices?.[0]?.message?.content || "No response generated.";
+  } catch (err: any) {
+    if (err.name === "AbortError") return "";
+    console.error("Mistral API call failed:", err);
+    return "Sorry, a connection error occurred. Please try again.";
+  }
+}
 
 const TOOL_LABELS: Record<string, string> = { search: "chat.tools.search", code: "chat.tools.code", photo: "chat.tools.photo", music: "chat.tools.music" };
 
@@ -404,6 +450,7 @@ export default function ChatPage() {
   const [showTokenModal, setShowTokenModal] = useState(false);
 
   const generationAbortRef = useRef(false);
+  const abortControllerRef = useRef<AbortController | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const profileRef = useRef<HTMLDivElement>(null);
@@ -460,7 +507,7 @@ export default function ChatPage() {
   useEffect(() => { if (!user) return; const unsub = onValue(ref(db, `viewAsUser/${user.uid}`), (snap) => { setViewAsUser(!!snap.val()); }); return () => unsub(); }, [user]);
   useEffect(() => { setCurrentSuggestions(getRandomSuggestions(selectedModel.id)); }, [selectedModel.id]);
   useEffect(() => { if (!user) return; const unsub = onValue(ref(db, `users/${user.uid}`), (snap) => { const d = snap.val(); if (d) { setProfileData({ displayName: d.displayName || user.displayName || "User", systemNick: user.email || "", visibleNick: d.visibleNick || d.displayName || user.displayName || "User", id: d.uniqueId || "", plan: d.plan || "free", language: d.language || "ru" }); if (!d.uniqueId) set(ref(db, `users/${user.uid}/uniqueId`), String(Math.floor(10000000 + Math.random() * 90000000))); } }); return () => unsub(); }, [user]);
-  useEffect(() => { if (!user) return; const q = query(ref(db, `chats/${user.uid}`), orderByChild("createdAt")); const unsub = onValue(q, (snap) => { const d = snap.val(); if (d) { setChatSessions(Object.entries(d).map(([id, v]: [string, any]) => ({ id, title: v.title || t('chat.newChat'), model: v.model || "gpt-5.2-codex", createdAt: v.createdAt || 0, lastMessage: v.lastMessage || v.createdAt || 0, messageCount: v.messageCount || 0, folderId: v.folderId || undefined }))); } else setChatSessions([]); }); return () => unsub(); }, [user, t]);
+  useEffect(() => { if (!user) return; const q = query(ref(db, `chats/${user.uid}`), orderByChild("createdAt")); const unsub = onValue(q, (snap) => { const d = snap.val(); if (d) { setChatSessions(Object.entries(d).map(([id, v]: [string, any]) => ({ id, title: v.title || t('chat.newChat'), model: v.model || "gpt-5.2-codex", createdAt: v.createdAt || 0, lastMessage: v.lastMessage || v.createdAt || 0, messageCount: v.messageCount || 0, folderId: v.folderId || undefined, activeTool: v.activeTool || null }))); } else setChatSessions([]); }); return () => unsub(); }, [user, t]);
   useEffect(() => { if (!user) return; const unsub = onValue(ref(db, `folders/${user.uid}`), (snap) => { const d = snap.val(); if (d) { setFolders(Object.entries(d).map(([id, v]: [string, any]) => ({ id, name: v.name || t('chat.folder'), createdAt: v.createdAt || 0, collapsed: v.collapsed || false }))); } else setFolders([]); }); return () => unsub(); }, [user, t]);
 
   // Token Quota Listener
@@ -501,7 +548,7 @@ export default function ChatPage() {
     return () => unsub();
   }, [user, currentChatId]);
 
-  useEffect(() => { if (!currentChatId) return; const cs = chatSessions.find(c => c.id === currentChatId); if (cs?.model) { const mi = allModels.find(m => m.id === cs.model); if (mi && !isModelDisabledCheck(mi.id)) setSelectedModel(mi); } }, [currentChatId, chatSessions, isModelDisabledCheck]);
+  useEffect(() => { if (!currentChatId) return; const cs = chatSessions.find(c => c.id === currentChatId); if (cs?.model) { const mi = allModels.find(m => m.id === cs.model); if (mi && !isModelDisabledCheck(mi.id)) setSelectedModel(mi); } setActiveTool((cs?.activeTool as ToolType) || null); }, [currentChatId, chatSessions, isModelDisabledCheck]);
   useEffect(() => { messagesEndRef.current?.scrollIntoView({ behavior: "smooth" }); }, [messages, typingText, isGenerating]);
 
   const handleModelChange = async (model: typeof allModels[0]) => { setSelectedModel(model); setShowModelPicker(false); if (currentChatId && user) await update(ref(db, `chats/${user.uid}/${currentChatId}`), { model: model.id }); };
@@ -527,7 +574,9 @@ export default function ChatPage() {
   const handleDragEnd = () => { setDraggedChatId(null); setDragOverTarget(null); };
 
   const handleToolSelect = (tool: ToolType) => {
-    setActiveTool(activeTool === tool ? null : tool);
+    const newTool = activeTool === tool ? null : tool;
+    setActiveTool(newTool);
+    if (user && currentChatId) update(ref(db, `chats/${user.uid}/${currentChatId}`), { activeTool: newTool || null });
   };
 
   const animateTyping = useCallback((fullText: string, messageId: string) => {
@@ -537,7 +586,7 @@ export default function ChatPage() {
       if (generationAbortRef.current) { clearInterval(iv); setTypingMessageId(null); setTypingText(""); setIsGenerating(false); generationAbortRef.current = false; return; }
       if (i < fullText.length) { setTypingText(fullText.substring(0, i + 1)); i++; }
       else { clearInterval(iv); setTypingMessageId(null); setTypingText(""); setIsGenerating(false); }
-    }, 10);
+    }, 8);
   }, []);
 
   const sendMessage = async () => {
@@ -590,23 +639,29 @@ export default function ChatPage() {
     if (godModeActive === "manual" || godModeActive === "admin") return;
 
     setIsGenerating(true); generationAbortRef.current = false;
+    const controller = new AbortController();
+    abortControllerRef.current = controller;
     const doRespond = async () => {
       if (generationAbortRef.current) { setIsGenerating(false); generationAbortRef.current = false; return; }
-      const responseText = String(t(responses[Math.floor(Math.random() * responses.length)]));
+      // Build conversation history for API
+      const chatHistory = messages.filter(m => m.role === "user" || m.role === "assistant").map((m: any) => ({ role: m.role, content: String(m.content || "") }));
+      chatHistory.push({ role: "user", content: text });
+      const responseText = await callMistralAPI(selectedModel.id, chatHistory, controller.signal);
+      if (!responseText || generationAbortRef.current) { setIsGenerating(false); generationAbortRef.current = false; return; }
       const msgRef = await push(msgsRef, { role: "assistant", content: responseText, model: selectedModel.id, timestamp: Date.now() });
       await update(chatRef, { lastMessage: Date.now(), messageCount: (cc2?.messageCount || 0) + 2 });
       if (msgRef.key) animateTyping(responseText, msgRef.key);
 
-      // Deduct tokens (skip for admins)
+      // Deduct tokens for AI response (skip for admins)
       if (!hasAdminAccess) {
-        const newUsed = tokensUsed + responseText.length;
+        const newUsed = tokensUsed + text.length + responseText.length;
         await update(ref(db, `users/${user.uid}/tokens`), { used: newUsed });
       }
     };
     doRespond();
   };
 
-  const stopGeneration = () => { generationAbortRef.current = true; };
+  const stopGeneration = () => { generationAbortRef.current = true; if (abortControllerRef.current) { abortControllerRef.current.abort(); abortControllerRef.current = null; } };
   const handleKeyDown = (e: React.KeyboardEvent) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); sendMessage(); } };
   const charCount = input.length;
   const charOverLimit = charCount > MAX_CHARS;
