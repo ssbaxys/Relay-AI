@@ -85,6 +85,8 @@ const resources = {
         "degraded": "Degraded",
         "down": "Down",
         "maintenance": "Maintenance",
+        "other": "Other",
+        "retry": "Retry",
         "languages": {
           "en": "English",
           "ru": "Русский",
@@ -142,7 +144,7 @@ const resources = {
           "price": "0₽",
           "period": "forever",
           "features": [
-            "5 requests per day",
+            "50K tokens per day",
             "GPT-4o Mini, Gemini Flash",
             "Web interface",
             "Basic support"
@@ -154,7 +156,7 @@ const resources = {
           "price": "499₽",
           "period": "per month",
           "features": [
-            "Unlimited requests",
+            "1M tokens per day",
             "All 100+ models",
             "API access",
             "Priority speed",
@@ -168,7 +170,7 @@ const resources = {
           "price": "1,299₽",
           "period": "per month",
           "features": [
-            "Everything in Pro",
+            "5M tokens per day",
             "Dedicated servers",
             "99.9% SLA",
             "Personal manager",
@@ -220,6 +222,14 @@ const resources = {
         "disclaimer": "AI can provide inaccurate information. Check important facts.",
         "generating": "Generating...",
         "pay_success_title": "Payment Successful",
+        "tokens": {
+          "exhausted": "Token quota exhausted",
+          "exhaustedDesc": "Your daily token limit has been reached.",
+          "used": "Tokens used",
+          "tokensPerDay": "tokens/day",
+          "resetsIn": "Quota resets in ~{{hours}}h",
+          "waitReset": "Wait {{hours}}h for quota reset"
+        },
         "userMenu": {
           "home": "To Home",
           "profile": "Profile",
@@ -265,54 +275,8 @@ const resources = {
           "edit": "Edit",
           "delete": "Delete"
         },
-        "suggestions": {
-          "gpt-5.2-codex": [
-            "Write a REST API in Node.js with auth",
-            "Create a React component with drag & drop",
-            "Optimize this SQL query",
-            "Write a CLI tool in Python"
-          ],
-          "claude-opus-4.6": [
-            "Draft a business plan for a SaaS startup",
-            "Write an essay about the future of AI",
-            "Analyze Stoic philosophy",
-            "Create a marketing strategy"
-          ],
-          "claude-sonnet-4.6": [
-            "Help with code refactoring",
-            "Write technical documentation",
-            "Create a test plan",
-            "Analyze log files"
-          ],
-          "gemini-3.1-pro": [
-            "Suggest content ideas",
-            "Write a business plan",
-            "Explain quantum physics",
-            "How to learn Spanish?"
-          ],
-          "gemini-3-flash": [
-            "Draft a quick email",
-            "Summarize this article",
-            "Create a daily schedule",
-            "Explain machine learning"
-          ],
-          "mistral-large-latest": [
-            "Write a creative story",
-            "Generate blog ideas",
-            "Help with French translation",
-            "Explain complex concepts"
-          ],
-          "deepseek-v3.2-exp": [
-            "Solve a math problem",
-            "Write a complex SQL query",
-            "Help with system design",
-            "Optimize an algorithm"
-          ]
-        },
-        "responses": [
-          "That's a great question. Let's look into it in more detail.\n\n**Key aspects:**\n\n1. **Context** — it's important to understand what is being discussed\n2. **Details** — every situation is unique\n3. **Approach** — vertical analysis is always better\n\n> Remember: a well-phrased question is half the answer.\n\nIf you have more questions — feel free to ask.",
-          "Here's what I can say:\n\n## Main points\n\n- **Key point** — understand the context\n- **Details** — unique situation\n\n```python\ndef solve(data):\n    result = process(data)\n    return optimize(result)\n```\n\nHope this helps!"
-        ]
+        "seconds": "sec",
+        "tool": "Tool"
       },
       "settings": {
         "title": "Settings",
@@ -354,6 +318,7 @@ const resources = {
       },
 
       "admin": {
+        "admin": "Admin",
         "payments": "Payments",
         "models": "Models",
         "viewingBanner": "Administrator is viewing your account",
@@ -548,7 +513,24 @@ const resources = {
           "next": "Next",
           "back": "Back",
           "nickPlaceholder": "Visual nickname",
-          "nickHelp": "This name will be seen by other users"
+          "nickHelp": "This name will be seen by other users",
+          "plans": {
+            "free": {
+              "name": "Free",
+              "period": "forever",
+              "features": ["5 requests per day", "Base models", "Web interface"]
+            },
+            "pro": {
+              "name": "Pro",
+              "period": "per month",
+              "features": ["500 requests per day", "All models", "Priority speed", "API access"]
+            },
+            "ultra": {
+              "name": "Ultra",
+              "period": "per month",
+              "features": ["Unlimited requests", "All models", "Dedicated servers", "API + SLA 99.9%"]
+            }
+          }
         },
         "common": {
           "or": "or",
@@ -562,6 +544,19 @@ const resources = {
           "agree": "By continuing, you agree to the",
           "termsLink": "terms of use",
           "errorTitle": "Error"
+        },
+        "errors": {
+          "fillFields": "Please fill in all fields",
+          "enterName": "Please enter your name",
+          "invalidEmail": "Invalid email address",
+          "weakPassword": "Password is too weak",
+          "emailInUse": "Email is already in use",
+          "userNotFound": "User not found",
+          "wrongPassword": "Wrong password",
+          "invalidCredential": "Invalid credentials",
+          "loginError": "Login error",
+          "registerError": "Registration error",
+          "googleError": "Google sign-in error"
         },
         "steps": {
           "method": "Auth Method",
@@ -712,6 +707,8 @@ const resources = {
         "degraded": "Деградация",
         "down": "Не работает",
         "maintenance": "Тех. работы",
+        "other": "Другое",
+        "retry": "Повторить",
         "languages": {
           "en": "English",
           "ru": "Русский",
@@ -769,7 +766,7 @@ const resources = {
           "price": "0₽",
           "period": "навсегда",
           "features": [
-            "5 запросов в день",
+            "50K токенов в день",
             "GPT-4o Mini, Gemini Flash",
             "Веб-интерфейс",
             "Базовая поддержка"
@@ -781,7 +778,7 @@ const resources = {
           "price": "499₽",
           "period": "в месяц",
           "features": [
-            "Безлимитные запросы",
+            "1M токенов в день",
             "Все 100+ моделей",
             "API доступ",
             "Приоритетная скорость",
@@ -795,7 +792,7 @@ const resources = {
           "price": "1 299₽",
           "period": "в месяц",
           "features": [
-            "Всё из Pro",
+            "5M токенов в день",
             "Выделенные серверы",
             "SLA 99.9%",
             "Персональный менеджер",
@@ -847,6 +844,16 @@ const resources = {
         "disclaimer": "ИИ может давать неточные ответы. Проверяйте важную информацию.",
         "generating": "Генерация...",
         "pay_success_title": "Оплата прошла успешно",
+        "tokens": {
+          "exhausted": "Лимит токенов исчерпан",
+          "exhaustedDesc": "Ваш дневной лимит токенов достигнут.",
+          "used": "Использовано токенов",
+          "tokensPerDay": "токенов/день",
+          "resetsIn": "Квота обновится через ~{{hours}}ч",
+          "waitReset": "Подождите {{hours}}ч до сброса квоты"
+        },
+        "seconds": "сек",
+        "tool": "Инструмент",
         "userMenu": {
           "home": "На главную",
           "profile": "Профиль",
@@ -891,55 +898,7 @@ const resources = {
           "create": "Создать",
           "edit": "Изменить",
           "delete": "Удалить"
-        },
-        "suggestions": {
-          "gpt-5.2-codex": [
-            "Напиши REST API на Node.js с авторизацией",
-            "Создай React компонент с drag & drop",
-            "Оптимизируй этот SQL запрос",
-            "Напиши CLI утилиту на Python"
-          ],
-          "claude-opus-4.6": [
-            "Составь бизнес-план для SaaS стартапа",
-            "Напиши эссе о будущем AI",
-            "Проанализируй философию стоицизма",
-            "Создай маркетинговую стратегию"
-          ],
-          "claude-sonnet-4.6": [
-            "Помоги с рефакторингом кода",
-            "Напиши техническую документацию",
-            "Создай план тестирования",
-            "Проанализируй лог-файлы"
-          ],
-          "gemini-3.1-pro": [
-            "Идеи для контента",
-            "Напиши бизнес-план",
-            "Объясни квантовую физику",
-            "Как выучить испанский?"
-          ],
-          "gemini-3-flash": [
-            "Быстрый ответ на email",
-            "Краткое содержание",
-            "План на день",
-            "Основы машинного обучения"
-          ],
-          "mistral-large-latest": [
-            "Напиши креативный рассказ",
-            "Сгенерируй идеи для блога",
-            "Помоги с переводом на французский",
-            "Объясни сложные концепции"
-          ],
-          "deepseek-v3.2-exp": [
-            "Реши математическую задачу",
-            "Напиши сложный SQL запрос",
-            "Помоги с системным проектированием",
-            "Оптимизируй алгоритм"
-          ]
-        },
-        "responses": [
-          "Это отличный вопрос. Давайте разберёмся подробнее.\n\n**Ключевые аспекты:**\n\n1. **Контекст** — важно понимать, о чём идёт речь\n2. **Детали** — каждая ситуация уникальна\n3. **Подход** — системный анализ всегда лучше\n\n> Помните: правильный вопрос — это уже половина ответа.\n\nЕсли у вас есть дополнительные вопросы — спрашивайте.",
-          "Вот что я могу сказать:\n\n## Основные моменты\n\n- **Ключевой момент** — важно понимать контекст\n- **Детали** — каждая ситуация уникальна\n\n```python\ndef solve(data):\n    result = process(data)\n    return optimize(result)\n```\n\nНадеюсь, это поможет!"
-        ]
+        }
       },
       "settings": {
         "title": "Настройки",
@@ -956,6 +915,10 @@ const resources = {
         "timeLeft": "Осталось времени",
         "forever": "Навсегда",
         "min": "мин",
+        "hours": "ч",
+        "minutes": "мин",
+        "seconds": "сек",
+        "expired": "Истёк",
         "createTicket": "Создать апелляцию",
         "myTickets": "Мои тикеты",
         "back": "Назад",
@@ -979,8 +942,8 @@ const resources = {
         "enterPassword": "Введите пароль",
         "invalidPassword": "Неверный пароль"
       },
-
       "admin": {
+        "admin": "Админ",
         "payments": "Платежи",
         "models": "Модели",
         "viewingBanner": "Администратор просматривает ваш аккаунт",
@@ -1175,7 +1138,24 @@ const resources = {
           "next": "Далее",
           "back": "Назад",
           "nickPlaceholder": "Визуальный ник",
-          "nickHelp": "Это имя будут видеть другие пользователи"
+          "nickHelp": "Это имя будут видеть другие пользователи",
+          "plans": {
+            "free": {
+              "name": "Free",
+              "period": "навсегда",
+              "features": ["5 запросов в день", "Базовые модели", "Веб-интерфейс"]
+            },
+            "pro": {
+              "name": "Pro",
+              "period": "в месяц",
+              "features": ["500 запросов в день", "Все модели", "Приоритетная скорость", "API доступ"]
+            },
+            "ultra": {
+              "name": "Ultra",
+              "period": "в месяц",
+              "features": ["Безлимит запросов", "Все модели", "Выделенные серверы", "API + SLA 99.9%"]
+            }
+          }
         },
         "common": {
           "or": "или",
@@ -1189,6 +1169,19 @@ const resources = {
           "agree": "Продолжая, вы соглашаетесь с",
           "termsLink": "условиями использования",
           "errorTitle": "Ошибка"
+        },
+        "errors": {
+          "fillFields": "Заполните все поля",
+          "enterName": "Введите имя",
+          "invalidEmail": "Неверный email",
+          "weakPassword": "Слабый пароль",
+          "emailInUse": "Email уже используется",
+          "userNotFound": "Пользователь не найден",
+          "wrongPassword": "Неверный пароль",
+          "invalidCredential": "Неверные данные",
+          "loginError": "Ошибка входа",
+          "registerError": "Ошибка регистрации",
+          "googleError": "Ошибка входа через Google"
         },
         "steps": {
           "method": "Способ входа",
@@ -1293,6 +1286,8 @@ const resources = {
         "degraded": "Degradado",
         "down": "Caído",
         "maintenance": "Mantenimiento",
+        "other": "Otro",
+        "retry": "Reintentar",
         "languages": {
           "en": "English",
           "ru": "Русский",
@@ -1301,6 +1296,22 @@ const resources = {
           "de": "Deutsch",
           "zh": "中文"
         }
+      },
+      "stats": {
+        "models": "Modelos IA",
+        "users": "Usuarios",
+        "uptime": "Uptime",
+        "latency": "Latencia"
+      },
+      "features": {
+        "Layers": { "title": "Mejores Modelos", "desc": "GPT-5.2, Claude 4.6 y Gemini 3.1 a través de una sola interfaz." },
+        "Zap": { "title": "Velocidad Instantánea", "desc": "Enrutamiento optimizado con menos de 50ms de latencia." },
+        "Globe": { "title": "API Unificada", "desc": "Una clave para todos los modelos. Sin registro por separado." },
+        "Shield": { "title": "Seguridad", "desc": "Cifrado de extremo a extremo y cumplimiento de estándares de protección." }
+      },
+      "models": {
+        "title": "Modelos Disponibles",
+        "subtitle": "Los mejores modelos de los principales proveedores"
       },
       "home": {
         "badge": "Modelos IA top disponibles",
@@ -1322,7 +1333,7 @@ const resources = {
           "price": "0₽",
           "period": "siempre",
           "features": [
-            "5 peticiones por día",
+            "50K tokens por día",
             "GPT-4o Mini, Gemini Flash",
             "Interfaz web",
             "Soporte básico"
@@ -1334,7 +1345,7 @@ const resources = {
           "price": "499₽",
           "period": "por mes",
           "features": [
-            "Peticiones ilimitadas",
+            "1M tokens por día",
             "Todos los +100 modelos",
             "Acceso API",
             "Velocidad prioritaria",
@@ -1348,7 +1359,7 @@ const resources = {
           "price": "1,299₽",
           "period": "por mes",
           "features": [
-            "Todo en Pro",
+            "5M tokens por día",
             "Servidores dedicados",
             "99.9% SLA",
             "Manager personal",
@@ -1399,6 +1410,16 @@ const resources = {
         "inputPlaceholder": "Escribe un mensaje...",
         "disclaimer": "La IA puede proporcionar información inexacta. Verifica datos importantes.",
         "generating": "Generando...",
+        "pay_success_title": "Pago exitoso",
+        "tokens": {
+          "exhausted": "Límite de tokens agotado",
+          "exhaustedDesc": "Tu límite diario de tokens se ha alcanzado.",
+          "used": "Tokens usados",
+          "tokensPerDay": "tokens/día",
+          "resetsIn": "La cuota se renueva en ~{{hours}}h",
+          "waitReset": "Espera {{hours}}h para renovar la cuota"
+        },
+        "seconds": "seg",
         "userMenu": {
           "home": "Inicio",
           "profile": "Perfil",
@@ -1445,12 +1466,17 @@ const resources = {
           "delete": "Eliminar"
         }
       },
-      "uptime": {
-        "title": "Uptime",
-        "allSystems": "Todos los sistemas operativos",
-        "subtitle": "Los sistemas funcionan normalmente"
+      "settings": {
+        "title": "Ajustes",
+        "language": "Idioma",
+        "theme": "Tema",
+        "dark": "Oscuro",
+        "light": "Claro",
+        "system": "Sistema"
       },
       "admin": {
+        "admin": "Admin",
+        "payments": "Pagos",
         "viewingBanner": "El administrador está viendo su cuenta",
         "title": "Panel de Administración",
         "users": "Usuarios",
@@ -1628,6 +1654,10 @@ const resources = {
         "timeLeft": "Tiempo restante",
         "forever": "Permanente",
         "min": "min",
+        "hours": "h",
+        "minutes": "min",
+        "seconds": "seg",
+        "expired": "Expirado",
         "createTicket": "Crear ticket de apelación",
         "myTickets": "Mis tickets",
         "back": "Volver",
@@ -1661,6 +1691,24 @@ const resources = {
           "cardNumber": "Número de tarjeta",
           "submit": "Pagar {{price}}₽",
           "processing": "Procesando..."
+        }
+      },
+      "sign": {
+        "backToHome": "Volver al inicio",
+        "login": { "title": "Iniciar sesión", "subtitle": "Elige un método", "google": "Iniciar con Google", "submit": "Entrar", "loading": "Entrando..." },
+        "register": { "title": "Crear cuenta", "subtitle": "Elige un método", "google": "Registrar con Google", "profileTitle": "Tu perfil", "profileSubtitle": "¿Cómo te llamas?", "planTitle": "Elige plan", "planSubtitle": "Puedes cambiarlo después", "submit": "Crear cuenta", "loading": "Creando...", "next": "Siguiente", "back": "Atrás", "nickPlaceholder": "Apodo visual", "nickHelp": "Este nombre será visible para otros", "plans": { "free": { "name": "Gratis", "period": "siempre", "features": ["5 consultas/día", "Modelos básicos", "Interfaz web"] }, "pro": { "name": "Pro", "period": "por mes", "features": ["500 consultas/día", "Todos los modelos", "Velocidad prioritaria", "Acceso API"] }, "ultra": { "name": "Ultra", "period": "por mes", "features": ["Ilimitado", "Todos los modelos", "Servidores dedicados", "API + SLA 99.9%"] } } },
+        "common": { "or": "o", "email": "Email", "password": "Contraseña", "passwordPlaceholder": "Mínimo 6 caracteres", "noAccount": "¿No tienes cuenta?", "haveAccount": "¿Ya tienes cuenta?", "switchRegister": "Registrarse", "switchLogin": "Entrar", "agree": "Al continuar, aceptas los", "termsLink": "términos de uso", "errorTitle": "Error" },
+        "errors": { "fillFields": "Completa todos los campos", "enterName": "Ingresa tu nombre", "invalidEmail": "Email inválido", "weakPassword": "Contraseña débil", "emailInUse": "Email ya en uso", "userNotFound": "Usuario no encontrado", "wrongPassword": "Contraseña incorrecta", "invalidCredential": "Credenciales inválidas", "loginError": "Error al entrar", "registerError": "Error al registrar", "googleError": "Error de Google" },
+        "steps": { "method": "Método", "profile": "Perfil", "plan": "Suscripción" }
+      },
+      "terms": {
+        "title": "Términos de Uso",
+        "lastUpdated": "Última actualización: Enero 2025",
+        "toc": "Contenido",
+        "back": "Volver",
+        "questions": "¿Tienes preguntas?",
+        "sections": {
+          "s0": "1. Disposiciones generales", "s1": "2. Descripción del servicio", "s2": "3. Registro y cuenta", "s3": "4. Reglas de uso", "s4": "5. Tarifas y pago", "s5": "6. Propiedad intelectual", "s6": "7. Privacidad y datos", "s7": "8. Limitación de responsabilidad", "s8": "9. Soporte técnico", "s9": "10. Terminación de uso", "s10": "11. Resolución de disputas", "s11": "12. Información de contacto"
         }
       }
     }
@@ -1701,6 +1749,8 @@ const resources = {
         "degraded": "Dégradé",
         "down": "En panne",
         "maintenance": "Maintenance",
+        "other": "Autre",
+        "retry": "Réessayer",
         "languages": {
           "en": "English",
           "ru": "Русский",
@@ -1709,6 +1759,22 @@ const resources = {
           "de": "Deutsch",
           "zh": "中文"
         }
+      },
+      "stats": {
+        "models": "Modèles IA",
+        "users": "Utilisateurs",
+        "uptime": "Uptime",
+        "latency": "Latence"
+      },
+      "features": {
+        "Layers": { "title": "Meilleurs Modèles", "desc": "GPT-5.2, Claude 4.6 et Gemini 3.1 via une seule interface." },
+        "Zap": { "title": "Vitesse Instantanée", "desc": "Routage optimisé avec moins de 50ms de latence." },
+        "Globe": { "title": "API Unifiée", "desc": "Une clé pour tous les modèles. Sans inscription séparée." },
+        "Shield": { "title": "Sécurité", "desc": "Chiffrement de bout en bout et conformité aux normes de protection." }
+      },
+      "models": {
+        "title": "Modèles Disponibles",
+        "subtitle": "Les meilleurs modèles des principaux fournisseurs"
       },
       "home": {
         "badge": "Meilleurs modèles IA disponibles",
@@ -1730,7 +1796,7 @@ const resources = {
           "price": "0₽",
           "period": "toujours",
           "features": [
-            "5 requêtes par jour",
+            "50K tokens par jour",
             "GPT-4o Mini, Gemini Flash",
             "Interface web",
             "Support de base"
@@ -1742,7 +1808,7 @@ const resources = {
           "price": "499₽",
           "period": "par mois",
           "features": [
-            "Requêtes illimitées",
+            "1M tokens par jour",
             "Tous les +100 modèles",
             "Accès API",
             "Vitesse prioritaire",
@@ -1756,7 +1822,7 @@ const resources = {
           "price": "1,299₽",
           "period": "par mois",
           "features": [
-            "Tout du Pro",
+            "5M tokens par jour",
             "Serveurs dédiés",
             "99.9% SLA",
             "Manager personnel",
@@ -1765,6 +1831,9 @@ const resources = {
           ],
           "cta": "Choisir Ultra"
         }
+      },
+      "footer": {
+        "description": "Votre guide dans le monde de l'intelligence artificielle moderne."
       },
       "chat": {
         "newChat": "Nouveau Chat",
@@ -1787,6 +1856,18 @@ const resources = {
         "delete": "Supprimer",
         "inputPlaceholder": "Écrivez un message...",
         "disclaimer": "L'IA peut fournir des informations inexactes. Vérifiez les faits importants.",
+        "generating": "Génération...",
+        "pay_success_title": "Paiement réussi",
+        "tokens": {
+          "exhausted": "Quota de tokens épuisée",
+          "exhaustedDesc": "Votre limite quotidienne de tokens est atteinte.",
+          "used": "Tokens utilisés",
+          "tokensPerDay": "tokens/jour",
+          "resetsIn": "Quota renouvellement dans ~{{hours}}h",
+          "waitReset": "Attendez {{hours}}h pour le renouvellement"
+        },
+        "seconds": "sec",
+        "tool": "Outil",
         "userMenu": {
           "home": "Accueil",
           "profile": "Profil",
@@ -1804,7 +1885,17 @@ const resources = {
           "login": "Connexion"
         }
       },
+      "settings": {
+        "title": "Paramètres",
+        "language": "Langue de l'interface",
+        "theme": "Thème",
+        "dark": "Sombre",
+        "light": "Clair",
+        "system": "Système"
+      },
       "admin": {
+        "admin": "Admin",
+        "payments": "Paiements",
         "viewingBanner": "L'administrateur consulte votre compte",
         "title": "Panneau d'administration",
         "users": "Utilisateurs",
@@ -1993,7 +2084,11 @@ const resources = {
         "statusOpen": "Ouvert",
         "statusClosed": "Fermé",
         "writeMessage": "Écrire un message...",
-        "ticketClosed": "Ce ticket est fermé"
+        "ticketClosed": "Ce ticket est fermé",
+        "hours": "h",
+        "minutes": "min",
+        "seconds": "sec",
+        "expired": "Expiré"
       },
       "maintenance": {
         "title": "Travaux Techniques",
@@ -2004,6 +2099,24 @@ const resources = {
         "areYouAdmin": "Êtes-vous administrateur ?",
         "enterPassword": "Entrer le mot de passe",
         "invalidPassword": "Mot de passe incorrect"
+      },
+      "sign": {
+        "backToHome": "Accueil",
+        "login": { "title": "Se connecter", "subtitle": "Choisissez une méthode", "google": "Se connecter avec Google", "submit": "Connexion", "loading": "Connexion..." },
+        "register": { "title": "Créer un compte", "subtitle": "Choisissez une méthode", "google": "S'inscrire avec Google", "profileTitle": "Votre profil", "profileSubtitle": "Comment vous appelez-vous ?", "planTitle": "Choisissez un plan", "planSubtitle": "Vous pouvez changer plus tard", "submit": "Créer le compte", "loading": "Création...", "next": "Suivant", "back": "Retour", "nickPlaceholder": "Pseudo visible", "nickHelp": "Ce nom sera visible par les autres", "plans": { "free": { "name": "Gratuit", "period": "pour toujours", "features": ["5 requêtes/jour", "Modèles de base", "Interface web"] }, "pro": { "name": "Pro", "period": "par mois", "features": ["500 requêtes/jour", "Tous les modèles", "Vitesse prioritaire", "Accès API"] }, "ultra": { "name": "Ultra", "period": "par mois", "features": ["Illimité", "Tous les modèles", "Serveurs dédiés", "API + SLA 99.9%"] } } },
+        "common": { "or": "ou", "email": "Email", "password": "Mot de passe", "passwordPlaceholder": "Minimum 6 caractères", "noAccount": "Pas de compte ?", "haveAccount": "Déjà un compte ?", "switchRegister": "S'inscrire", "switchLogin": "Se connecter", "agree": "En continuant, vous acceptez les", "termsLink": "conditions d'utilisation", "errorTitle": "Erreur" },
+        "errors": { "fillFields": "Remplissez tous les champs", "enterName": "Entrez votre nom", "invalidEmail": "Email invalide", "weakPassword": "Mot de passe faible", "emailInUse": "Email déjà utilisé", "userNotFound": "Utilisateur non trouvé", "wrongPassword": "Mot de passe incorrect", "invalidCredential": "Identifiants invalides", "loginError": "Erreur de connexion", "registerError": "Erreur d'inscription", "googleError": "Erreur Google" },
+        "steps": { "method": "Méthode", "profile": "Profil", "plan": "Abonnement" }
+      },
+      "terms": {
+        "title": "Conditions d'utilisation",
+        "lastUpdated": "Dernière mise à jour : Janvier 2025",
+        "toc": "Sommaire",
+        "back": "Retour",
+        "questions": "Des questions ?",
+        "sections": {
+          "s0": "1. Dispositions générales", "s1": "2. Description du service", "s2": "3. Inscription et compte", "s3": "4. Règles d'utilisation", "s4": "5. Tarifs et paiement", "s5": "6. Propriété intellectuelle", "s6": "7. Confidentialité et données", "s7": "8. Limitation de responsabilité", "s8": "9. Support technique", "s9": "10. Résiliation", "s10": "11. Résolution des litiges", "s11": "12. Coordonnées"
+        }
       }
     },
     "de": {
@@ -2042,6 +2155,8 @@ const resources = {
           "degraded": "Eingeschränkt",
           "down": "Ausfall",
           "maintenance": "Wartung",
+          "other": "Sonstiges",
+          "retry": "Erneut versuchen",
           "languages": {
             "en": "English",
             "ru": "Русский",
@@ -2050,6 +2165,22 @@ const resources = {
             "de": "Deutsch",
             "zh": "中文"
           }
+        },
+        "stats": {
+          "models": "KI-Modelle",
+          "users": "Benutzer",
+          "uptime": "Uptime",
+          "latency": "Latenz"
+        },
+        "features": {
+          "Layers": { "title": "Beste Modelle", "desc": "GPT-5.2, Claude 4.6 und Gemini 3.1 über eine einzige Schnittstelle." },
+          "Zap": { "title": "Sofortige Geschwindigkeit", "desc": "Optimiertes Routing mit weniger als 50ms Latenz." },
+          "Globe": { "title": "Einheitliche API", "desc": "Ein Schlüssel für alle Modelle. Ohne separate Registrierung." },
+          "Shield": { "title": "Sicherheit", "desc": "End-to-End-Verschlüsselung und Einhaltung von Schutzstandards." }
+        },
+        "models": {
+          "title": "Verfügbare Modelle",
+          "subtitle": "Die besten Modelle der führenden Anbieter"
         },
         "home": {
           "badge": "Top-KI-Modelle verfügbar",
@@ -2071,7 +2202,7 @@ const resources = {
             "price": "0₽",
             "period": "für immer",
             "features": [
-              "5 Anfragen pro Tag",
+              "50K Tokens pro Tag",
               "GPT-4o Mini, Gemini Flash",
               "Web-Interface",
               "Basis-Support"
@@ -2083,7 +2214,7 @@ const resources = {
             "price": "499₽",
             "period": "pro Monat",
             "features": [
-              "Unbegrenzte Anfragen",
+              "1M Tokens pro Tag",
               "Alle +100 Modelle",
               "API-Zugriff",
               "Priorisierte Geschwindigkeit",
@@ -2097,7 +2228,7 @@ const resources = {
             "price": "1,299₽",
             "period": "pro Monat",
             "features": [
-              "Alles aus Pro",
+              "5M Tokens pro Tag",
               "Dedizierte Server",
               "99.9% SLA",
               "Persönlicher Manager",
@@ -2106,6 +2237,9 @@ const resources = {
             ],
             "cta": "Ultra wählen"
           }
+        },
+        "footer": {
+          "description": "Ihr Leitfaden in der Welt der modernen künstlichen Intelligenz."
         },
         "chat": {
           "newChat": "Neuer Chat",
@@ -2122,6 +2256,18 @@ const resources = {
           "delete": "Löschen",
           "inputPlaceholder": "Nachricht schreiben...",
           "disclaimer": "KI kann ungenaue Informationen liefern. Wichtige Fakten prüfen.",
+          "generating": "Generierung...",
+          "pay_success_title": "Zahlung erfolgreich",
+          "tokens": {
+            "exhausted": "Token-Limit erreicht",
+            "exhaustedDesc": "Ihr tägliches Token-Limit ist erreicht.",
+            "used": "Verbrauchte Tokens",
+            "tokensPerDay": "Tokens/Tag",
+            "resetsIn": "Erneuerung in ~{{hours}} Std.",
+            "waitReset": "{{hours}} Std. bis zur Erneuerung warten"
+          },
+          "seconds": "Sek",
+          "tool": "Werkzeug",
           "userMenu": {
             "home": "Startseite",
             "profile": "Profil",
@@ -2139,7 +2285,17 @@ const resources = {
             "login": "Anmelden"
           }
         },
+        "settings": {
+          "title": "Einstellungen",
+          "language": "Sprache",
+          "theme": "Thema",
+          "dark": "Dunkel",
+          "light": "Hell",
+          "system": "System"
+        },
         "admin": {
+          "admin": "Admin",
+          "payments": "Zahlungen",
           "viewingBanner": "Administrator sieht sich Ihr Konto an",
           "title": "Admin-Panel",
           "users": "Benutzer",
@@ -2344,6 +2500,24 @@ const resources = {
           "minutes": "Min.",
           "seconds": "Sek.",
           "expired": "Abgelaufen"
+        },
+        "sign": {
+          "backToHome": "Zur Startseite",
+          "login": { "title": "Anmelden", "subtitle": "Wähle eine Methode", "google": "Mit Google anmelden", "submit": "Anmelden", "loading": "Anmeldung..." },
+          "register": { "title": "Konto erstellen", "subtitle": "Wähle eine Methode", "google": "Mit Google registrieren", "profileTitle": "Dein Profil", "profileSubtitle": "Wie heißt du?", "planTitle": "Plan wählen", "planSubtitle": "Du kannst später ändern", "submit": "Konto erstellen", "loading": "Erstellen...", "next": "Weiter", "back": "Zurück", "nickPlaceholder": "Anzeigename", "nickHelp": "Dieser Name ist für andere sichtbar", "plans": { "free": { "name": "Kostenlos", "period": "für immer", "features": ["5 Anfragen/Tag", "Basis-Modelle", "Web-Interface"] }, "pro": { "name": "Pro", "period": "pro Monat", "features": ["500 Anfragen/Tag", "Alle Modelle", "Priorisierte Geschwindigkeit", "API-Zugriff"] }, "ultra": { "name": "Ultra", "period": "pro Monat", "features": ["Unbegrenzt", "Alle Modelle", "Dedizierte Server", "API + SLA 99.9%"] } } },
+          "common": { "or": "oder", "email": "Email", "password": "Passwort", "passwordPlaceholder": "Mindestens 6 Zeichen", "noAccount": "Kein Konto?", "haveAccount": "Schon ein Konto?", "switchRegister": "Registrieren", "switchLogin": "Anmelden", "agree": "Mit dem Fortfahren akzeptierst du die", "termsLink": "Nutzungsbedingungen", "errorTitle": "Fehler" },
+          "errors": { "fillFields": "Alle Felder ausfüllen", "enterName": "Name eingeben", "invalidEmail": "Ungültige Email", "weakPassword": "Schwaches Passwort", "emailInUse": "Email bereits verwendet", "userNotFound": "Benutzer nicht gefunden", "wrongPassword": "Falsches Passwort", "invalidCredential": "Ungültige Daten", "loginError": "Anmeldefehler", "registerError": "Registrierungsfehler", "googleError": "Google-Fehler" },
+          "steps": { "method": "Methode", "profile": "Profil", "plan": "Abonnement" }
+        },
+        "terms": {
+          "title": "Nutzungsbedingungen",
+          "lastUpdated": "Letzte Aktualisierung: Januar 2025",
+          "toc": "Inhaltsverzeichnis",
+          "back": "Zurück",
+          "questions": "Fragen?",
+          "sections": {
+            "s0": "1. Allgemeine Bestimmungen", "s1": "2. Dienstbeschreibung", "s2": "3. Registrierung und Konto", "s3": "4. Nutzungsregeln", "s4": "5. Tarife und Zahlung", "s5": "6. Geistiges Eigentum", "s6": "7. Datenschutz", "s7": "8. Haftungsbeschränkung", "s8": "9. Technischer Support", "s9": "10. Nutzungsbeendigung", "s10": "11. Streitbeilegung", "s11": "12. Kontaktinformationen"
+          }
         }
       }
     },
@@ -2383,6 +2557,8 @@ const resources = {
           "degraded": "性能下降",
           "down": "停机",
           "maintenance": "维护中",
+          "other": "其他",
+          "retry": "重试",
           "languages": {
             "en": "English",
             "ru": "Русский",
@@ -2391,6 +2567,22 @@ const resources = {
             "de": "Deutsch",
             "zh": "中文"
           }
+        },
+        "stats": {
+          "models": "AI 模型",
+          "users": "用户",
+          "uptime": "运行时间",
+          "latency": "延迟"
+        },
+        "features": {
+          "Layers": { "title": "顶级模型", "desc": "通过统一界面访问 GPT-5.2、Claude 4.6 和 Gemini 3.1。" },
+          "Zap": { "title": "极速响应", "desc": "优化路由，延迟低于 50ms。" },
+          "Globe": { "title": "统一 API", "desc": "一个密钥访问所有模型。无需单独注册。" },
+          "Shield": { "title": "安全保障", "desc": "端到端加密，符合保护标准。" }
+        },
+        "models": {
+          "title": "可用模型",
+          "subtitle": "来自顶级提供商的最佳模型"
         },
         "home": {
           "badge": "现已支持顶级 AI 模型",
@@ -2412,7 +2604,7 @@ const resources = {
             "price": "0₽",
             "period": "永久",
             "features": [
-              "每日 5 次请求",
+              "50K 代币/天",
               "GPT-4o Mini, Gemini Flash",
               "Web 界面",
               "基础支持"
@@ -2424,7 +2616,7 @@ const resources = {
             "price": "499₽",
             "period": "每月",
             "features": [
-              "无限次请求",
+              "1M 代币/天",
               "支持所有 100+ 模型",
               "API 访问权限",
               "优先响应速度",
@@ -2438,7 +2630,7 @@ const resources = {
             "price": "1,299₽",
             "period": "每月",
             "features": [
-              "包含所有专业版功能",
+              "5M 代币/天",
               "独立服务器",
               "99.9% 运行保障",
               "专属客户经理",
@@ -2447,6 +2639,9 @@ const resources = {
             ],
             "cta": "选择旗舰版"
           }
+        },
+        "footer": {
+          "description": "您的现代人工智能世界向导。"
         },
         "chat": {
           "newChat": "新聊天",
@@ -2463,6 +2658,18 @@ const resources = {
           "delete": "删除",
           "inputPlaceholder": "输入消息...",
           "disclaimer": "AI 可能会生成不准确的信息。请核实重要事实。",
+          "generating": "生成中...",
+          "pay_success_title": "支付成功",
+          "tokens": {
+            "exhausted": "代币额度已用尽",
+            "exhaustedDesc": "您的每日代币额度已达上限。",
+            "used": "已使用代币",
+            "tokensPerDay": "代币/天",
+            "resetsIn": "额度将在 ~{{hours}}小时后重置",
+            "waitReset": "请等待 {{hours}} 小时后重置额度"
+          },
+          "seconds": "秒",
+          "tool": "工具",
           "userMenu": {
             "home": "返回首页",
             "profile": "个人资料",
@@ -2479,7 +2686,17 @@ const resources = {
             "terms": "使用条款"
           }
         },
+        "settings": {
+          "title": "设置",
+          "language": "界面语言",
+          "theme": "主题",
+          "dark": "深色",
+          "light": "浅色",
+          "system": "系统"
+        },
         "admin": {
+          "admin": "管理员",
+          "payments": "支付记录",
           "viewingBanner": "管理员正在查看您的帐户",
           "title": "管理面板",
           "users": "用户管理",
@@ -2684,6 +2901,24 @@ const resources = {
           "minutes": "分钟",
           "seconds": "秒",
           "expired": "已过期"
+        },
+        "sign": {
+          "backToHome": "返回首页",
+          "login": { "title": "登录", "subtitle": "选择登录方式", "google": "通过 Google 登录", "submit": "登录", "loading": "登录中..." },
+          "register": { "title": "创建账户", "subtitle": "选择注册方式", "google": "通过 Google 注册", "profileTitle": "个人资料", "profileSubtitle": "您的名字是？", "planTitle": "选择方案", "planSubtitle": "稍后可以更改", "submit": "创建账户", "loading": "创建中...", "next": "下一步", "back": "返回", "nickPlaceholder": "显示名称", "nickHelp": "其他用户将看到此名称", "plans": { "free": { "name": "免费版", "period": "永久", "features": ["5 次请求/天", "基础模型", "Web 界面"] }, "pro": { "name": "专业版", "period": "每月", "features": ["500 次请求/天", "所有模型", "优先速度", "API 访问"] }, "ultra": { "name": "旗舰版", "period": "每月", "features": ["无限请求", "所有模型", "独立服务器", "API + SLA 99.9%"] } } },
+          "common": { "or": "或", "email": "电子邮箱", "password": "密码", "passwordPlaceholder": "至少 6 个字符", "noAccount": "没有账户？", "haveAccount": "已有账户？", "switchRegister": "注册", "switchLogin": "登录", "agree": "继续即表示您同意", "termsLink": "使用条款", "errorTitle": "错误" },
+          "errors": { "fillFields": "请填写所有字段", "enterName": "请输入名称", "invalidEmail": "邮箱无效", "weakPassword": "密码太弱", "emailInUse": "邮箱已被使用", "userNotFound": "用户未找到", "wrongPassword": "密码错误", "invalidCredential": "凭据无效", "loginError": "登录错误", "registerError": "注册错误", "googleError": "Google 登录错误" },
+          "steps": { "method": "方式", "profile": "资料", "plan": "方案" }
+        },
+        "terms": {
+          "title": "使用条款",
+          "lastUpdated": "最后更新：2025年1月",
+          "toc": "目录",
+          "back": "返回",
+          "questions": "有疑问？",
+          "sections": {
+            "s0": "1. 总则", "s1": "2. 服务描述", "s2": "3. 注册与账户", "s3": "4. 使用规则", "s4": "5. 费率与支付", "s5": "6. 知识产权", "s6": "7. 隐私与数据", "s7": "8. 责任限制", "s8": "9. 技术支持", "s9": "10. 停止使用", "s10": "11. 争议解决", "s11": "12. 联系信息"
+          }
         }
       }
     }

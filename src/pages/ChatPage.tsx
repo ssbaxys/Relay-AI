@@ -13,12 +13,14 @@ import {
   GripVertical, FolderOpen, Home, User, Lock, FileText, PanelLeftClose, PanelLeft,
   Shield, Wrench, AlertTriangle, Ban, TicketCheck, ChevronLeft, Send as SendIcon,
   Play, Pause, Download, Code, Image as ImageIcon, Music, ExternalLink, Eye,
-  Crown, Gem, Sparkles, Settings, Globe
+  Crown, Gem, Sparkles, Settings, Globe, Zap
 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { LanguageSwitcher } from "../components/LanguageSwitcher";
 
 const MAX_CHARS = 2000;
+const TOKEN_LIMITS: Record<string, number> = { free: 50000, pro: 1000000, ultra: 5000000 };
+const getTokenLimit = (plan: string) => TOKEN_LIMITS[plan] || TOKEN_LIMITS.free;
 const sanitizeKey = (k: string) => k.replace(/\./g, "_");
 
 type SortMode = "recent" | "alphabetical" | "messages";
@@ -397,6 +399,9 @@ export default function ChatPage() {
   const [newTicketSubject, setNewTicketSubject] = useState("");
   const [newTicketMessage, setNewTicketMessage] = useState("");
   const [ticketReply, setTicketReply] = useState("");
+  const [tokensUsed, setTokensUsed] = useState(0);
+  const [tokensResetDate, setTokensResetDate] = useState(0);
+  const [showTokenModal, setShowTokenModal] = useState(false);
 
   const generationAbortRef = useRef(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -458,6 +463,33 @@ export default function ChatPage() {
   useEffect(() => { if (!user) return; const q = query(ref(db, `chats/${user.uid}`), orderByChild("createdAt")); const unsub = onValue(q, (snap) => { const d = snap.val(); if (d) { setChatSessions(Object.entries(d).map(([id, v]: [string, any]) => ({ id, title: v.title || t('chat.newChat'), model: v.model || "gpt-5.2-codex", createdAt: v.createdAt || 0, lastMessage: v.lastMessage || v.createdAt || 0, messageCount: v.messageCount || 0, folderId: v.folderId || undefined }))); } else setChatSessions([]); }); return () => unsub(); }, [user, t]);
   useEffect(() => { if (!user) return; const unsub = onValue(ref(db, `folders/${user.uid}`), (snap) => { const d = snap.val(); if (d) { setFolders(Object.entries(d).map(([id, v]: [string, any]) => ({ id, name: v.name || t('chat.folder'), createdAt: v.createdAt || 0, collapsed: v.collapsed || false }))); } else setFolders([]); }); return () => unsub(); }, [user, t]);
 
+  // Token Quota Listener
+  useEffect(() => {
+    if (!user) return;
+    const unsub = onValue(ref(db, `users/${user.uid}/tokens`), (snap) => {
+      const d = snap.val();
+      if (d) {
+        const now = Date.now();
+        const resetDate = d.resetDate || 0;
+        // If more than 24h since last reset, reset tokens
+        if (now - resetDate > 24 * 60 * 60 * 1000) {
+          set(ref(db, `users/${user.uid}/tokens`), { used: 0, resetDate: now });
+          setTokensUsed(0);
+          setTokensResetDate(now);
+        } else {
+          setTokensUsed(d.used || 0);
+          setTokensResetDate(resetDate);
+        }
+      } else {
+        // Initialize tokens for new users
+        set(ref(db, `users/${user.uid}/tokens`), { used: 0, resetDate: Date.now() });
+        setTokensUsed(0);
+        setTokensResetDate(Date.now());
+      }
+    });
+    return () => unsub();
+  }, [user]);
+
   useEffect(() => {
     if (!user || !currentChatId) { setMessages([]); return; }
     const q = query(ref(db, `messages/${user.uid}/${currentChatId}`), orderByChild("timestamp"));
@@ -512,6 +544,17 @@ export default function ChatPage() {
     if (!input.trim() || !user || isGenerating) return;
     if (isModelDisabledCheck(selectedModel.id)) return;
     const text = input.trim().substring(0, MAX_CHARS);
+
+    // Token quota check (skip for admins)
+    if (!hasAdminAccess) {
+      const limit = getTokenLimit(profileData.plan);
+      const tokenCost = text.length; // 1 char = 1 token
+      if (tokensUsed + tokenCost > limit) {
+        setShowTokenModal(true);
+        return;
+      }
+    }
+
     setInput("");
 
     let chatId = currentChatId;
@@ -536,6 +579,12 @@ export default function ChatPage() {
     const chatRef = ref(db, `chats/${user.uid}/${chatId}`);
     const cc2 = chatSessions.find(c => c.id === chatId);
     await update(chatRef, { lastMessage: Date.now(), messageCount: (cc2?.messageCount || 0) + 1 });
+
+    // Deduct tokens (skip for admins)
+    if (!hasAdminAccess) {
+      const newUsed = tokensUsed + text.length;
+      await update(ref(db, `users/${user.uid}/tokens`), { used: newUsed });
+    }
 
     // Don't auto-respond if god mode manual/admin is active
     if (godModeActive === "manual" || godModeActive === "admin") return;
@@ -724,6 +773,60 @@ export default function ChatPage() {
 
   const isModelDisabled = isModelDisabledCheck(selectedModel.id);
   const noModelsAvailable = enabledModels.length === 0;
+  const tokenLimit = getTokenLimit(profileData.plan);
+  const tokenPercent = Math.min((tokensUsed / tokenLimit) * 100, 100);
+  const tokensExhausted = tokensUsed >= tokenLimit;
+  const tokenResetMs = tokensResetDate ? Math.max(0, (tokensResetDate + 24 * 60 * 60 * 1000) - Date.now()) : 0;
+  const tokenResetHours = Math.ceil(tokenResetMs / (60 * 60 * 1000));
+
+  // Token Exhausted Modal
+  const TokenExhaustedModal = () => (
+    <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4" onClick={() => setShowTokenModal(false)}>
+      <div className="bg-[#0d0d12] border border-white/[0.08] rounded-2xl p-6 max-w-md w-full shadow-2xl" onClick={(e) => e.stopPropagation()}>
+        <div className="flex items-center gap-3 mb-4">
+          <div className="w-10 h-10 rounded-xl bg-amber-500/10 flex items-center justify-center">
+            <Zap className="w-5 h-5 text-amber-400" />
+          </div>
+          <div>
+            <h3 className="text-base font-semibold text-zinc-100">{t('chat.tokens.exhausted')}</h3>
+            <p className="text-xs text-zinc-500">{t('chat.tokens.exhaustedDesc')}</p>
+          </div>
+        </div>
+        <div className="bg-white/[0.02] rounded-xl p-4 mb-4 border border-white/[0.04]">
+          <div className="flex justify-between text-xs text-zinc-400 mb-2">
+            <span>{t('chat.tokens.used')}</span>
+            <span>{tokensUsed.toLocaleString()} / {tokenLimit.toLocaleString()}</span>
+          </div>
+          <div className="w-full h-2 bg-white/[0.04] rounded-full overflow-hidden">
+            <div className="h-full bg-gradient-to-r from-red-500 to-amber-500 rounded-full" style={{ width: '100%' }} />
+          </div>
+          <p className="text-[11px] text-zinc-600 mt-2">{t('chat.tokens.resetsIn', { hours: tokenResetHours })}</p>
+        </div>
+        {profileData.plan === 'free' ? (
+          <div className="space-y-2">
+            <Link to="/payment?plan=pro" className="flex items-center justify-between w-full px-4 py-3 rounded-xl bg-violet-600/15 border border-violet-500/20 text-sm text-violet-300 hover:bg-violet-600/25 transition-all">
+              <span className="flex items-center gap-2"><Crown className="w-4 h-4" /> Pro — 1M {t('chat.tokens.tokensPerDay')}</span>
+              <span className="text-xs text-violet-400">499₽/{t('pricing.perMonth')}</span>
+            </Link>
+            <Link to="/payment?plan=ultra" className="flex items-center justify-between w-full px-4 py-3 rounded-xl bg-amber-600/10 border border-amber-500/15 text-sm text-amber-300 hover:bg-amber-600/20 transition-all">
+              <span className="flex items-center gap-2"><Gem className="w-4 h-4" /> Ultra — 5M {t('chat.tokens.tokensPerDay')}</span>
+              <span className="text-xs text-amber-400">1 299₽/{t('pricing.perMonth')}</span>
+            </Link>
+            <button onClick={() => setShowTokenModal(false)} className="w-full px-4 py-2.5 rounded-xl text-xs text-zinc-600 hover:text-zinc-400 transition-colors">
+              {t('chat.tokens.waitReset', { hours: tokenResetHours })}
+            </button>
+          </div>
+        ) : (
+          <div className="space-y-2">
+            <p className="text-sm text-zinc-400 text-center">{t('chat.tokens.waitReset', { hours: tokenResetHours })}</p>
+            <button onClick={() => setShowTokenModal(false)} className="w-full px-4 py-2.5 rounded-xl bg-white/[0.04] text-sm text-zinc-300 hover:bg-white/[0.06] transition-all">
+              {t('common.close')}
+            </button>
+          </div>
+        )}
+      </div>
+    </div>
+  );
 
   return (
     <div className="h-screen bg-[#050507] text-zinc-100 flex flex-col overflow-hidden">
@@ -1000,11 +1103,23 @@ export default function ChatPage() {
                 </div>
               </div>
               <p className="text-center text-[10px] text-zinc-700 mt-2">{t('chat.disclaimer')}</p>
+              {/* Token usage indicator */}
+              {!hasAdminAccess && (
+                <div className="flex items-center gap-2 mt-1.5 px-1">
+                  <div className="flex-1 h-1 bg-white/[0.03] rounded-full overflow-hidden">
+                    <div className={`h-full rounded-full transition-all duration-500 ${tokenPercent > 90 ? 'bg-gradient-to-r from-red-500 to-amber-500' : tokenPercent > 70 ? 'bg-gradient-to-r from-amber-500 to-yellow-500' : 'bg-gradient-to-r from-violet-500 to-indigo-500'}`} style={{ width: `${tokenPercent}%` }} />
+                  </div>
+                  <span className={`text-[9px] tabular-nums shrink-0 ${tokenPercent > 90 ? 'text-red-400' : tokenPercent > 70 ? 'text-amber-400' : 'text-zinc-600'}`}>
+                    {tokensUsed >= 1000 ? `${(tokensUsed / 1000).toFixed(0)}K` : tokensUsed} / {tokenLimit >= 1000000 ? `${(tokenLimit / 1000000).toFixed(0)}M` : tokenLimit >= 1000 ? `${(tokenLimit / 1000).toFixed(0)}K` : tokenLimit}
+                  </span>
+                </div>
+              )}
             </div>
           </div>
         </div>
       </div>
       {showSettings && <SettingsModal onClose={() => setShowSettings(false)} />}
+      {showTokenModal && <TokenExhaustedModal />}
     </div>
   );
 }
