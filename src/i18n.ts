@@ -3,8 +3,8 @@ import { initReactI18next } from 'react-i18next';
 import LanguageDetector from 'i18next-browser-languagedetector';
 
 const resources = {
-  en: {
-    translation: {
+  "en": {
+    "translation": {
       "nav": {
         "home": "Home",
         "chat": "Open Chat",
@@ -63,10 +63,22 @@ const resources = {
         "latency": "Latency"
       },
       "features": {
-        "Layers": { "title": "Top Models", "desc": "GPT-5.2, Claude 4.6, and Gemini 3.1 through a single interface." },
-        "Zap": { "title": "Instant Speed", "desc": "Optimized routing with less than 50ms latency. Global servers." },
-        "Globe": { "title": "Unified API", "desc": "One key for all models. No separate registration needed." },
-        "Shield": { "title": "Security", "desc": "End-to-end encryption and full compliance with data protection standards." }
+        "Layers": {
+          "title": "Top Models",
+          "desc": "GPT-5.2, Claude 4.6, and Gemini 3.1 through a single interface."
+        },
+        "Zap": {
+          "title": "Instant Speed",
+          "desc": "Optimized routing with less than 50ms latency. Global servers."
+        },
+        "Globe": {
+          "title": "Unified API",
+          "desc": "One key for all models. No separate registration needed."
+        },
+        "Shield": {
+          "title": "Security",
+          "desc": "End-to-end encryption and full compliance with data protection standards."
+        }
       },
       "models": {
         "title": "Available Models",
@@ -83,21 +95,40 @@ const resources = {
           "name": "Free",
           "price": "0₽",
           "period": "forever",
-          "features": ["5 requests per day", "GPT-4o Mini, Gemini Flash", "Web interface", "Basic support"],
+          "features": [
+            "5 requests per day",
+            "GPT-4o Mini, Gemini Flash",
+            "Web interface",
+            "Basic support"
+          ],
           "cta": "Start for free"
         },
         "pro": {
           "name": "Pro",
           "price": "499₽",
           "period": "per month",
-          "features": ["Unlimited requests", "All 100+ models", "API access", "Priority speed", "24/7 support", "Unlimited history"],
+          "features": [
+            "Unlimited requests",
+            "All 100+ models",
+            "API access",
+            "Priority speed",
+            "24/7 support",
+            "Unlimited history"
+          ],
           "cta": "Choose Pro"
         },
         "ultra": {
           "name": "Ultra",
           "price": "1,299₽",
           "period": "per month",
-          "features": ["Everything in Pro", "Dedicated servers", "99.9% SLA", "Personal manager", "Custom models", "Priority routing"],
+          "features": [
+            "Everything in Pro",
+            "Dedicated servers",
+            "99.9% SLA",
+            "Personal manager",
+            "Custom models",
+            "Priority routing"
+          ],
           "cta": "Choose Ultra"
         }
       },
@@ -247,37 +278,32 @@ const resources = {
       "ban": {
         "title": "Account Banned",
         "reason": "Reason",
+        "noReason": "Not specified",
         "timeLeft": "Time Left",
         "forever": "Forever",
-        "min": "min.",
-        "createTicket": "Create Ticket",
+        "min": "min",
+        "createTicket": "Create Appeal Ticket",
         "myTickets": "My Tickets",
-        "statusOpen": "Open",
-        "statusClosed": "Closed",
         "back": "Back",
         "subject": "Subject",
         "message": "Message",
-        "subjectPlaceholder": "Ban appeal",
-        "messagePlaceholder": "Describe the reason for your appeal...",
-        "send": "Send",
-        "ticketClosed": "Ticket closed",
+        "subjectPlaceholder": "Appeal subject...",
+        "messagePlaceholder": "Describe why we should unban you...",
+        "send": "Send Appeal",
+        "statusOpen": "Open",
+        "statusClosed": "Closed",
         "writeMessage": "Write a message...",
-        "hours": "h",
-        "minutes": "m",
-        "seconds": "s",
-        "expired": "Expired"
+        "ticketClosed": "This ticket is closed"
       },
       "maintenance": {
-        "title": "Maintenance",
-        "desc": "We are performing scheduled maintenance to improve the service.",
-        "expectedTime": "Expected time",
+        "title": "Technical Works",
+        "defaultMsg": "We are performing scheduled technical works.",
+        "estimate": "Estimated time: {{time}}",
         "toHome": "To Home",
         "systemStatus": "System Status",
-        "adminPanel": "Admin Panel",
         "areYouAdmin": "Are you an admin?",
-        "enterPass": "Enter password",
-        "password": "Password",
-        "login": "Login"
+        "enterPassword": "Enter password",
+        "invalidPassword": "Invalid password"
       },
       "admin": {
         "viewingBanner": "Administrator is viewing your account",
@@ -448,41 +474,7 @@ const resources = {
         "uptimeAuth": "Auth",
         "uptimeCdn": "CDN & Networking",
         "statusOpen": "Open",
-        "statusClosed": "Closed",
-        "toolSearch": "Search",
-        "toolCode": "Code",
-        "toolPhoto": "Photo",
-        "toolMusic": "Music"
-      },
-      "ban": {
-        "title": "Account Banned",
-        "reason": "Reason",
-        "noReason": "Not specified",
-        "timeLeft": "Time Left",
-        "forever": "Forever",
-        "min": "min",
-        "createTicket": "Create Appeal Ticket",
-        "myTickets": "My Tickets",
-        "back": "Back",
-        "subject": "Subject",
-        "message": "Message",
-        "subjectPlaceholder": "Appeal subject...",
-        "messagePlaceholder": "Describe why we should unban you...",
-        "send": "Send Appeal",
-        "statusOpen": "Open",
-        "statusClosed": "Closed",
-        "writeMessage": "Write a message...",
-        "ticketClosed": "This ticket is closed"
-      },
-      "maintenance": {
-        "title": "Technical Works",
-        "defaultMsg": "We are performing scheduled technical works.",
-        "estimate": "Estimated time: {{time}}",
-        "toHome": "To Home",
-        "systemStatus": "System Status",
-        "areYouAdmin": "Are you an admin?",
-        "enterPassword": "Enter password",
-        "invalidPassword": "Invalid password"
+        "statusClosed": "Closed"
       },
       "sign": {
         "backToHome": "Back to Home",
@@ -624,8 +616,8 @@ const resources = {
       }
     }
   },
-  ru: {
-    translation: {
+  "ru": {
+    "translation": {
       "nav": {
         "home": "Главная",
         "chat": "Открыть чат",
@@ -684,10 +676,22 @@ const resources = {
         "latency": "Задержка"
       },
       "features": {
-        "Layers": { "title": "Лучшие модели", "desc": "GPT-5.2, Claude 4.6 и Gemini 3.1 через единый интерфейс." },
-        "Zap": { "title": "Мгновенная скорость", "desc": "Оптимизированная маршрутизация с задержкой менее 50мс." },
-        "Globe": { "title": "Единый API", "desc": "Один ключ для всех моделей. Без отдельной регистрации." },
-        "Shield": { "title": "Безопасность", "desc": "End-to-end шифрование и соответствие стандартам защиты." }
+        "Layers": {
+          "title": "Лучшие модели",
+          "desc": "GPT-5.2, Claude 4.6 и Gemini 3.1 через единый интерфейс."
+        },
+        "Zap": {
+          "title": "Мгновенная скорость",
+          "desc": "Оптимизированная маршрутизация с задержкой менее 50мс."
+        },
+        "Globe": {
+          "title": "Единый API",
+          "desc": "Один ключ для всех моделей. Без отдельной регистрации."
+        },
+        "Shield": {
+          "title": "Безопасность",
+          "desc": "End-to-end шифрование и соответствие стандартам защиты."
+        }
       },
       "models": {
         "title": "Доступные модели",
@@ -704,21 +708,40 @@ const resources = {
           "name": "Free",
           "price": "0₽",
           "period": "навсегда",
-          "features": ["5 запросов в день", "GPT-4o Mini, Gemini Flash", "Веб-интерфейс", "Базовая поддержка"],
+          "features": [
+            "5 запросов в день",
+            "GPT-4o Mini, Gemini Flash",
+            "Веб-интерфейс",
+            "Базовая поддержка"
+          ],
           "cta": "Начать бесплатно"
         },
         "pro": {
           "name": "Pro",
           "price": "499₽",
           "period": "в месяц",
-          "features": ["Безлимитные запросы", "Все 100+ моделей", "API доступ", "Приоритетная скорость", "Поддержка 24/7", "История без ограничений"],
+          "features": [
+            "Безлимитные запросы",
+            "Все 100+ моделей",
+            "API доступ",
+            "Приоритетная скорость",
+            "Поддержка 24/7",
+            "История без ограничений"
+          ],
           "cta": "Выбрать Pro"
         },
         "ultra": {
           "name": "Ultra",
           "price": "1 299₽",
           "period": "в месяц",
-          "features": ["Всё из Pro", "Выделенные серверы", "SLA 99.9%", "Персональный менеджер", "Кастомные модели", "Приоритетный роутинг"],
+          "features": [
+            "Всё из Pro",
+            "Выделенные серверы",
+            "SLA 99.9%",
+            "Персональный менеджер",
+            "Кастомные модели",
+            "Приоритетный роутинг"
+          ],
           "cta": "Выбрать Ultra"
         }
       },
@@ -868,37 +891,32 @@ const resources = {
       "ban": {
         "title": "Аккаунт заблокирован",
         "reason": "Причина",
+        "noReason": "Не указана",
         "timeLeft": "Осталось времени",
         "forever": "Навсегда",
-        "min": "мин.",
-        "createTicket": "Создать тикет",
+        "min": "мин",
+        "createTicket": "Создать апелляцию",
         "myTickets": "Мои тикеты",
-        "statusOpen": "Открыт",
-        "statusClosed": "Закрыт",
         "back": "Назад",
         "subject": "Тема",
         "message": "Сообщение",
-        "subjectPlaceholder": "Оспаривание блокировки",
-        "messagePlaceholder": "Опишите причину обращения...",
+        "subjectPlaceholder": "Тема апелляции...",
+        "messagePlaceholder": "Опишите, почему мы должны разблокировать вас...",
         "send": "Отправить",
-        "ticketClosed": "Тикет закрыт",
-        "writeMessage": "Написать сообщение...",
-        "hours": "ч",
-        "minutes": "м",
-        "seconds": "с",
-        "expired": "Истекло"
+        "statusOpen": "Открыт",
+        "statusClosed": "Закрыт",
+        "writeMessage": "Напишите сообщение...",
+        "ticketClosed": "Этот тикет закрыт"
       },
       "maintenance": {
         "title": "Технические работы",
-        "desc": "Мы проводим плановые технические работы для улучшения сервиса.",
-        "expectedTime": "Ожидаемое время",
+        "defaultMsg": "Мы проводим плановые технические работы.",
+        "estimate": "Ожидаемое время: {{time}}",
         "toHome": "На главную",
         "systemStatus": "Статус систем",
-        "adminPanel": "Админ панель",
         "areYouAdmin": "Вы администратор?",
-        "enterPass": "Введите пароль",
-        "password": "Пароль",
-        "login": "Войти"
+        "enterPassword": "Введите пароль",
+        "invalidPassword": "Неверный пароль"
       },
       "admin": {
         "viewingBanner": "Администратор просматривает ваш аккаунт",
@@ -1069,41 +1087,7 @@ const resources = {
         "uptimeAuth": "Авторизация",
         "uptimeCdn": "CDN и Сеть",
         "statusOpen": "Открыт",
-        "statusClosed": "Закрыт",
-        "toolSearch": "Поиск",
-        "toolCode": "Код",
-        "toolPhoto": "Фото",
-        "toolMusic": "Музыка"
-      },
-      "ban": {
-        "title": "Аккаунт заблокирован",
-        "reason": "Причина",
-        "noReason": "Не указана",
-        "timeLeft": "Осталось времени",
-        "forever": "Навсегда",
-        "min": "мин",
-        "createTicket": "Создать апелляцию",
-        "myTickets": "Мои тикеты",
-        "back": "Назад",
-        "subject": "Тема",
-        "message": "Сообщение",
-        "subjectPlaceholder": "Тема апелляции...",
-        "messagePlaceholder": "Опишите, почему мы должны разблокировать вас...",
-        "send": "Отправить",
-        "statusOpen": "Открыт",
-        "statusClosed": "Закрыт",
-        "writeMessage": "Напишите сообщение...",
-        "ticketClosed": "Этот тикет закрыт"
-      },
-      "maintenance": {
-        "title": "Технические работы",
-        "defaultMsg": "Мы проводим плановые технические работы.",
-        "estimate": "Ожидаемое время: {{time}}",
-        "toHome": "На главную",
-        "systemStatus": "Статус систем",
-        "areYouAdmin": "Вы администратор?",
-        "enterPassword": "Введите пароль",
-        "invalidPassword": "Неверный пароль"
+        "statusClosed": "Закрыт"
       },
       "sign": {
         "backToHome": "На главную",
@@ -1245,8 +1229,8 @@ const resources = {
       }
     }
   },
-  es: {
-    translation: {
+  "es": {
+    "translation": {
       "nav": {
         "home": "Inicio",
         "chat": "Chat",
@@ -1309,21 +1293,40 @@ const resources = {
           "name": "Gratis",
           "price": "0₽",
           "period": "siempre",
-          "features": ["5 peticiones por día", "GPT-4o Mini, Gemini Flash", "Interfaz web", "Soporte básico"],
+          "features": [
+            "5 peticiones por día",
+            "GPT-4o Mini, Gemini Flash",
+            "Interfaz web",
+            "Soporte básico"
+          ],
           "cta": "Empezar gratis"
         },
         "pro": {
           "name": "Pro",
           "price": "499₽",
           "period": "por mes",
-          "features": ["Peticiones ilimitadas", "Todos los +100 modelos", "Acceso API", "Velocidad prioritaria", "Soporte 24/7", "Historial ilimitado"],
+          "features": [
+            "Peticiones ilimitadas",
+            "Todos los +100 modelos",
+            "Acceso API",
+            "Velocidad prioritaria",
+            "Soporte 24/7",
+            "Historial ilimitado"
+          ],
           "cta": "Elegir Pro"
         },
         "ultra": {
           "name": "Ultra",
           "price": "1,299₽",
           "period": "por mes",
-          "features": ["Todo en Pro", "Servidores dedicados", "99.9% SLA", "Manager personal", "Modelos personalizados", "Enrutamiento prioritario"],
+          "features": [
+            "Todo en Pro",
+            "Servidores dedicados",
+            "99.9% SLA",
+            "Manager personal",
+            "Modelos personalizados",
+            "Enrutamiento prioritario"
+          ],
           "cta": "Elegir Ultra"
         }
       },
@@ -1588,11 +1591,7 @@ const resources = {
         "uptimeAuth": "Autenticación",
         "uptimeCdn": "CDN y Red",
         "statusOpen": "Abierto",
-        "statusClosed": "Cerrado",
-        "toolSearch": "Buscar",
-        "toolCode": "Código",
-        "toolPhoto": "Foto",
-        "toolMusic": "Música"
+        "statusClosed": "Cerrado"
       },
       "ban": {
         "title": "Cuenta Bloqueada",
@@ -1638,8 +1637,8 @@ const resources = {
       }
     }
   },
-  fr: {
-    translation: {
+  "fr": {
+    "translation": {
       "nav": {
         "home": "Accueil",
         "chat": "Chat",
@@ -1702,21 +1701,40 @@ const resources = {
           "name": "Gratuit",
           "price": "0₽",
           "period": "toujours",
-          "features": ["5 requêtes par jour", "GPT-4o Mini, Gemini Flash", "Interface web", "Support de base"],
+          "features": [
+            "5 requêtes par jour",
+            "GPT-4o Mini, Gemini Flash",
+            "Interface web",
+            "Support de base"
+          ],
           "cta": "Démarrer gratuitement"
         },
         "pro": {
           "name": "Pro",
           "price": "499₽",
           "period": "par mois",
-          "features": ["Requêtes illimitées", "Tous les +100 modèles", "Accès API", "Vitesse prioritaire", "Support 24/7", "Historique illimité"],
+          "features": [
+            "Requêtes illimitées",
+            "Tous les +100 modèles",
+            "Accès API",
+            "Vitesse prioritaire",
+            "Support 24/7",
+            "Historique illimité"
+          ],
           "cta": "Choisir Pro"
         },
         "ultra": {
           "name": "Ultra",
           "price": "1,299₽",
           "period": "par mois",
-          "features": ["Tout du Pro", "Serveurs dédiés", "99.9% SLA", "Manager personnel", "Modèles personnalisés", "Routage prioritaire"],
+          "features": [
+            "Tout du Pro",
+            "Serveurs dédiés",
+            "99.9% SLA",
+            "Manager personnel",
+            "Modèles personnalisés",
+            "Routage prioritaire"
+          ],
           "cta": "Choisir Ultra"
         }
       },
@@ -1860,7 +1878,7 @@ const resources = {
         "statusDegraded": "Dégradé",
         "statusDown": "En panne",
         "statusMaintenance": "Maintenance",
-        "toolSearch": "Rechercher",
+        "toolSearch": "Recherche",
         "toolCode": "Code",
         "toolPhoto": "Photo",
         "toolMusic": "Musique",
@@ -1927,11 +1945,7 @@ const resources = {
         "uptimeAuth": "Authentification",
         "uptimeCdn": "CDN et Réseau",
         "statusOpen": "Ouvert",
-        "statusClosed": "Fermé",
-        "toolSearch": "Recherche",
-        "toolCode": "Code",
-        "toolPhoto": "Photo",
-        "toolMusic": "Musique"
+        "statusClosed": "Fermé"
       },
       "ban": {
         "title": "Compte Bannie",
@@ -1962,30 +1976,10 @@ const resources = {
         "areYouAdmin": "Êtes-vous administrateur ?",
         "enterPassword": "Entrer le mot de passe",
         "invalidPassword": "Mot de passe incorrect"
-      },
-      "ban": {
-        "title": "Compte Bannie",
-        "reason": "Raison",
-        "noReason": "Non spécifiée",
-        "timeLeft": "Temps restant",
-        "forever": "Permanent",
-        "min": "min",
-        "createTicket": "Créer un ticket d'appel",
-        "myTickets": "Mes tickets",
-        "back": "Retour",
-        "subject": "Sujet",
-        "message": "Message",
-        "subjectPlaceholder": "Sujet de l'appel...",
-        "messagePlaceholder": "Décrivez pourquoi nous devrions vous débannir...",
-        "send": "Envoyer l'appel",
-        "statusOpen": "Ouvert",
-        "statusClosed": "Fermé",
-        "writeMessage": "Écrire un message...",
-        "ticketClosed": "Ce ticket est fermé"
       }
     },
-    de: {
-      translation: {
+    "de": {
+      "translation": {
         "nav": {
           "home": "Startseite",
           "chat": "Chat öffnen",
@@ -2048,21 +2042,40 @@ const resources = {
             "name": "Kostenlos",
             "price": "0₽",
             "period": "für immer",
-            "features": ["5 Anfragen pro Tag", "GPT-4o Mini, Gemini Flash", "Web-Interface", "Basis-Support"],
+            "features": [
+              "5 Anfragen pro Tag",
+              "GPT-4o Mini, Gemini Flash",
+              "Web-Interface",
+              "Basis-Support"
+            ],
             "cta": "Kostenlos starten"
           },
           "pro": {
             "name": "Pro",
             "price": "499₽",
             "period": "pro Monat",
-            "features": ["Unbegrenzte Anfragen", "Alle +100 Modelle", "API-Zugriff", "Priorisierte Geschwindigkeit", "24/7 Support", "Unbegrenzter Verlauf"],
+            "features": [
+              "Unbegrenzte Anfragen",
+              "Alle +100 Modelle",
+              "API-Zugriff",
+              "Priorisierte Geschwindigkeit",
+              "24/7 Support",
+              "Unbegrenzter Verlauf"
+            ],
             "cta": "Pro wählen"
           },
           "ultra": {
             "name": "Ultra",
             "price": "1,299₽",
             "period": "pro Monat",
-            "features": ["Alles aus Pro", "Dedizierte Server", "99.9% SLA", "Persönlicher Manager", "Eigene Modelle", "Priorisiertes Routing"],
+            "features": [
+              "Alles aus Pro",
+              "Dedizierte Server",
+              "99.9% SLA",
+              "Persönlicher Manager",
+              "Eigene Modelle",
+              "Priorisiertes Routing"
+            ],
             "cta": "Ultra wählen"
           }
         },
@@ -2200,7 +2213,7 @@ const resources = {
           "statusDegraded": "Eingeschränkt",
           "statusDown": "Ausfall",
           "statusMaintenance": "Wartung",
-          "toolSearch": "Suchen",
+          "toolSearch": "Suche",
           "toolCode": "Code",
           "toolPhoto": "Foto",
           "toolMusic": "Musik",
@@ -2267,11 +2280,7 @@ const resources = {
           "uptimeAuth": "Authentifizierung",
           "uptimeCdn": "CDN & Netzwerk",
           "statusOpen": "Offen",
-          "statusClosed": "Geschlossen",
-          "toolSearch": "Suche",
-          "toolCode": "Code",
-          "toolPhoto": "Foto",
-          "toolMusic": "Musik"
+          "statusClosed": "Geschlossen"
         },
         "maintenance": {
           "title": "Wartungsarbeiten",
@@ -2310,8 +2319,8 @@ const resources = {
         }
       }
     },
-    zh: {
-      translation: {
+    "zh": {
+      "translation": {
         "nav": {
           "home": "首页",
           "chat": "开始聊天",
@@ -2374,21 +2383,40 @@ const resources = {
             "name": "免费版",
             "price": "0₽",
             "period": "永久",
-            "features": ["每日 5 次请求", "GPT-4o Mini, Gemini Flash", "Web 界面", "基础支持"],
+            "features": [
+              "每日 5 次请求",
+              "GPT-4o Mini, Gemini Flash",
+              "Web 界面",
+              "基础支持"
+            ],
             "cta": "免费开始"
           },
           "pro": {
             "name": "专业版",
             "price": "499₽",
             "period": "每月",
-            "features": ["无限次请求", "支持所有 100+ 模型", "API 访问权限", "优先响应速度", "24/7 技术支持", "无限历史记录"],
+            "features": [
+              "无限次请求",
+              "支持所有 100+ 模型",
+              "API 访问权限",
+              "优先响应速度",
+              "24/7 技术支持",
+              "无限历史记录"
+            ],
             "cta": "选择专业版"
           },
           "ultra": {
             "name": "旗舰版",
             "price": "1,299₽",
             "period": "每月",
-            "features": ["包含所有专业版功能", "独立服务器", "99.9% 运行保障", "专属客户经理", "自定义模型支持", "优先路由"],
+            "features": [
+              "包含所有专业版功能",
+              "独立服务器",
+              "99.9% 运行保障",
+              "专属客户经理",
+              "自定义模型支持",
+              "优先路由"
+            ],
             "cta": "选择旗舰版"
           }
         },
@@ -2420,8 +2448,8 @@ const resources = {
             "upgrade": "升级至",
             "active": "已激活",
             "free": "免费版",
-            "terms": "使用条款",
-          },
+            "terms": "使用条款"
+          }
         },
         "admin": {
           "viewingBanner": "管理员正在查看您的帐户",
@@ -2592,11 +2620,7 @@ const resources = {
           "uptimeAuth": "身份验证",
           "uptimeCdn": "CDN 和网络",
           "statusOpen": "开启",
-          "statusClosed": "关闭",
-          "toolSearch": "搜索",
-          "toolCode": "代码",
-          "toolPhoto": "照片",
-          "toolMusic": "音乐"
+          "statusClosed": "关闭"
         },
         "maintenance": {
           "title": "维护中",
@@ -2635,17 +2659,18 @@ const resources = {
         }
       }
     }
-  };
+  }
+};
 
-  i18n
+i18n
   .use(LanguageDetector)
-    .use(initReactI18next)
-    .init({
-      resources,
-      fallbackLng: 'en',
-      interpolation: {
-        escapeValue: false
-      }
-    });
+  .use(initReactI18next)
+  .init({
+    resources,
+    fallbackLng: 'en',
+    interpolation: {
+      escapeValue: false
+    }
+  });
 
-  export default i18n;
+export default i18n;

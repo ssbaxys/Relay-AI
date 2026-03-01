@@ -167,7 +167,7 @@ export default function HomePage() {
             <span className="w-1.5 h-1.5 bg-violet-500 rounded-full animate-pulse" />
             {t('home.badge', 'Лучшие AI модели доступны')}
           </div>
-          <h1 className="text-4xl sm:text-6xl md:text-7xl font-bold tracking-tight leading-[1.05] mb-6 text-white">
+          <h1 className="text-5xl sm:text-6xl md:text-7xl font-bold tracking-tight leading-[1.05] mb-6 text-white">
             {t('home.titleLine1', 'Все AI модели')}
             <br />
             <span className="text-transparent bg-clip-text bg-gradient-to-r from-violet-400 to-fuchsia-400">
@@ -227,7 +227,7 @@ export default function HomePage() {
             <h2 className="text-3xl font-bold mb-3">{t('models.title', 'Доступные модели')}</h2>
             <p className="text-zinc-500 text-sm font-light">{t('models.subtitle', 'Лучшие модели от ведущих провайдеров')}</p>
           </div>
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
             {models.map((m) => (
               <div key={m.name} className="border border-white/[0.04] bg-white/[0.01] rounded-2xl p-6 hover:border-violet-500/20 transition-all group backdrop-blur-sm flex flex-col items-center sm:items-start text-center sm:text-left">
                 <div className="flex items-center justify-between w-full mb-6">
@@ -254,7 +254,7 @@ export default function HomePage() {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {pricing.map((p) => (
               <div key={p.id} className={`rounded-3xl p-8 flex flex-col transition-all relative overflow-hidden group ${p.highlighted
-                ? "bg-violet-600 shadow-2xl shadow-violet-600/20 scale-105 z-10"
+                ? "bg-violet-600 shadow-2xl shadow-violet-600/20 z-10 md:scale-105"
                 : "border border-white/[0.04] bg-white/[0.01] hover:border-white/[0.1] backdrop-blur-sm"
                 }`}>
                 {p.highlighted && <div className="absolute top-0 right-0 p-4"><span className="text-[10px] font-bold bg-white text-violet-700 px-3 py-1 rounded-full uppercase tracking-tighter">{t('pricing.bestDeal')}</span></div>}

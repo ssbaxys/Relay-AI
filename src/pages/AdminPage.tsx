@@ -89,7 +89,7 @@ function ViewAsUserPanel({ targetUser, onExit }: { targetUser: UserData; onExit:
   const [selectedChat, setSelectedChat] = useState<any>(null);
   const [messages, setMessages] = useState<any[]>([]);
   const [collapsedFolders, setCollapsedFolders] = useState<Set<string>>(new Set());
-  const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [sidebarOpen, setSidebarOpen] = useState(window.innerWidth > 768);
   const [searchQuery, setSearchQuery] = useState("");
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
@@ -231,9 +231,11 @@ function ViewAsUserPanel({ targetUser, onExit }: { targetUser: UserData; onExit:
         </button>
       </div>
 
-      <div className="flex-1 flex overflow-hidden">
+      <div className="flex-1 flex overflow-hidden relative">
+        {/* Mobile sidebar overlay */}
+        {sidebarOpen && <div className="fixed inset-0 z-30 bg-black/50 backdrop-blur-sm md:hidden" onClick={() => setSidebarOpen(false)} />}
         {/* Sidebar */}
-        <div className="shrink-0 border-r border-white/[0.04] bg-[#0a0a0d] transition-all duration-300 overflow-hidden" style={{ width: sidebarOpen ? 260 : 0 }}>
+        <div className="shrink-0 border-r border-white/[0.04] bg-[#0a0a0d] transition-all duration-300 overflow-hidden absolute md:relative z-40 h-full" style={{ width: sidebarOpen ? 260 : 0 }}>
           <div className="w-[260px] min-w-[260px] flex flex-col h-full">
             <div className="p-3 space-y-2">
               <div className="flex items-center gap-1.5">
@@ -319,7 +321,14 @@ function ViewAsUserPanel({ targetUser, onExit }: { targetUser: UserData; onExit:
 // ===================== MAIN ADMIN PAGE =====================
 export default function AdminPage() {
   const navigate = useNavigate();
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+
+  const TOOL_LABELS: Record<string, string> = {
+    search: t('admin.toolSearch'),
+    code: t('admin.toolCode'),
+    photo: t('admin.toolPhoto'),
+    music: t('admin.toolMusic')
+  };
   const STATUS_LABELS: Record<UptimeStatus, string> = {
     operational: t('admin.statusOperational'),
     degraded: t('admin.statusDegraded'),
@@ -397,10 +406,10 @@ export default function AdminPage() {
 
   // ALL DATA LOADING — onValue for real-time sync
   useEffect(() => { if (!authenticated) return; const u = onValue(ref(db, "disabledModels"), (s) => { const v = s.val(); setDisabledModels(v && typeof v === "object" ? v : {}); }); return () => u(); }, [authenticated]);
-  useEffect(() => { if (!authenticated) return; const u = onValue(ref(db, "users"), (s) => { const d = s.val(); if (d) { const l: UserData[] = Object.entries(d).map(([uid, val]: [string, any]) => ({ uid, displayName: val.displayName || t('admin.noName'), email: val.email || "—", plan: val.plan || "free", role: val.role || "user", lastLogin: val.lastLogin || 0, createdAt: val.createdAt || 0, banned: val.banned || false, visibleNick: val.visibleNick || "", language: val.language || "en" })); setUsers(l); const t = new Date(); t.setHours(0, 0, 0, 0); setStats(p => ({ ...p, totalUsers: l.length, newUsersToday: l.filter(u2 => u2.createdAt >= t.getTime()).length })); } }); return () => u(); }, [authenticated]);
+  useEffect(() => { if (!authenticated) return; const u = onValue(ref(db, "users"), (s) => { const d = s.val(); if (d) { const l: UserData[] = Object.entries(d).map(([uid, val]: [string, any]) => ({ uid, displayName: val.displayName || t('admin.noName'), email: val.email || "—", plan: val.plan || "free", role: val.role || "user", lastLogin: val.lastLogin || 0, createdAt: val.createdAt || 0, banned: val.banned || false, visibleNick: val.visibleNick || "", language: val.language || "en" })); setUsers(l); const today = new Date(); today.setHours(0, 0, 0, 0); setStats(p => ({ ...p, totalUsers: l.length, newUsersToday: l.filter(u2 => u2.createdAt >= today.getTime()).length })); } }); return () => u(); }, [authenticated]);
   useEffect(() => { if (!authenticated) return; const u = onValue(ref(db, "settings"), (s) => { const d = s.val(); if (d) setSettings(p => ({ ...p, ...d })); }); return () => u(); }, [authenticated]);
-  useEffect(() => { if (!authenticated) return; const u = onValue(ref(db, "chats"), (s) => { const d = s.val(); if (d) { let t = 0, n = 0; const td = new Date(); td.setHours(0, 0, 0, 0); Object.values(d).forEach((uc: any) => { Object.values(uc).forEach((c: any) => { t++; if (c.createdAt >= td.getTime()) n++; }); }); setStats(p => ({ ...p, totalChats: t, newChatsToday: n })); } }); return () => u(); }, [authenticated]);
-  useEffect(() => { if (!authenticated) return; const u = onValue(ref(db, "messages"), (s) => { const d = s.val(); if (d) { let t = 0, n = 0; const td = new Date(); td.setHours(0, 0, 0, 0); Object.values(d).forEach((uc: any) => { Object.values(uc).forEach((cm: any) => { Object.values(cm).forEach((m: any) => { t++; if (m.timestamp >= td.getTime()) n++; }); }); }); setStats(p => ({ ...p, totalMessages: t, newMessagesToday: n })); } }); return () => u(); }, [authenticated]);
+  useEffect(() => { if (!authenticated) return; const u = onValue(ref(db, "chats"), (s) => { const d = s.val(); if (d) { let chatsTotal = 0, n = 0; const td = new Date(); td.setHours(0, 0, 0, 0); Object.values(d).forEach((uc: any) => { Object.values(uc).forEach((c: any) => { chatsTotal++; if (c.createdAt >= td.getTime()) n++; }); }); setStats(p => ({ ...p, totalChats: chatsTotal, newChatsToday: n })); } }); return () => u(); }, [authenticated]);
+  useEffect(() => { if (!authenticated) return; const u = onValue(ref(db, "messages"), (s) => { const d = s.val(); if (d) { let msgsTotal = 0, n = 0; const td = new Date(); td.setHours(0, 0, 0, 0); Object.values(d).forEach((uc: any) => { Object.values(uc).forEach((cm: any) => { Object.values(cm).forEach((m: any) => { msgsTotal++; if (m.timestamp >= td.getTime()) n++; }); }); }); setStats(p => ({ ...p, totalMessages: msgsTotal, newMessagesToday: n })); } }); return () => u(); }, [authenticated]);
   useEffect(() => { if (!authenticated) return; set(ref(db, `visits/${Date.now()}`), { timestamp: Date.now() }); const u = onValue(ref(db, "visits"), (s) => { const d = s.val(); if (d) setStats(p => ({ ...p, totalVisits: Object.keys(d).length })); }); return () => u(); }, [authenticated]);
   useEffect(() => { if (!authenticated) return; const u = onValue(ref(db, "uptime"), (s) => { const d = s.val(); if (d) { setComponentUptimes(UPTIME_COMPONENTS.map(c => { const h = d[c.key] ? (d[c.key] as UptimeStatus[]) : getDefaultHours(); return { ...c, hours: Array.from({ length: 90 }, (_, i) => h[i] || "operational") as UptimeStatus[] }; })); } }); return () => u(); }, [authenticated]);
   useEffect(() => { if (!authenticated) return; const u = onValue(ref(db, "tickets"), (s) => { const d = s.val(); if (d) { setAllTickets(Object.entries(d).map(([id, v]: [string, any]) => ({ id, ...v })).sort((a: any, b: any) => (b.createdAt || 0) - (a.createdAt || 0))); } else setAllTickets([]); }); return () => u(); }, [authenticated]);

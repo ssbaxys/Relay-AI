@@ -351,7 +351,7 @@ export default function ChatPage() {
   const [selectedModel, setSelectedModel] = useState(allModels[0]);
   const [showModelPicker, setShowModelPicker] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
-  const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [sidebarOpen, setSidebarOpen] = useState(window.innerWidth > 768);
   const [input, setInput] = useState("");
   const [messages, setMessages] = useState<any[]>([]);
   const [chatSessions, setChatSessions] = useState<ChatSession[]>([]);
@@ -542,7 +542,7 @@ export default function ChatPage() {
 
     setIsGenerating(true); generationAbortRef.current = false;
     const doRespond = async () => {
-      if (generationAbortRef.current) { setIsGenerating(false); generationAbortAbortRef.current = false; return; }
+      if (generationAbortRef.current) { setIsGenerating(false); generationAbortRef.current = false; return; }
       const responseText = responses[Math.floor(Math.random() * responses.length)];
       const msgRef = await push(msgsRef, { role: "assistant", content: responseText, model: selectedModel.id, timestamp: Date.now() });
       await update(chatRef, { lastMessage: Date.now(), messageCount: (cc2?.messageCount || 0) + 2 });
@@ -733,9 +733,11 @@ export default function ChatPage() {
           <span className="text-[11px] text-violet-300 font-medium">{t('admin.viewingBanner')}</span>
         </div>
       )}
-      <div className="flex-1 flex overflow-hidden">
+      <div className="flex-1 flex overflow-hidden relative">
+        {/* Mobile sidebar overlay */}
+        {sidebarOpen && <div className="fixed inset-0 z-30 bg-black/50 backdrop-blur-sm md:hidden" onClick={() => setSidebarOpen(false)} />}
         {/* Sidebar */}
-        <div className="shrink-0 border-r border-white/[0.04] bg-[#0a0a0d] flex transition-all duration-300 ease-in-out overflow-hidden" style={{ width: sidebarOpen ? 260 : 0 }}>
+        <div className={`shrink-0 border-r border-white/[0.04] bg-[#0a0a0d] flex transition-all duration-300 ease-in-out overflow-hidden absolute md:relative z-40 h-full`} style={{ width: sidebarOpen ? 260 : 0 }}>
           <div className="w-[260px] min-w-[260px] flex flex-col h-full">
             <div className="p-3 space-y-2">
               <div className="flex items-center gap-1.5">
