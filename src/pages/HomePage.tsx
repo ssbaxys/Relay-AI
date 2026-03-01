@@ -15,10 +15,9 @@ const UPTIME_KEYS = ["api_gateway", "ai_router", "web_app", "database", "auth", 
 const models = [
   { name: "GPT-5.2 Codex", provider: "OpenAI", tag: "Code", logo: "https://img.icons8.com/fluency-systems-regular/48/chatgpt.png", logoFilter: "invert(1) brightness(2)" },
   { name: "Claude Opus 4.6", provider: "Anthropic", tag: "Analysis", logo: "https://img.icons8.com/fluency/48/claude-ai.png", logoFilter: "" },
-  { name: "Gemini 3.1 Pro", provider: "Google", tag: "Multimodal", logo: "https://img.icons8.com/color/48/google-logo.png", logoFilter: "" },
-  { name: "Mistral Large", provider: "Mistral", tag: "Efficient", logo: "https://mistral.ai/images/logo.svg", logoFilter: "invert(1)" },
-  { name: "DeepSeek V3.2", provider: "DeepSeek", tag: "Reasoning", logo: "https://www.deepseek.com/favicon.ico", logoFilter: "" },
-  { name: "Qwen-3-Max", provider: "Alibaba", tag: "Powerful", logo: "https://chat.qwenlm.ai/favicon.ico", logoFilter: "" },
+  { name: "Gemini 3.1 Pro", provider: "Google", tag: "Multimodal", logo: "https://img.icons8.com/skeuomorphism/32/gemini-ai.png", logoFilter: "" },
+  { name: "Mistral Large", provider: "Mistral", tag: "Fast", logo: "https://mistral.ai/images/favicon.ico", logoFilter: "brightness(0) invert(1)" },
+  { name: "DeepSeek V3.2", provider: "DeepSeek", tag: "Reasoning", logo: "https://img.icons8.com/color/48/deepseek.png", logoFilter: "" },
 ];
 
 const pricingPlans = (t: any) => [

@@ -53,12 +53,6 @@ const resources = {
           "1": "Solve a leetcode problem",
           "2": "Explain memory management",
           "3": "Write a sorting algorithm"
-        },
-        "qwen-3-max": {
-          "0": "Translate to Chinese",
-          "1": "Write a poem",
-          "2": "Explain machine learning",
-          "3": "Help with data analysis"
         }
       },
 
@@ -311,12 +305,6 @@ const resources = {
             "Write a complex SQL query",
             "Help with system design",
             "Optimize an algorithm"
-          ],
-          "qwen-3-max": [
-            "Write an article in Chinese",
-            "Help with Asian market analysis",
-            "Generate Python code",
-            "Explain big data concepts"
           ]
         },
         "responses": [
@@ -723,12 +711,6 @@ const resources = {
           "1": "Реши задачу leetcode",
           "2": "Объясни управление памятью",
           "3": "Напиши алгоритм сортировки"
-        },
-        "qwen-3-max": {
-          "0": "Переведи на китайский",
-          "1": "Напиши стихотворение",
-          "2": "Объясни машинное обучение",
-          "3": "Помоги с анализом данных"
         }
       },
 
@@ -981,12 +963,6 @@ const resources = {
             "Напиши сложный SQL запрос",
             "Помоги с системным проектированием",
             "Оптимизируй алгоритм"
-          ],
-          "qwen-3-max": [
-            "Напиши статью на китайском",
-            "Помоги с анализом рынка Азии",
-            "Сгенерируй код на Python",
-            "Объясни концепцию больших данных"
           ]
         },
         "responses": [

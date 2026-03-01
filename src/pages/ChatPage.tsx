@@ -33,11 +33,10 @@ const MODEL_LOGOS: Record<string, { src: string; filter?: string }> = {
   "gpt-5.2-codex": { src: "https://img.icons8.com/fluency-systems-regular/48/chatgpt.png", filter: "invert(1) brightness(2)" },
   "claude-opus-4.6": { src: "https://img.icons8.com/fluency/48/claude-ai.png" },
   "claude-sonnet-4.6": { src: "https://img.icons8.com/fluency/48/claude-ai.png" },
-  "gemini-3-pro": { src: "https://img.icons8.com/color/48/google-logo.png" },
-  "gemini-3.1-pro": { src: "https://img.icons8.com/color/48/google-logo.png" },
+  "gemini-3-pro": { src: "https://img.icons8.com/skeuomorphism/32/gemini-ai.png" },
+  "gemini-3.1-pro": { src: "https://img.icons8.com/skeuomorphism/32/gemini-ai.png" },
   "mistral-large-latest": { src: "https://img.icons8.com/external-flat-juicy-fish/48/external-ai-artificial-intelligence-flat-juicy-fish.png" },
-  "deepseek-v3.2-exp": { src: "https://img.icons8.com/fluency/48/robot-2.png" },
-  "qwen-3-max": { src: "https://img.icons8.com/fluency/48/brainstorming.png" },
+  "deepseek-v3.2-exp": { src: "https://img.icons8.com/color/48/deepseek.png" },
 };
 
 function ModelLogo({ modelId, size = 20, className = "" }: { modelId: string; size?: number; className?: string }) {
@@ -53,7 +52,6 @@ const allModels = [
   { id: "gemini-3.1-pro", name: "Gemini 3.1 Pro", provider: "Google", color: "text-blue-400", bg: "bg-blue-500/10" },
   { id: "mistral-large-latest", name: "Mistral Large", provider: "Mistral", color: "text-zinc-300", bg: "bg-white/5" },
   { id: "deepseek-v3.2-exp", name: "DeepSeek V3.2", provider: "DeepSeek", color: "text-blue-300", bg: "bg-blue-400/10" },
-  { id: "qwen-3-max", name: "Qwen 3 Max", provider: "Alibaba", color: "text-violet-300", bg: "bg-violet-400/10" },
 ];
 
 const modelSuggestions: Record<string, string[]> = {
@@ -63,7 +61,6 @@ const modelSuggestions: Record<string, string[]> = {
   "gemini-3.1-pro": ["suggestions.gemini-3.1-pro.0", "suggestions.gemini-3.1-pro.1", "suggestions.gemini-3.1-pro.2", "suggestions.gemini-3.1-pro.3"],
   "mistral-large-latest": ["suggestions.mistral-large-latest.0", "suggestions.mistral-large-latest.1", "suggestions.mistral-large-latest.2", "suggestions.mistral-large-latest.3"],
   "deepseek-v3.2-exp": ["suggestions.deepseek-v3.2-exp.0", "suggestions.deepseek-v3.2-exp.1", "suggestions.deepseek-v3.2-exp.2", "suggestions.deepseek-v3.2-exp.3"],
-  "qwen-3-max": ["suggestions.qwen-3-max.0", "suggestions.qwen-3-max.1", "suggestions.qwen-3-max.2", "suggestions.qwen-3-max.3"],
 };
 
 const responses = ["chat.responses.0", "chat.responses.1"];
@@ -592,9 +589,9 @@ export default function ChatPage() {
     if (role === "user") {
       return (
         <div className="flex justify-end animate-fade-in-up">
-          <div className="max-w-[80%]">
+          <div className="max-w-[90%] md:max-w-[80%]">
             {msg.imageUrl && <div className="mb-2 flex justify-end"><img src={String(msg.imageUrl)} alt="" className="max-w-[300px] max-h-[300px] rounded-xl object-cover border border-white/[0.06]" /></div>}
-            {msg.content && <div className="bg-violet-600/15 text-zinc-100 px-4 py-3 rounded-2xl rounded-br-md text-sm leading-relaxed"><MarkdownRenderer content={String(msg.content)} /></div>}
+            {msg.content && <div className="bg-violet-600/15 text-zinc-100 px-3 sm:px-4 py-2.5 sm:py-3 rounded-2xl rounded-br-md text-[13px] sm:text-sm leading-relaxed"><MarkdownRenderer content={String(msg.content)} /></div>}
             {msg.tool && <div className="flex justify-end mt-1"><span className="text-[9px] text-zinc-600 bg-white/[0.02] px-2 py-0.5 rounded-full flex items-center gap-1">{msg.tool === "search" && <Search className="w-2.5 h-2.5" />}{msg.tool === "code" && <Code className="w-2.5 h-2.5" />}{msg.tool === "photo" && <ImageIcon className="w-2.5 h-2.5" />}{msg.tool === "music" && <Music className="w-2.5 h-2.5" />}{TOOL_LABELS[msg.tool] || msg.tool}</span></div>}
           </div>
         </div>
@@ -604,10 +601,10 @@ export default function ChatPage() {
     if (role === "admin") {
       return (
         <div className="animate-fade-in-up">
-          <div className="max-w-[80%]">
+          <div className="max-w-[90%] md:max-w-[80%]">
             <div className="flex items-center gap-2 mb-1.5"><div className="w-5 h-5 rounded-md bg-red-600/10 flex items-center justify-center"><Shield className="w-3 h-3 text-red-400" /></div><span className="text-[11px] font-medium text-red-400">{t('chat.role.admin')}</span></div>
             {msg.imageUrl && <div className="mb-2"><img src={String(msg.imageUrl)} alt="" className="max-w-[300px] max-h-[300px] rounded-xl object-cover border border-red-500/10" /></div>}
-            <div className="bg-red-600/5 border border-red-500/10 text-zinc-300 px-4 py-3 rounded-2xl rounded-tl-md text-sm"><MarkdownRenderer content={String(msg.content || "")} /></div>
+            <div className="bg-red-600/5 border border-red-500/10 text-zinc-300 px-3 sm:px-4 py-2.5 sm:py-3 rounded-2xl rounded-tl-md text-[13px] sm:text-sm"><MarkdownRenderer content={String(msg.content || "")} /></div>
           </div>
         </div>
       );
@@ -615,13 +612,13 @@ export default function ChatPage() {
 
     return (
       <div className="animate-fade-in-up">
-        <div className="max-w-[80%]">
+        <div className="max-w-[90%] md:max-w-[80%]">
           <div className="flex items-center gap-2 mb-1.5"><ModelLogo modelId={msg.model || ""} size={18} /><span className="text-[11px] font-medium text-zinc-400">{msgModel.name}</span></div>
           {hasSpecialType ? <SpecialMessage msg={msg} /> : (
             <>
               {msg.imageUrl && <div className="mb-2"><img src={String(msg.imageUrl)} alt="" className="max-w-[300px] max-h-[300px] rounded-xl object-cover border border-white/[0.06]" /></div>}
               {msg.audioUrl && <div className="mb-2"><AudioPlayer url={String(msg.audioUrl)} /></div>}
-              <div className="text-zinc-300 text-sm leading-relaxed">
+              <div className="text-zinc-300 text-[13px] sm:text-sm leading-relaxed">
                 {typingMessageId === msg.id ? (<div><MarkdownRenderer content={typingText} /><span className="inline-block w-0.5 h-4 bg-violet-400 ml-0.5 animate-pulse align-middle" /></div>) : (<MarkdownRenderer content={String(msg.content || "")} />)}
               </div>
             </>
@@ -735,9 +732,9 @@ export default function ChatPage() {
       )}
       <div className="flex-1 flex overflow-hidden relative">
         {/* Mobile sidebar overlay */}
-        {sidebarOpen && <div className="fixed inset-0 z-30 bg-black/50 backdrop-blur-sm md:hidden" onClick={() => setSidebarOpen(false)} />}
+        {sidebarOpen && <div className="fixed md:hidden inset-0 z-[60] bg-black/50 backdrop-blur-sm" onClick={() => setSidebarOpen(false)} />}
         {/* Sidebar */}
-        <div className={`shrink-0 border-r border-white/[0.04] bg-[#0a0a0d] flex transition-all duration-300 ease-in-out overflow-hidden absolute md:relative z-40 h-full`} style={{ width: sidebarOpen ? 260 : 0 }}>
+        <div className={`shrink-0 border-r border-white/[0.04] bg-[#0a0a0d] flex transition-all duration-300 ease-in-out overflow-hidden absolute md:relative z-[70] md:z-40 h-full`} style={{ width: sidebarOpen ? 260 : 0, left: sidebarOpen ? 0 : -260, visibility: sidebarOpen ? "visible" : "hidden" }}>
           <div className="w-[260px] min-w-[260px] flex flex-col h-full">
             <div className="p-3 space-y-2">
               <div className="flex items-center gap-1.5">
@@ -932,11 +929,11 @@ export default function ChatPage() {
         )}
 
         {/* Main */}
-        <div className="flex-1 flex flex-col min-w-0">
-          <div className="h-12 border-b border-white/[0.04] flex items-center justify-between px-4 shrink-0">
-            <div className="flex items-center gap-2">{!sidebarOpen && <button onClick={() => setSidebarOpen(true)} className="p-1.5 rounded-lg hover:bg-white/[0.03] text-zinc-500 transition-all"><PanelLeft className="w-4 h-4" /></button>}</div>
+        <div className="flex-1 flex flex-col min-w-0 bg-[#070709]">
+          <div className="h-12 border-b border-white/[0.04] flex items-center justify-between px-2 sm:px-4 shrink-0 bg-[#0a0a0c]">
+            <div className="flex items-center gap-1 sm:gap-2">{!sidebarOpen && <button onClick={() => setSidebarOpen(true)} className="p-1.5 rounded-lg hover:bg-white/[0.03] text-zinc-500 transition-all"><PanelLeft className="w-4 h-4" /></button>}</div>
             <div className="relative">
-              <button onClick={() => setShowModelPicker(!showModelPicker)} className={`flex items-center gap-2.5 px-3 py-1.5 rounded-lg hover:bg-white/[0.03] transition-all text-sm ${isModelDisabled ? "opacity-50" : ""}`}>
+              <button onClick={() => setShowModelPicker(!showModelPicker)} className={`flex items-center gap-2 sm:gap-2.5 px-2 sm:px-3 py-1.5 rounded-lg hover:bg-white/[0.03] transition-all text-xs sm:text-sm ${isModelDisabled ? "opacity-50" : ""}`}>
                 <ModelLogo modelId={selectedModel.id} size={18} /><span className="font-medium">{selectedModel.name}</span>{isModelDisabled && <AlertTriangle className="w-3 h-3 text-zinc-500" />}<ChevronDown className="w-3.5 h-3.5 text-zinc-600" />
               </button>
               {showModelPicker && (<><div className="fixed inset-0 z-40" onClick={() => setShowModelPicker(false)} /><div className="absolute left-1/2 -translate-x-1/2 top-full mt-1 w-72 bg-[#111114] border border-white/[0.06] rounded-xl shadow-2xl z-50 overflow-hidden p-1 animate-fade-in-up">
@@ -954,7 +951,7 @@ export default function ChatPage() {
             ) : messages.length === 0 && !isGenerating ? (
               <div className="h-full flex items-center justify-center px-6"><div className="text-center max-w-md"><ModelLogo modelId={selectedModel.id} size={36} className="mx-auto mb-4" /><h2 className="text-lg font-semibold mb-1">{t('chat.chatWith')} {selectedModel.name}</h2><p className="text-sm text-zinc-600 mb-8">{selectedModel.provider}</p><div className="grid grid-cols-1 sm:grid-cols-2 gap-2">{currentSuggestions.map((s: string) => (<button key={s} onClick={() => { setInput(t(s)); inputRef.current?.focus(); }} className="px-4 py-3 rounded-xl border border-white/[0.04] text-xs text-zinc-500 hover:text-zinc-300 hover:border-violet-500/20 transition-all text-left">{t(s)}</button>))}</div></div></div>
             ) : (
-              <div className="max-w-2xl mx-auto py-6 px-4 space-y-6">
+              <div className="max-w-2xl mx-auto py-4 sm:py-6 px-3 sm:px-4 space-y-4 sm:space-y-6">
                 {messages.map((msg: any) => <div key={msg.id}>{renderMessage(msg)}</div>)}
                 {isGenerating && !typingMessageId && (
                   <div className="animate-fade-in-up"><div className="flex items-center gap-2 mb-1.5"><ModelLogo modelId={selectedModel.id} size={18} /><span className="text-[11px] font-medium text-zinc-400">{selectedModel.name}</span></div><div className="flex gap-1 py-2">{[0, 1, 2].map((i) => (<div key={i} className="w-1.5 h-1.5 bg-violet-500/40 rounded-full animate-pulse" style={{ animationDelay: `${i * 200}ms` }} />))}</div></div>
@@ -965,9 +962,9 @@ export default function ChatPage() {
           </div>
 
           {/* Input area - tools are just indicator buttons, NO file upload for users */}
-          <div className="p-4">
-            <div className="max-w-2xl mx-auto">
-              <div className="flex items-center gap-1.5 mb-2">
+          <div className="p-2 sm:p-4 bg-gradient-to-t from-[#070709] to-transparent">
+            <div className="max-w-2xl mx-auto relative relative-z-10">
+              <div className="flex items-center gap-1 sm:gap-1.5 mb-2 overflow-x-auto no-scrollbar pb-1">
                 {([
                   { key: "search" as ToolType, icon: Search, label: t('chat.tools.search') },
                   { key: "code" as ToolType, icon: Code, label: t('chat.tools.code') },
@@ -980,7 +977,7 @@ export default function ChatPage() {
                   </button>
                 ))}
               </div>
-              <div className={`flex items-end gap-2 border bg-white/[0.01] rounded-2xl px-4 py-3 transition-all duration-200 ${charOverLimit ? "border-red-500/30" : isModelDisabled || noModelsAvailable ? "border-zinc-800 opacity-50" : "border-white/[0.06] focus-within:border-violet-500/30"}`}>
+              <div className={`flex items-end gap-2 border bg-[#111114]/80 backdrop-blur-md rounded-2xl px-3 sm:px-4 py-2.5 sm:py-3 transition-all duration-300 shadow-lg ${charOverLimit ? "border-red-500/30 shadow-red-500/5 text-shadow-glow" : isModelDisabled || noModelsAvailable ? "border-zinc-800 opacity-50" : "border-white/[0.06] hover:border-violet-500/20 focus-within:border-violet-500/40 focus-within:shadow-violet-500/10 focus-within:ring-1 focus-within:ring-violet-500/20"}`}>
                 <textarea ref={inputRef} value={input} onChange={(e) => { if (e.target.value.length <= MAX_CHARS + 100) setInput(e.target.value); }}
                   onKeyDown={handleKeyDown} placeholder={isModelDisabled || noModelsAvailable ? t('chat.modelUnavailable') : `${t('chat.inputPlaceholder')} ${selectedModel.name}...`}
                   rows={1} disabled={isModelDisabled || noModelsAvailable}

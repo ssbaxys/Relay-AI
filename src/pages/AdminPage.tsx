@@ -30,7 +30,7 @@ const STATUS_OPTIONS: UptimeStatus[] = ["operational", "degraded", "down", "main
 const adminModels = [
   { id: "gpt-5.2-codex", name: "GPT-5.2 Codex", provider: "OpenAI", logo: "https://img.icons8.com/fluency-systems-regular/48/chatgpt.png", logoFilter: "invert(1) brightness(2)" },
   { id: "claude-opus-4.6", name: "Claude Opus 4.6", provider: "Anthropic", logo: "https://img.icons8.com/fluency/48/claude-ai.png", logoFilter: "" },
-  { id: "gemini-3-pro", name: "Gemini 3 Pro", provider: "Google", logo: "https://img.icons8.com/color/48/google-logo.png", logoFilter: "" },
+  { id: "gemini-3-pro", name: "Gemini 3 Pro", provider: "Google", logo: "https://img.icons8.com/skeuomorphism/32/gemini-ai.png", logoFilter: "" },
 ];
 
 function AdminModelLogo({ modelId, size = 20 }: { modelId: string; size?: number }) {
