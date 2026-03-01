@@ -592,10 +592,16 @@ export default function ChatPage() {
     setIsGenerating(true); generationAbortRef.current = false;
     const doRespond = async () => {
       if (generationAbortRef.current) { setIsGenerating(false); generationAbortRef.current = false; return; }
-      const responseText = responses[Math.floor(Math.random() * responses.length)];
+      const responseText = String(t(responses[Math.floor(Math.random() * responses.length)]));
       const msgRef = await push(msgsRef, { role: "assistant", content: responseText, model: selectedModel.id, timestamp: Date.now() });
       await update(chatRef, { lastMessage: Date.now(), messageCount: (cc2?.messageCount || 0) + 2 });
       if (msgRef.key) animateTyping(responseText, msgRef.key);
+
+      // Deduct tokens (skip for admins)
+      if (!hasAdminAccess) {
+        const newUsed = tokensUsed + responseText.length;
+        await update(ref(db, `users/${user.uid}/tokens`), { used: newUsed });
+      }
     };
     doRespond();
   };
@@ -923,6 +929,16 @@ export default function ChatPage() {
               </div>
               <div className="p-6 space-y-4">
                 <div><label className="block text-[10px] text-zinc-600 uppercase tracking-wider mb-1">{t('chat.profile.systemNick')}</label><p className="text-sm text-zinc-300 font-mono">{profileData.systemNick}</p></div>
+
+                {/* Tokens UI */}
+                {profileData.plan !== "ultra" && !hasAdminAccess && (
+                  <div>
+                    <div className="flex items-center justify-between mb-1.5"><label className="block text-[10px] text-zinc-600 uppercase tracking-wider">{t('chat.tokens.used')}</label><span className="text-[10px] font-mono text-zinc-500">{tokensUsed.toLocaleString("en-US")} / {tokenLimit.toLocaleString("en-US")}</span></div>
+                    <div className="h-2 bg-white/[0.04] rounded-full overflow-hidden mb-1.5">
+                      <div className={`h-full transition-all duration-300 ${tokensExhausted ? "bg-red-500" : tokenPercent > 85 ? "bg-amber-400" : "bg-violet-500"}`} style={{ width: `${tokenPercent}%` }} />
+                    </div>
+                  </div>
+                )}
 
                 {/* Subscription Card */}
                 <div><label className="block text-[10px] text-zinc-600 uppercase tracking-wider mb-2">{t('chat.profile.plan')}</label>

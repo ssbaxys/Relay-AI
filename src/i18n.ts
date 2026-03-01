@@ -128,6 +128,16 @@ const resources = {
           "desc": "End-to-end encryption and full compliance with data protection standards."
         }
       },
+      "uptime": {
+        "components": {
+          "api_gateway": "API Gateway",
+          "ai_router": "AI Router",
+          "web_app": "Web App",
+          "database": "Database",
+          "auth": "Auth Service",
+          "cdn": "CDN Nodes"
+        }
+      },
       "models": {
         "title": "Available Models",
         "subtitle": "Best models from leading providers"
@@ -750,6 +760,16 @@ const resources = {
           "desc": "End-to-end шифрование и соответствие стандартам защиты."
         }
       },
+      "uptime": {
+        "components": {
+          "api_gateway": "API Шлюз",
+          "ai_router": "ИИ Роутер",
+          "web_app": "Веб-интерфейс",
+          "database": "База данных",
+          "auth": "Авторизация",
+          "cdn": "CDN узлы"
+        }
+      },
       "models": {
         "title": "Доступные модели",
         "subtitle": "Лучшие модели от ведущих провайдеров"
@@ -1309,6 +1329,16 @@ const resources = {
         "Globe": { "title": "API Unificada", "desc": "Una clave para todos los modelos. Sin registro por separado." },
         "Shield": { "title": "Seguridad", "desc": "Cifrado de extremo a extremo y cumplimiento de estándares de protección." }
       },
+      "uptime": {
+        "components": {
+          "api_gateway": "Puerta de enlace API",
+          "ai_router": "Enrutador IA",
+          "web_app": "Aplicación Web",
+          "database": "Base de datos",
+          "auth": "Autenticación",
+          "cdn": "Nodos CDN"
+        }
+      },
       "models": {
         "title": "Modelos Disponibles",
         "subtitle": "Los mejores modelos de los principales proveedores"
@@ -1772,6 +1802,16 @@ const resources = {
         "Globe": { "title": "API Unifiée", "desc": "Une clé pour tous les modèles. Sans inscription séparée." },
         "Shield": { "title": "Sécurité", "desc": "Chiffrement de bout en bout et conformité aux normes de protection." }
       },
+      "uptime": {
+        "components": {
+          "api_gateway": "Passerelle API",
+          "ai_router": "Routeur IA",
+          "web_app": "Application Web",
+          "database": "Base de données",
+          "auth": "Authentification",
+          "cdn": "Nœuds CDN"
+        }
+      },
       "models": {
         "title": "Modèles Disponibles",
         "subtitle": "Les meilleurs modèles des principaux fournisseurs"
@@ -2178,6 +2218,16 @@ const resources = {
           "Globe": { "title": "Einheitliche API", "desc": "Ein Schlüssel für alle Modelle. Ohne separate Registrierung." },
           "Shield": { "title": "Sicherheit", "desc": "End-to-End-Verschlüsselung und Einhaltung von Schutzstandards." }
         },
+        "uptime": {
+          "components": {
+            "api_gateway": "API-Gateway",
+            "ai_router": "KI-Router",
+            "web_app": "Web-App",
+            "database": "Datenbank",
+            "auth": "Authentifizierung",
+            "cdn": "CDN-Knoten"
+          }
+        },
         "models": {
           "title": "Verfügbare Modelle",
           "subtitle": "Die besten Modelle der führenden Anbieter"
@@ -2579,6 +2629,16 @@ const resources = {
           "Zap": { "title": "极速响应", "desc": "优化路由，延迟低于 50ms。" },
           "Globe": { "title": "统一 API", "desc": "一个密钥访问所有模型。无需单独注册。" },
           "Shield": { "title": "安全保障", "desc": "端到端加密，符合保护标准。" }
+        },
+        "uptime": {
+          "components": {
+            "api_gateway": "API 网关",
+            "ai_router": "AI 路由器",
+            "web_app": "网页应用",
+            "database": "数据库",
+            "auth": "授权服务",
+            "cdn": "CDN 节点"
+          }
         },
         "models": {
           "title": "可用模型",
