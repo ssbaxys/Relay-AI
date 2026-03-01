@@ -82,7 +82,7 @@ export default function TermsPage() {
           <p className="text-xs text-zinc-500 font-medium uppercase tracking-wider mb-3">{t('terms.toc')}</p>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-1">
             {sectionsList.map((s, i) => (
-              <a key={i} href={`#s-${i}`} className="text-xs text-zinc-600 hover:text-violet-400 transition-colors py-1">{s.title}</a>
+              <button key={i} onClick={(e) => { e.preventDefault(); document.getElementById(`s-${i}`)?.scrollIntoView({ behavior: 'smooth' }); }} className="text-xs text-zinc-600 hover:text-violet-400 transition-colors py-1 text-left">{s.title}</button>
             ))}
           </div>
         </div>

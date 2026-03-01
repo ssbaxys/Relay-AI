@@ -5,50 +5,45 @@ import LanguageDetector from 'i18next-browser-languagedetector';
 const resources = {
   "en": {
     "translation": {
-      "chat": {
-        "responses": {
-          "0": "Hello! How can I help you today?",
-          "1": "I am ready to help you."
-        },
-        "tools": {
-          "search": "Search",
-          "code": "Code",
-          "photo": "Photo",
-          "music": "Music"
-        }
-      },
+
       "suggestions": {
-        "gpt-5.2-codex": {
+        "gpt_5_2_codex": {
           "0": "Write a python script",
           "1": "Explain React hooks",
           "2": "Create a CSS grid layout",
           "3": "How to center a div?"
         },
-        "claude-opus-4.6": {
+        "claude_opus_4_6": {
           "0": "Write an essay about AI",
           "1": "Summarize this article",
           "2": "Help me translate a text",
           "3": "Draft a formal email"
         },
-        "claude-sonnet-4.6": {
+        "claude_sonnet_4_6": {
           "0": "Write a sonnet about the sea",
           "1": "Help me brainstorm ideas",
           "2": "Create a pros/cons list",
           "3": "Write a polite decline email"
         },
-        "gemini-3.1-pro": {
-          "0": "Analyze this dataset",
-          "1": "Help me with math",
-          "2": "Write a regular expression",
-          "3": "Explain quantum computing"
+        "gemini_3_1_pro": {
+          "0": "Suggest content ideas",
+          "1": "Write a business plan",
+          "2": "Explain quantum physics",
+          "3": "How to learn Spanish?"
         },
-        "mistral-large-latest": {
+        "gemini_3_flash": {
+          "0": "Draft a quick email",
+          "1": "Summarize this article",
+          "2": "Create a daily schedule",
+          "3": "Explain machine learning"
+        },
+        "mistral_large_latest": {
           "0": "Write a bash script",
           "1": "Explain system architecture",
           "2": "Create a deployment plan",
           "3": "Write a README file"
         },
-        "deepseek-v3.2-exp": {
+        "deepseek_v3_2_exp": {
           "0": "Write a C++ class",
           "1": "Solve a leetcode problem",
           "2": "Explain memory management",
@@ -224,6 +219,7 @@ const resources = {
         "inputPlaceholder": "Write a message...",
         "disclaimer": "AI can provide inaccurate information. Check important facts.",
         "generating": "Generating...",
+        "pay_success_title": "Payment Successful",
         "userMenu": {
           "home": "To Home",
           "profile": "Profile",
@@ -289,10 +285,16 @@ const resources = {
             "Analyze log files"
           ],
           "gemini-3.1-pro": [
-            "Translate text into 5 languages",
-            "Analyze this dataset",
-            "Explain quantum computing",
-            "Create a presentation about neural networks"
+            "Suggest content ideas",
+            "Write a business plan",
+            "Explain quantum physics",
+            "How to learn Spanish?"
+          ],
+          "gemini-3-flash": [
+            "Draft a quick email",
+            "Summarize this article",
+            "Create a daily schedule",
+            "Explain machine learning"
           ],
           "mistral-large-latest": [
             "Write a creative story",
@@ -350,7 +352,10 @@ const resources = {
         "enterPassword": "Enter password",
         "invalidPassword": "Invalid password"
       },
+
       "admin": {
+        "payments": "Payments",
+        "models": "Models",
         "viewingBanner": "Administrator is viewing your account",
         "title": "Admin Panel",
         "users": "Users",
@@ -564,43 +569,7 @@ const resources = {
           "plan": "Subscription"
         }
       },
-      "uptime": {
-        "title": "Uptime",
-        "allSystems": "All systems operational",
-        "partialIssues": "Partial issues",
-        "maintenance": "Under maintenance",
-        "subtitle": "All systems are working normally",
-        "subtitleIssues": "Some components are experiencing issues",
-        "maintenanceDesc": "We are performing scheduled maintenance",
-        "expectedTime": "Expected time",
-        "incidents": "Incidents",
-        "resolved": "RESOLVED",
-        "noticeIssue": "Notice a problem?",
-        "isAdmin": "Are you an admin?",
-        "adminPanel": "Admin Panel",
-        "enterAdminPass": "Enter admin password",
-        "password": "Password",
-        "login": "Login",
-        "components": {
-          "api_gateway": "API Gateway",
-          "ai_router": "AI Models Router",
-          "web_app": "Web Application",
-          "database": "Database",
-          "auth": "Authentication",
-          "cdn": "CDN & Networking"
-        },
-        "status": {
-          "operational": "Operational",
-          "degraded": "Degraded",
-          "down": "Down",
-          "maintenance": "Maintenance"
-        },
-        "history": {
-          "hoursAgo": "90 hours ago",
-          "now": "Now",
-          "ago": "{{count}}h ago"
-        }
-      },
+
       "terms": {
         "title": "Terms of Use",
         "lastUpdated": "Last updated: January 2025",
@@ -663,50 +632,45 @@ const resources = {
   },
   "ru": {
     "translation": {
-      "chat": {
-        "responses": {
-          "0": "Привет! Чем я могу помочь сегодня?",
-          "1": "Я готов помочь вам."
-        },
-        "tools": {
-          "search": "Поиск",
-          "code": "Код",
-          "photo": "Фото",
-          "music": "Музыка"
-        }
-      },
+
       "suggestions": {
-        "gpt-5.2-codex": {
+        "gpt_5_2_codex": {
           "0": "Напиши скрипт на Python",
           "1": "Объясни хуки в React",
           "2": "Создай CSS grid",
           "3": "Как центрировать div?"
         },
-        "claude-opus-4.6": {
+        "claude_opus_4_6": {
           "0": "Напиши эссе про ИИ",
           "1": "Сделай краткое содержание",
           "2": "Помоги перевести текст",
           "3": "Напиши формальное письмо"
         },
-        "claude-sonnet-4.6": {
+        "claude_sonnet_4_6": {
           "0": "Напиши стих о море",
           "1": "Помоги придумать идеи",
           "2": "Сделай список за/против",
           "3": "Напиши вежливый отказ"
         },
-        "gemini-3.1-pro": {
-          "0": "Проанализируй данные",
-          "1": "Помоги с математикой",
-          "2": "Напиши регулярное выражение",
-          "3": "Объясни квантовые компьютеры"
+        "gemini_3_1_pro": {
+          "0": "Идеи для контента",
+          "1": "Напиши бизнес-план",
+          "2": "Объясни квантовую физику",
+          "3": "Как выучить испанский?"
         },
-        "mistral-large-latest": {
+        "gemini_3_flash": {
+          "0": "Быстрый ответ на email",
+          "1": "Краткое содержание",
+          "2": "План на день",
+          "3": "Основы машинного обучения"
+        },
+        "mistral_large_latest": {
           "0": "Напиши bash скрипт",
           "1": "Объясни архитектуру",
-          "2": "Создай план деплоя",
+          "2": "План развертывания",
           "3": "Напиши README"
         },
-        "deepseek-v3.2-exp": {
+        "deepseek_v3_2_exp": {
           "0": "Напиши класс на C++",
           "1": "Реши задачу leetcode",
           "2": "Объясни управление памятью",
@@ -882,6 +846,7 @@ const resources = {
         "inputPlaceholder": "Напишите сообщение...",
         "disclaimer": "ИИ может давать неточные ответы. Проверяйте важную информацию.",
         "generating": "Генерация...",
+        "pay_success_title": "Оплата прошла успешно",
         "userMenu": {
           "home": "На главную",
           "profile": "Профиль",
@@ -947,10 +912,16 @@ const resources = {
             "Проанализируй лог-файлы"
           ],
           "gemini-3.1-pro": [
-            "Переведи текст на 5 языков",
-            "Проанализируй этот датасет",
-            "Объясни квантовые вычисления",
-            "Создай презентацию о нейросетях"
+            "Идеи для контента",
+            "Напиши бизнес-план",
+            "Объясни квантовую физику",
+            "Как выучить испанский?"
+          ],
+          "gemini-3-flash": [
+            "Быстрый ответ на email",
+            "Краткое содержание",
+            "План на день",
+            "Основы машинного обучения"
           ],
           "mistral-large-latest": [
             "Напиши креативный рассказ",
@@ -1008,7 +979,10 @@ const resources = {
         "enterPassword": "Введите пароль",
         "invalidPassword": "Неверный пароль"
       },
+
       "admin": {
+        "payments": "Платежи",
+        "models": "Модели",
         "viewingBanner": "Администратор просматривает ваш аккаунт",
         "title": "Админ панель",
         "users": "Пользователи",
@@ -1222,43 +1196,7 @@ const resources = {
           "plan": "Подписка"
         }
       },
-      "uptime": {
-        "title": "Uptime",
-        "allSystems": "Все системы работают",
-        "partialIssues": "Частичные проблемы",
-        "maintenance": "Технические работы",
-        "subtitle": "Все компоненты работают нормально",
-        "subtitleIssues": "Некоторые компоненты работают с перебоями",
-        "maintenanceDesc": "Мы проводим плановые технические работы для улучшения сервиса.",
-        "expectedTime": "Ожидаемое время",
-        "incidents": "Инциденты",
-        "resolved": "РЕШЕНО",
-        "noticeIssue": "Заметили проблему?",
-        "isAdmin": "Вы администратор?",
-        "adminPanel": "Админ панель",
-        "enterAdminPass": "Введите пароль администратора",
-        "password": "Пароль",
-        "login": "Войти",
-        "components": {
-          "api_gateway": "API Gateway",
-          "ai_router": "AI Models Router",
-          "web_app": "Веб-приложение",
-          "database": "База данных",
-          "auth": "Аутентификация",
-          "cdn": "CDN & Networking"
-        },
-        "status": {
-          "operational": "Работает",
-          "degraded": "Деградация",
-          "down": "Не работает",
-          "maintenance": "Тех. работы"
-        },
-        "history": {
-          "hoursAgo": "90 часов назад",
-          "now": "Сейчас",
-          "ago": "{{count}}ч назад"
-        }
-      },
+
       "terms": {
         "title": "Условия использования",
         "lastUpdated": "Последнее обновление: Январь 2025",

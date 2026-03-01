@@ -35,7 +35,8 @@ const MODEL_LOGOS: Record<string, { src: string; filter?: string }> = {
   "claude-sonnet-4.6": { src: "https://img.icons8.com/fluency/48/claude-ai.png" },
   "gemini-3-pro": { src: "https://img.icons8.com/skeuomorphism/32/gemini-ai.png" },
   "gemini-3.1-pro": { src: "https://img.icons8.com/skeuomorphism/32/gemini-ai.png" },
-  "mistral-large-latest": { src: "https://img.icons8.com/external-flat-juicy-fish/48/external-ai-artificial-intelligence-flat-juicy-fish.png" },
+  "gemini-3-flash": { src: "https://img.icons8.com/skeuomorphism/32/gemini-ai.png" },
+  "mistral-large-latest": { src: "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHhtbG5zOnhsaW5rPSJodHRwOi8vd3d3LnczLm9yZy8xOTk5L3hsaW5rIiB4bWxuczpzZXJpZj0iaHR0cDovL3d3dy5zZXJpZi5jb20vIiB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiB2aWV3Qm94PSIwIDAgMTI5IDkxIiB2ZXJzaW9uPSIxLjEiIHhtbDpzcGFjZT0icHJlc2VydmUiIHN0eWxlPSJmaWxsLXJ1bGU6ZXZlbm9kZDtjbGlwLXJ1bGU6ZXZlbm9kZDtzdHJva2UtbGluZWpvaW46cm91bmQ7c3Ryb2tlLW1pdGVybGltaXQ6MjsiPjxnPjxyZWN0IHg9IjE4LjI5MiIgeT0iMCIgd2lkdGg9IjE4LjI5MyIgaGVpZ2h0PSIxOC4xMjMiIHN0eWxlPSJmaWxsOiNmZmQ4MDA7ZmlsbC1ydWxlOm5vbnplcm87Ii8+PHJlY3QgeD0iOTEuNDczIiB5PSIwIiB3aWR0aD0iMTguMjkzIiBoZWlnaHQ9IjE4LjEyMyIgc3R5bGU9ImZpbGw6I2ZmZDgwMDtmaWxsLXJ1bGU6bm9uemVybzsiLz48cmVjdCB4PSIxOC4yOTIiIHk9IjE4LjEyMSIgd2lkdGg9IjM2LjU4NiIgaGVpZ2h0PSIxOC4xMjMiIHN0eWxlPSJmaWxsOiNmZmFmMDA7ZmlsbC1ydWxlOm5vbnplcm87Ii8+PHJlY3QgeD0iNzMuMTgxIiB5PSIxOC4xMjEiIHdpZHRoPSIzNi41ODYiIGhlaWdodD0iMTguMTIzIiBzdHlsZT0iZmlsbDojZmZhZjAwO2ZpbGwtcnVsZTpub256ZXJvOyIvPjxyZWN0IHg9IjE4LjI5MiIgeT0iMzYuMjQzIiB3aWR0aD0iOTEuNDc2IiBoZWlnaHQ9IjE4LjEyMiIgc3R5bGU9ImZpbGw6I2ZmODIwNTtmaWxsLXJ1bGU6bm9uemVybzsiLz48cmVjdCB4PSIxOC4yOTIiIHk9IjU0LjM3IiB3aWR0aD0iMTguMjkzIiBoZWlnaHQ9IjE4LjEyMyIgc3R5bGU9ImZpbGw6I2ZhNTAwZjtmaWxsLXJ1bGU6bm9uemVybzsiLz48cmVjdCB4PSI1NC44ODMiIHk9IjU0LjM3IiB3aWR0aD0iMTguMjkzIiBoZWlnaHQ9IjE4LjEyMyIgc3R5bGU9ImZpbGw6I2ZhNTAwZjtmaWxsLXJ1bGU6bm9uemVybzsiLz48cmVjdCB4PSI5MS40NzMiIHk9IjU0LjM3IiB3aWR0aD0iMTguMjkzIiBoZWlnaHQ9IjE4LjEyMyIgc3R5bGU9ImZpbGw6I2ZhNTAwZjtmaWxsLXJ1bGU6bm9uemVybzsiLz48cmVjdCB4PSIwIiB5PSI3Mi41MDQiIHdpZHRoPSI1NC44OSIgaGVpZ2h0PSIxOC4xMjMiIHN0eWxlPSJmaWxsOiNlMTA1MDA7ZmlsbC1ydWxlOm5vbnplcm87Ii8+PHJlY3QgeD0iNzMuMTgxIiB5PSI3Mi41MDQiIHdpZHRoPSI1NC44OSIgaGVpZ2h0PSIxOC4xMjMiIHN0eWxlPSJmaWxsOiNlMTA1MDA7ZmlsbC1ydWxlOm5vbnplcm87Ii8+PC9nPjwvc3ZnPg==" },
   "deepseek-v3.2-exp": { src: "https://img.icons8.com/color/48/deepseek.png" },
 };
 
@@ -50,17 +51,19 @@ const allModels = [
   { id: "claude-opus-4.6", name: "Claude Opus 4.6", provider: "Anthropic", color: "text-orange-400", bg: "bg-orange-500/10" },
   { id: "claude-sonnet-4.6", name: "Claude Sonnet 4.6", provider: "Anthropic", color: "text-orange-300", bg: "bg-orange-500/5" },
   { id: "gemini-3.1-pro", name: "Gemini 3.1 Pro", provider: "Google", color: "text-blue-400", bg: "bg-blue-500/10" },
+  { id: "gemini-3-flash", name: "Gemini 3 Flash", provider: "Google", color: "text-blue-300", bg: "bg-blue-500/5" },
   { id: "mistral-large-latest", name: "Mistral Large", provider: "Mistral", color: "text-zinc-300", bg: "bg-white/5" },
   { id: "deepseek-v3.2-exp", name: "DeepSeek V3.2", provider: "DeepSeek", color: "text-blue-300", bg: "bg-blue-400/10" },
 ];
 
 const modelSuggestions: Record<string, string[]> = {
-  "gpt-5.2-codex": ["suggestions.gpt-5.2-codex.0", "suggestions.gpt-5.2-codex.1", "suggestions.gpt-5.2-codex.2", "suggestions.gpt-5.2-codex.3"],
-  "claude-opus-4.6": ["suggestions.claude-opus-4.6.0", "suggestions.claude-opus-4.6.1", "suggestions.claude-opus-4.6.2", "suggestions.claude-opus-4.6.3"],
-  "claude-sonnet-4.6": ["suggestions.claude-sonnet-4.6.0", "suggestions.claude-sonnet-4.6.1", "suggestions.claude-sonnet-4.6.2", "suggestions.claude-sonnet-4.6.3"],
-  "gemini-3.1-pro": ["suggestions.gemini-3.1-pro.0", "suggestions.gemini-3.1-pro.1", "suggestions.gemini-3.1-pro.2", "suggestions.gemini-3.1-pro.3"],
-  "mistral-large-latest": ["suggestions.mistral-large-latest.0", "suggestions.mistral-large-latest.1", "suggestions.mistral-large-latest.2", "suggestions.mistral-large-latest.3"],
-  "deepseek-v3.2-exp": ["suggestions.deepseek-v3.2-exp.0", "suggestions.deepseek-v3.2-exp.1", "suggestions.deepseek-v3.2-exp.2", "suggestions.deepseek-v3.2-exp.3"],
+  "gpt-5.2-codex": ["suggestions.gpt_5_2_codex.0", "suggestions.gpt_5_2_codex.1", "suggestions.gpt_5_2_codex.2", "suggestions.gpt_5_2_codex.3"],
+  "claude-opus-4.6": ["suggestions.claude_opus_4_6.0", "suggestions.claude_opus_4_6.1", "suggestions.claude_opus_4_6.2", "suggestions.claude_opus_4_6.3"],
+  "claude-sonnet-4.6": ["suggestions.claude_sonnet_4_6.0", "suggestions.claude_sonnet_4_6.1", "suggestions.claude_sonnet_4_6.2", "suggestions.claude_sonnet_4_6.3"],
+  "gemini-3.1-pro": ["suggestions.gemini_3_1_pro.0", "suggestions.gemini_3_1_pro.1", "suggestions.gemini_3_1_pro.2", "suggestions.gemini_3_1_pro.3"],
+  "gemini-3-flash": ["suggestions.gemini_3_flash.0", "suggestions.gemini_3_flash.1", "suggestions.gemini_3_flash.2", "suggestions.gemini_3_flash.3"],
+  "mistral-large-latest": ["suggestions.mistral_large_latest.0", "suggestions.mistral_large_latest.1", "suggestions.mistral_large_latest.2", "suggestions.mistral_large_latest.3"],
+  "deepseek-v3.2-exp": ["suggestions.deepseek_v3_2_exp.0", "suggestions.deepseek_v3_2_exp.1", "suggestions.deepseek_v3_2_exp.2", "suggestions.deepseek_v3_2_exp.3"],
 };
 
 const responses = ["chat.responses.0", "chat.responses.1"];
@@ -592,7 +595,8 @@ export default function ChatPage() {
           <div className="max-w-[90%] md:max-w-[80%]">
             {msg.imageUrl && <div className="mb-2 flex justify-end"><img src={String(msg.imageUrl)} alt="" className="max-w-[300px] max-h-[300px] rounded-xl object-cover border border-white/[0.06]" /></div>}
             {msg.content && <div className="bg-violet-600/15 text-zinc-100 px-3 sm:px-4 py-2.5 sm:py-3 rounded-2xl rounded-br-md text-[13px] sm:text-sm leading-relaxed"><MarkdownRenderer content={String(msg.content)} /></div>}
-            {msg.tool && <div className="flex justify-end mt-1"><span className="text-[9px] text-zinc-600 bg-white/[0.02] px-2 py-0.5 rounded-full flex items-center gap-1">{msg.tool === "search" && <Search className="w-2.5 h-2.5" />}{msg.tool === "code" && <Code className="w-2.5 h-2.5" />}{msg.tool === "photo" && <ImageIcon className="w-2.5 h-2.5" />}{msg.tool === "music" && <Music className="w-2.5 h-2.5" />}{TOOL_LABELS[msg.tool] || msg.tool}</span></div>}
+            {hasAdminAccess && msg.actions && <CodeActionDisplay msg={msg} />}
+            {hasAdminAccess && msg.tool && <div className="flex justify-end mt-1"><span className="text-[9px] text-zinc-600 bg-white/[0.02] px-2 py-0.5 rounded-full flex items-center gap-1">{msg.tool === "search" && <Search className="w-2.5 h-2.5" />}{msg.tool === "code" && <Code className="w-2.5 h-2.5" />}{msg.tool === "photo" && <ImageIcon className="w-2.5 h-2.5" />}{msg.tool === "music" && <Music className="w-2.5 h-2.5" />}{TOOL_LABELS[msg.tool] || msg.tool}</span></div>}
           </div>
         </div>
       );
