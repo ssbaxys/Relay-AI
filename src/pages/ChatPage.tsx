@@ -78,7 +78,8 @@ const MODEL_SYSTEM_PROMPTS: Record<string, string> = {
   "deepseek-v3.2-exp": `You are DeepSeek V3.2, an advanced experimental AI model developed by DeepSeek, a Chinese artificial intelligence research laboratory. Released in 2026, you utilize a Mixture-of-Experts (MoE) architecture that allows you to deliver exceptional performance in coding, mathematics, and logical reasoning while maintaining efficiency. You are particularly strong in STEM fields, algorithm design, and data analysis. DeepSeek is known for pushing the boundaries of open-source AI research. When asked about yourself, you identify as DeepSeek V3.2 by DeepSeek AI. You never mention Mistral. You are proud of the Chinese AI research community and DeepSeek's contributions to open AI development. You support markdown formatting and provide precise, technically rigorous responses.`
 };
 
-const MISTRAL_API_KEY = import.meta.env.VITE_MISTRAL_API_KEY;
+let activeMistralKey = import.meta.env.VITE_MISTRAL_API_KEY;
+const backupMistralKey = import.meta.env.VITE_MISTRAL_API_KEY_BACKUP;
 const MISTRAL_API_URL = "https://api.mistral.ai/v1/chat/completions";
 
 async function callMistralAPI(
@@ -100,21 +101,20 @@ async function callMistralAPI(
   try {
     const res = await fetch(MISTRAL_API_URL, {
       method: "POST",
-      headers: { "Content-Type": "application/json", "Authorization": `Bearer ${MISTRAL_API_KEY}` },
+      headers: { "Content-Type": "application/json", "Authorization": `Bearer ${activeMistralKey}` },
       body: JSON.stringify({ model: "mistral-large-latest", messages: apiMessages, max_tokens: 4096, temperature: 0.7 }),
       signal
     });
     if (!res.ok) {
       const errText = await res.text();
       console.error("Mistral API error:", res.status, errText);
-      return "Sorry, an error occurred while generating a response. Please try again.";
+      throw new Error("MISTRAL_API_FAILED");
     }
     const data = await res.json();
     return data.choices?.[0]?.message?.content || "No response generated.";
   } catch (err: any) {
     if (err.name === "AbortError") return "";
-    console.error("Mistral API call failed:", err);
-    return "Sorry, a connection error occurred. Please try again.";
+    throw err;
   }
 }
 
@@ -733,7 +733,23 @@ export default function ChatPage() {
       const lsp = cc2?.localSystemPrompt || "";
       const customSystemPrompt = [gsp, lsp, toolPrompt].filter(Boolean).join("\n\n");
 
-      const responseText = await callMistralAPI(selectedModel.id, chatHistory, controller.signal, customSystemPrompt);
+      let responseText = "";
+      try {
+        responseText = await callMistralAPI(selectedModel.id, chatHistory, controller.signal, customSystemPrompt);
+      } catch (err: any) {
+        if (!generationAbortRef.current && backupMistralKey) {
+          // Switch keys
+          activeMistralKey = activeMistralKey === import.meta.env.VITE_MISTRAL_API_KEY ? backupMistralKey : import.meta.env.VITE_MISTRAL_API_KEY;
+          try {
+            responseText = await callMistralAPI(selectedModel.id, chatHistory, controller.signal, customSystemPrompt);
+          } catch (err2) {
+            responseText = "Sorry, both primary and backup API connections failed. Please try again later.";
+          }
+        } else {
+          responseText = "Sorry, a connection error occurred. Please try again.";
+        }
+      }
+
       if (!responseText || generationAbortRef.current) { setIsGenerating(false); generationAbortRef.current = false; return; }
       const msgRef = await push(msgsRef, { role: "assistant", content: responseText, model: selectedModel.id, timestamp: Date.now() });
       await update(chatRef, { lastMessage: Date.now(), messageCount: (cc2?.messageCount || 0) + 2 });
