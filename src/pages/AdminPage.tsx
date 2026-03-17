@@ -212,6 +212,7 @@ function ViewAsUserPanel({ targetUser, onExit }: { targetUser: UserData; onExit:
             {msg.imageUrl && <img src={String(msg.imageUrl)} alt="" className="max-w-[260px] max-h-[260px] rounded-xl object-cover border border-white/[0.06] mb-2" />}
             {msg.audioUrl && <div className="mb-2"><AdminAudioPlayer url={String(msg.audioUrl)} /></div>}
             {content && <div className="text-zinc-300 text-sm"><MarkdownRenderer content={content} /></div>}
+            {msg.regenerated && <div className="mt-2"><span className="text-[10px] font-medium text-amber-500/80 bg-amber-500/10 border border-amber-500/20 px-2 py-0.5 rounded-full">{t('admin.regenerated')}</span></div>}
           </>
         )}
       </div>

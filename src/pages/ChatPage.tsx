@@ -430,6 +430,7 @@ export default function ChatPage() {
   const [draggedChatId, setDraggedChatId] = useState<string | null>(null);
   const [dragOverTarget, setDragOverTarget] = useState<string | null>(null);
   const [showTokenModal, setShowTokenModal] = useState(false);
+  const [regeneratingStatusText, setRegeneratingStatusText] = useState("");
   const [showChatAdminSettings, setShowChatAdminSettings] = useState(false);
   const [chatAdminPrompt, setChatAdminPrompt] = useState("");
   const [chatContextMenu, setChatContextMenu] = useState<{ chatId: string; x: number; y: number } | null>(null);
@@ -734,24 +735,34 @@ export default function ChatPage() {
       const customSystemPrompt = [gsp, lsp, toolPrompt].filter(Boolean).join("\n\n");
 
       let responseText = "";
+      let isRegenerated = false;
       try {
         responseText = await callMistralAPI(selectedModel.id, chatHistory, controller.signal, customSystemPrompt);
       } catch (err: any) {
-        if (!generationAbortRef.current && backupMistralKey) {
-          // Switch keys
-          activeMistralKey = activeMistralKey === import.meta.env.VITE_MISTRAL_API_KEY ? backupMistralKey : import.meta.env.VITE_MISTRAL_API_KEY;
+        if (!generationAbortRef.current) {
+          setRegeneratingStatusText(t('chat.regeneratingStatus'));
+          if (backupMistralKey) {
+            // Switch keys
+            activeMistralKey = activeMistralKey === import.meta.env.VITE_MISTRAL_API_KEY ? backupMistralKey : import.meta.env.VITE_MISTRAL_API_KEY;
+          } else {
+            await new Promise(r => setTimeout(r, 1500)); // wait 1.5s if no backup
+          }
+
           try {
             responseText = await callMistralAPI(selectedModel.id, chatHistory, controller.signal, customSystemPrompt);
+            isRegenerated = true; // Mark as successfully salvaged
           } catch (err2) {
-            responseText = "Sorry, both primary and backup API connections failed. Please try again later.";
+            responseText = t('chat.bothKeysFailed');
           }
         } else {
-          responseText = "Sorry, a connection error occurred. Please try again.";
+          responseText = t('chat.connectionError');
         }
       }
 
+      setRegeneratingStatusText(""); // Clear status
+
       if (!responseText || generationAbortRef.current) { setIsGenerating(false); generationAbortRef.current = false; return; }
-      const msgRef = await push(msgsRef, { role: "assistant", content: responseText, model: selectedModel.id, timestamp: Date.now() });
+      const msgRef = await push(msgsRef, { role: "assistant", content: responseText, model: selectedModel.id, timestamp: Date.now(), regenerated: isRegenerated });
       await update(chatRef, { lastMessage: Date.now(), messageCount: (cc2?.messageCount || 0) + 2 });
       if (msgRef.key) animateTyping(responseText, msgRef.key);
 

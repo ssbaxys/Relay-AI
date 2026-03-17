@@ -236,6 +236,10 @@ const resources = {
         "chatWith": "Chat with",
         "available": "Available",
         "unavailable": "Unavailable",
+        "chat.unavailable": "Response unavailable...",
+        "chat.regeneratingStatus": "Response failed, initiating regeneration...",
+        "chat.connectionError": "A connection error occurred with the AI. Please try again.",
+        "chat.bothKeysFailed": "Both primary and backup API connections failed. Please try again later.",
         "modelUnavailable": "Model unavailable",
         "chooseAnother": "Please choose another model.",
         "switchModel": "Switch to",
@@ -383,7 +387,9 @@ const resources = {
         "actions": "Actions",
         "viewAsUser": "View as User",
         "ban": "Ban",
-        "unban": "Unban",
+        "admin.date": "Date",
+        "admin.regenerated": "🔄 Regenerated",
+        "admin.unban": "Unban",
         "delete": "Delete",
         "changePlan": "Change Plan",
         "maintenanceMode": "Maintenance Mode",
@@ -896,7 +902,7 @@ const resources = {
         }
       },
       "footer": {
-        "description": "Ваш проводник в мир современного искусственного интеллекта."
+        "description": "Ваш умный ИИ-ассистент."
       },
       "chat": {
         "newChat": "Новый чат",
@@ -915,6 +921,10 @@ const resources = {
         "chatWith": "Чат с",
         "available": "Доступна",
         "unavailable": "Недоступна",
+        "chat.unavailable": "Ответ недоступен...",
+        "chat.regeneratingStatus": "Ошибка ответа, инициирована перегенерация...",
+        "chat.connectionError": "Произошла ошибка соединения с ИИ. Пожалуйста, повторите попытку.",
+        "chat.bothKeysFailed": "Оба API-ключа недействительны или перегружены. Пожалуйста, попробуйте позже.",
         "modelUnavailable": "Модель недоступна",
         "chooseAnother": "Выберите другую модель.",
         "switchModel": "Переключить на",
@@ -1061,7 +1071,9 @@ const resources = {
         "actions": "Действия",
         "viewAsUser": "Войти как",
         "ban": "Бан",
-        "unban": "Разбанить",
+        "admin.date": "Дата",
+        "admin.regenerated": "🔄 Перегенерация",
+        "admin.unban": "Разбанить",
         "delete": "Удалить",
         "changePlan": "Изменить план",
         "maintenanceMode": "Технические работы",
@@ -1515,7 +1527,7 @@ const resources = {
         }
       },
       "footer": {
-        "description": "Tu guía en el mundo de la inteligencia artificial moderna."
+        "description": "Tu asistente inteligente de IA."
       },
       "chat": {
         "newChat": "Nuevo Chat",
@@ -1534,6 +1546,10 @@ const resources = {
         "chatWith": "Chat con",
         "available": "Disponible",
         "unavailable": "No disponible",
+        "chat.unavailable": "Respuesta no disponible...",
+        "chat.regeneratingStatus": "Respuesta fallida, iniciando regeneración...",
+        "chat.connectionError": "Ocurrió un error de conexión con la IA. Por favor, inténtelo de nuevo.",
+        "chat.bothKeysFailed": "Las conexiones API principal y de respaldo fallaron. Por favor, inténtelo de nuevo más tarde.",
         "modelUnavailable": "Modelo no disponible",
         "chooseAnother": "Por favor elige otro modelo.",
         "switchModel": "Cambiar a",
@@ -1642,7 +1658,9 @@ const resources = {
         "actions": "Acciones",
         "viewAsUser": "Ver como Usuario",
         "ban": "Banear",
-        "unban": "Desbanear",
+        "admin.date": "Fecha",
+        "admin.regenerated": "🔄 Regenerado",
+        "admin.unban": "Desbanear",
         "delete": "Eliminar",
         "changePlan": "Cambiar Plan",
         "maintenanceMode": "Modo Mantenimiento",
@@ -1926,7 +1944,7 @@ const resources = {
         "Layers": { "title": "Meilleurs Modèles", "desc": "GPT-5.2, Claude 4.6 et Gemini 3.1 via une seule interface." },
         "Zap": { "title": "Vitesse Instantanée", "desc": "Routage optimisé avec moins de 50ms de latence." },
         "Globe": { "title": "API Unifiée", "desc": "Une clé pour tous les modèles. Sans inscription séparée." },
-        "Shield": { "title": "Sécurité", "desc": "Chiffrement de bout en bout et conformité aux normes de protection." }
+        "Shield": { "title": "Seguridad", "desc": "Chiffrement de bout en bout et conformité aux normes de protection." }
       },
       "uptime": {
         "title": "Statut du système",
@@ -2042,7 +2060,10 @@ const resources = {
         "chatWith": "Chat avec",
         "available": "Disponible",
         "unavailable": "Indisponible",
-        "modelUnavailable": "Modèle indisponible",
+        "chat.unavailable": "Réponse non disponible...",
+        "chat.regeneratingStatus": "Échec de la réponse, relance de la génération...",
+        "chat.connectionError": "Une erreur de connexion avec l'IA est survenue. Veuillez réessayer.",
+        "chat.bothKeysFailed": "Les connexions API principale et de secours ont échoué. Veuillez réessayer plus tard.",
         "switchModel": "Passer à",
         "rename": "Renommer",
         "delete": "Supprimer",
@@ -2108,7 +2129,9 @@ const resources = {
         "actions": "Actions",
         "viewAsUser": "Voir comme",
         "ban": "Bannir",
-        "unban": "Débannir",
+        "admin.date": "Date",
+        "admin.regenerated": "🔄 Régénéré",
+        "admin.unban": "Débannir",
         "delete": "Supprimer",
         "changePlan": "Changer le plan",
         "maintenanceMode": "Mode maintenance",
@@ -2490,6 +2513,10 @@ const resources = {
           "searchDone": "Suche abgeschlossen",
           "available": "Verfügbar",
           "unavailable": "Nicht verfügbar",
+          "chat.unavailable": "Antwort nicht verfügbar...",
+          "chat.regeneratingStatus": "Antwort fehlgeschlagen, Regeneration wird eingeleitet...",
+          "chat.connectionError": "Es ist ein Verbindungsfehler mit der KI aufgetreten. Bitte versuchen Sie es erneut.",
+          "chat.bothKeysFailed": "Sowohl die primäre als auch die Backup-API-Verbindung sind fehlgeschlagen. Bitte versuchen Sie es später erneut.",
           "switchModel": "Wechseln zu",
           "rename": "Umbenennen",
           "delete": "Löschen",
