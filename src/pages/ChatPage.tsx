@@ -1274,7 +1274,7 @@ export default function ChatPage() {
       {showSettings && <SettingsModal settings={userSettings} onUpdate={updateUserSettings} onClose={() => setShowSettings(false)} />}
       {showChatAdminSettings && (
         <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/60 backdrop-blur-sm px-4" onClick={() => setShowChatAdminSettings(false)}>
-          <div onClick={(e) => e.stopPropagation()} className="w-full max-w-md bg-[#111114] border border-white/[0.06] rounded-3xl shadow-2xl overflow-hidden animate-fade-in-up">
+          <div onClick={(e: React.MouseEvent) => e.stopPropagation()} className="w-full max-w-md bg-[#111114] border border-white/[0.06] rounded-3xl shadow-2xl overflow-hidden animate-fade-in-up">
             <div className="flex items-center justify-between px-6 py-5 border-b border-white/[0.04]">
               <div className="flex items-center gap-3">
                 <div className="w-8 h-8 rounded-xl bg-violet-500/20 flex items-center justify-center"><Settings className="w-4 h-4 text-violet-400" /></div>
@@ -1284,7 +1284,7 @@ export default function ChatPage() {
             </div>
             <div className="p-6 space-y-4">
               <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider px-1">{t('admin.localSystemPrompt') || "Local System Prompt"}</label>
-              <textarea value={chatAdminPrompt} onChange={(e) => setChatAdminPrompt(e.target.value)} rows={4} placeholder="System prompt specific to this chat..." className="w-full px-3.5 py-2.5 rounded-xl bg-white/[0.02] border border-white/[0.06] text-sm placeholder-zinc-700 focus:outline-none focus:border-violet-500/40 resize-none" />
+              <textarea value={chatAdminPrompt} onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setChatAdminPrompt(e.target.value)} rows={4} placeholder="System prompt specific to this chat..." className="w-full px-3.5 py-2.5 rounded-xl bg-white/[0.02] border border-white/[0.06] text-sm placeholder-zinc-700 focus:outline-none focus:border-violet-500/40 resize-none" />
             </div>
             <div className="px-6 py-4 bg-white/[0.02] border-t border-white/[0.04] flex justify-end gap-3">
               <button onClick={() => setShowChatAdminSettings(false)} className="px-5 py-2 rounded-xl bg-white/[0.05] text-white text-xs font-semibold hover:bg-white/[0.08] transition-colors">{t('common.cancel')}</button>
