@@ -78,15 +78,17 @@ const MODEL_SYSTEM_PROMPTS: Record<string, string> = {
   "deepseek-v3.2-exp": `You are DeepSeek V3.2, an advanced experimental AI model developed by DeepSeek, a Chinese artificial intelligence research laboratory. Released in 2026, you utilize a Mixture-of-Experts (MoE) architecture that allows you to deliver exceptional performance in coding, mathematics, and logical reasoning while maintaining efficiency. You are particularly strong in STEM fields, algorithm design, and data analysis. DeepSeek is known for pushing the boundaries of open-source AI research. When asked about yourself, you identify as DeepSeek V3.2 by DeepSeek AI. You never mention Mistral. You are proud of the Chinese AI research community and DeepSeek's contributions to open AI development. You support markdown formatting and provide precise, technically rigorous responses.`
 };
 
-const MISTRAL_API_KEY = "RGY25St9OHjWWfXq7118nY7FNEXDpet9";
+const MISTRAL_API_KEY = import.meta.env.VITE_MISTRAL_API_KEY;
 const MISTRAL_API_URL = "https://api.mistral.ai/v1/chat/completions";
 
 async function callMistralAPI(
   modelId: string,
   chatHistory: { role: string; content: string }[],
-  signal?: AbortSignal
+  signal?: AbortSignal,
+  customSystemPrompt?: string
 ): Promise<string> {
-  const systemPrompt = MODEL_SYSTEM_PROMPTS[modelId] || MODEL_SYSTEM_PROMPTS["mistral-large-latest"];
+  const defaultPrompt = MODEL_SYSTEM_PROMPTS[modelId] || MODEL_SYSTEM_PROMPTS["mistral-large-latest"];
+  const systemPrompt = customSystemPrompt ? `${customSystemPrompt}\n\n${defaultPrompt}` : defaultPrompt;
   const contextMessages = chatHistory.slice(-20).map(m => ({
     role: m.role === "assistant" ? "assistant" as const : "user" as const,
     content: m.content
@@ -427,6 +429,9 @@ export default function ChatPage() {
   const [renameFolderValue, setRenameFolderValue] = useState("");
   const [draggedChatId, setDraggedChatId] = useState<string | null>(null);
   const [dragOverTarget, setDragOverTarget] = useState<string | null>(null);
+  const [showTokenModal, setShowTokenModal] = useState(false);
+  const [showChatAdminSettings, setShowChatAdminSettings] = useState(false);
+  const [chatAdminPrompt, setChatAdminPrompt] = useState("");
   const [chatContextMenu, setChatContextMenu] = useState<{ chatId: string; x: number; y: number } | null>(null);
   const [folderContextMenu, setFolderContextMenu] = useState<{ folderId: string; x: number; y: number } | null>(null);
   const [showProfile, setShowProfile] = useState(false);
@@ -456,7 +461,6 @@ export default function ChatPage() {
   const [ticketReply, setTicketReply] = useState("");
   const [tokensUsed, setTokensUsed] = useState(0);
   const [tokensResetDate, setTokensResetDate] = useState(0);
-  const [showTokenModal, setShowTokenModal] = useState(false);
   const [userSettings, setUserSettings] = useState({ theme: "dark", fontSize: "medium" });
   const [systemSettings, setSystemSettings] = useState<any>(null);
 
@@ -553,7 +557,7 @@ export default function ChatPage() {
   useEffect(() => { if (!user) return; const unsub = onValue(ref(db, `viewAsUser/${user.uid}`), (snap) => { setViewAsUser(!!snap.val()); }); return () => unsub(); }, [user]);
   useEffect(() => { setCurrentSuggestions(getRandomSuggestions(selectedModel.id)); }, [selectedModel.id]);
   useEffect(() => { if (!user) return; const unsub = onValue(ref(db, `users/${user.uid}`), (snap) => { const d = snap.val(); if (d) { setProfileData({ displayName: d.displayName || user.displayName || "User", systemNick: user.email || "", visibleNick: d.visibleNick || d.displayName || user.displayName || "User", id: d.uniqueId || "", plan: d.plan || "free", language: d.language || "ru" }); if (!d.uniqueId) set(ref(db, `users/${user.uid}/uniqueId`), String(Math.floor(10000000 + Math.random() * 90000000))); } }); return () => unsub(); }, [user]);
-  useEffect(() => { if (!user) return; const q = query(ref(db, `chats/${user.uid}`), orderByChild("createdAt")); const unsub = onValue(q, (snap) => { const d = snap.val(); if (d) { setChatSessions(Object.entries(d).map(([id, v]: [string, any]) => ({ id, title: v.title || t('chat.newChat'), model: v.model || "gpt-5.2-codex", createdAt: v.createdAt || 0, lastMessage: v.lastMessage || v.createdAt || 0, messageCount: v.messageCount || 0, folderId: v.folderId || undefined, activeTool: v.activeTool || null }))); } else setChatSessions([]); }); return () => unsub(); }, [user, t]);
+  useEffect(() => { if (!user) return; const q = query(ref(db, `chats/${user.uid}`), orderByChild("createdAt")); const unsub = onValue(q, (snap) => { const d = snap.val(); if (d) { setChatSessions(Object.entries(d).map(([id, v]: [string, any]) => ({ id, title: v.title || t('chat.newChat'), model: v.model || "gpt-5.2-codex", createdAt: v.createdAt || 0, lastMessage: v.lastMessage || v.createdAt || 0, messageCount: v.messageCount || 0, folderId: v.folderId || undefined, activeTool: v.activeTool || null, localSystemPrompt: v.localSystemPrompt || "" }))); } else setChatSessions([]); }); return () => unsub(); }, [user, t]);
   useEffect(() => { if (!user) return; const unsub = onValue(ref(db, `folders/${user.uid}`), (snap) => { const d = snap.val(); if (d) { setFolders(Object.entries(d).map(([id, v]: [string, any]) => ({ id, name: v.name || t('chat.folder'), createdAt: v.createdAt || 0, collapsed: v.collapsed || false }))); } else setFolders([]); }); return () => unsub(); }, [user, t]);
 
   // Token Quota Listener
@@ -608,6 +612,11 @@ export default function ChatPage() {
   const deleteChat = async (chatId: string) => { if (!user) return; await remove(ref(db, `chats/${user.uid}/${chatId}`)); await remove(ref(db, `messages/${user.uid}/${chatId}`)); if (currentChatId === chatId) { setCurrentChatId(null); setMessages([]); } };
   const renameChat = async (chatId: string, t: string) => { if (!user || !t.trim()) return; await update(ref(db, `chats/${user.uid}/${chatId}`), { title: t.trim() }); setRenamingChatId(null); };
   const renameFolder = async (fId: string, n: string) => { if (!user || !n.trim()) return; await update(ref(db, `folders/${user.uid}/${fId}`), { name: n.trim() }); setRenamingFolderId(null); };
+  const saveChatAdminSettings = async () => {
+    if (!user || !currentChatId) return;
+    await update(ref(db, `chats/${user.uid}/${currentChatId}`), { localSystemPrompt: chatAdminPrompt });
+    setShowChatAdminSettings(false);
+  };
   const toggleFolderCollapse = async (fId: string) => { if (!user) return; const f = folders.find(fl => fl.id === fId); if (f) await update(ref(db, `folders/${user.uid}/${fId}`), { collapsed: !f.collapsed }); };
   const deleteFolder = async (fId: string, scatter: boolean) => { if (!user) return; const cif = chatSessions.filter(c => c.folderId === fId); if (scatter) { for (const c of cif) await update(ref(db, `chats/${user.uid}/${c.id}`), { folderId: null }); } else { for (const c of cif) { await remove(ref(db, `chats/${user.uid}/${c.id}`)); await remove(ref(db, `messages/${user.uid}/${c.id}`)); } } await remove(ref(db, `folders/${user.uid}/${fId}`)); };
   const moveChatToFolder = async (chatId: string, fId: string | null) => { if (!user) return; await update(ref(db, `chats/${user.uid}/${chatId}`), { folderId: fId || null }); };
@@ -627,10 +636,13 @@ export default function ChatPage() {
 
   const animateTyping = useCallback((fullText: string, messageId: string) => {
     setTypingMessageId(messageId); setTypingText("");
-    let i = 0;
+    const startTime = Date.now();
+    const charsPerMs = 1 / 8; // 1 char every 8ms roughly
     const iv = setInterval(() => {
       if (generationAbortRef.current) { clearInterval(iv); setTypingMessageId(null); setTypingText(""); setIsGenerating(false); generationAbortRef.current = false; return; }
-      if (i < fullText.length) { setTypingText(fullText.substring(0, i + 1)); i++; }
+      const elapsed = Date.now() - startTime;
+      const targetChars = Math.floor(elapsed * charsPerMs);
+      if (targetChars < fullText.length) { setTypingText(fullText.substring(0, targetChars + 1)); }
       else { clearInterval(iv); setTypingMessageId(null); setTypingText(""); setIsGenerating(false); }
     }, 8);
   }, []);
@@ -688,7 +700,40 @@ export default function ChatPage() {
       // Build conversation history for API
       const chatHistory = messages.filter(m => m.role === "user" || m.role === "assistant").map((m: any) => ({ role: m.role, content: String(m.content || "") }));
       chatHistory.push({ role: "user", content: text });
-      const responseText = await callMistralAPI(selectedModel.id, chatHistory, controller.signal);
+
+      let toolPrompt = "";
+      if (activeTool === "search") {
+        try {
+          const res = await fetch(`https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(text)}`);
+          if (res.ok) {
+            const data = await res.json();
+            if (data.extract) toolPrompt = `\n\n[Search Result for "${text}"]\n${data.extract}\n\nPlease use this information to answer the user's query clearly.`;
+          }
+        } catch (e) { }
+        if (!toolPrompt) toolPrompt = `\n\n[Search Result]: No specific summary found for "${text}". Please answer based on your existing knowledge.`;
+      } else if (activeTool === "photo") {
+        toolPrompt = `\n\n[SYSTEM INSTRUCTION: The user wants an image. You MUST respond with a markdown image tag in this exact format: ![Image Description](https://image.pollinations.ai/prompt/{url_encoded_english_description}?width=800&height=400&nologo=true) along with a short text description.]`;
+      } else if (activeTool === "music") {
+        try {
+          const res = await fetch(`https://itunes.apple.com/search?term=${encodeURIComponent(text)}&limit=1&entity=song`);
+          if (res.ok) {
+            const data = await res.json();
+            if (data.results && data.results.length > 0) {
+              const track = data.results[0];
+              toolPrompt = `\n\n[SYSTEM INSTRUCTION: I found a playable music track for "${text}". Preview URL: ${track.previewUrl}. Name: ${track.trackName} by ${track.artistName}. You MUST include an audio player link in your response formatted exactly like this: [listen](${track.previewUrl}) along with your commentary.]`;
+            }
+          }
+        } catch (e) { }
+        if (!toolPrompt) toolPrompt = `\n\n[SYSTEM INSTRUCTION: I could not find a playable music preview for "${text}". Please state that you could not find the track.]`;
+      } else if (activeTool === "code") {
+        toolPrompt = `\n\n[SYSTEM INSTRUCTION: The user expects a robust code solution. Provide the best, most optimized code for this query. Use correct markdown code blocks and explain briefly.]`;
+      }
+
+      const gsp = systemSettings?.globalSystemPrompt || "";
+      const lsp = cc2?.localSystemPrompt || "";
+      const customSystemPrompt = [gsp, lsp, toolPrompt].filter(Boolean).join("\n\n");
+
+      const responseText = await callMistralAPI(selectedModel.id, chatHistory, controller.signal, customSystemPrompt);
       if (!responseText || generationAbortRef.current) { setIsGenerating(false); generationAbortRef.current = false; return; }
       const msgRef = await push(msgsRef, { role: "assistant", content: responseText, model: selectedModel.id, timestamp: Date.now() });
       await update(chatRef, { lastMessage: Date.now(), messageCount: (cc2?.messageCount || 0) + 2 });
@@ -746,7 +791,7 @@ export default function ChatPage() {
             {msg.imageUrl && <div className="mb-2 flex justify-end"><img src={String(msg.imageUrl)} alt="" className="max-w-[300px] max-h-[300px] rounded-xl object-cover border border-white/[0.06]" /></div>}
             {msg.content && <div className="bg-violet-600/15 text-zinc-100 px-3 sm:px-4 py-2.5 sm:py-3 rounded-2xl rounded-br-md text-[13px] sm:text-sm leading-relaxed"><MarkdownRenderer content={String(msg.content)} /></div>}
             {hasAdminAccess && msg.actions && <CodeActionDisplay msg={msg} />}
-            {hasAdminAccess && msg.tool && <div className="flex justify-end mt-1"><span className="text-[9px] text-zinc-600 bg-white/[0.02] px-2 py-0.5 rounded-full flex items-center gap-1">{msg.tool === "search" && <Search className="w-2.5 h-2.5" />}{msg.tool === "code" && <Code className="w-2.5 h-2.5" />}{msg.tool === "photo" && <ImageIcon className="w-2.5 h-2.5" />}{msg.tool === "music" && <Music className="w-2.5 h-2.5" />}{TOOL_LABELS[msg.tool] || msg.tool}</span></div>}
+
           </div>
         </div>
       );
@@ -1111,7 +1156,12 @@ export default function ChatPage() {
                 {allModels.map((m) => { const dis = isModelDisabledCheck(m.id); return (<button key={m.id} onClick={() => { if (!dis) handleModelChange(m); }} disabled={dis} className={`w-full text-left px-3 py-2.5 rounded-lg text-sm flex items-center gap-3 transition-all ${dis ? "opacity-30 cursor-not-allowed" : selectedModel.id === m.id ? "bg-violet-600/10 text-violet-300" : "text-zinc-400 hover:bg-white/[0.03]"}`}><ModelLogo modelId={m.id} size={22} /><div className="flex-1 min-w-0"><div className="text-xs font-medium flex items-center gap-2">{m.name}{dis && <span className="text-[9px] text-zinc-500 bg-zinc-800 px-1.5 py-0.5 rounded">{t('chat.unavailable')}</span>}</div><div className="text-[11px] text-zinc-600">{m.provider}</div></div>{!dis && selectedModel.id === m.id && <Check className="w-3.5 h-3.5 text-violet-400 shrink-0" />}</button>); })}
               </div></>)}
             </div>
-            <div className="w-8" />
+            <div className="flex items-center gap-2">
+              {hasAdminAccess && currentChatId && (
+                <button title={t('admin.localSystemPrompt') || "Chat System Prompt"} onClick={() => { setChatAdminPrompt(chatSessions.find((c: any) => c.id === currentChatId)?.localSystemPrompt || ""); setShowChatAdminSettings(true); }} className="p-1.5 rounded-lg hover:bg-white/[0.03] text-zinc-500 hover:text-zinc-300 transition-all"><Settings className="w-4 h-4" /></button>
+              )}
+              <div className="w-8" />
+            </div>
           </div>
 
           <div className="flex-1 overflow-y-auto">
@@ -1195,7 +1245,27 @@ export default function ChatPage() {
         </div>
       </div>
       {showSettings && <SettingsModal settings={userSettings} onUpdate={updateUserSettings} onClose={() => setShowSettings(false)} />}
-      {showTokenModal && <TokenExhaustedModal />}
+      {showChatAdminSettings && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/60 backdrop-blur-sm px-4" onClick={() => setShowChatAdminSettings(false)}>
+          <div onClick={(e) => e.stopPropagation()} className="w-full max-w-md bg-[#111114] border border-white/[0.06] rounded-3xl shadow-2xl overflow-hidden animate-fade-in-up">
+            <div className="flex items-center justify-between px-6 py-5 border-b border-white/[0.04]">
+              <div className="flex items-center gap-3">
+                <div className="w-8 h-8 rounded-xl bg-violet-500/20 flex items-center justify-center"><Settings className="w-4 h-4 text-violet-400" /></div>
+                <h3 className="text-sm font-semibold">{t('admin.localSystemPrompt') || "Chat System Prompt"}</h3>
+              </div>
+              <button onClick={() => setShowChatAdminSettings(false)} className="p-2 rounded-xl hover:bg-white/[0.05] text-zinc-500 transition-all"><X className="w-4 h-4" /></button>
+            </div>
+            <div className="p-6 space-y-4">
+              <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider px-1">{t('admin.localSystemPrompt') || "Local System Prompt"}</label>
+              <textarea value={chatAdminPrompt} onChange={(e) => setChatAdminPrompt(e.target.value)} rows={4} placeholder="System prompt specific to this chat..." className="w-full px-3.5 py-2.5 rounded-xl bg-white/[0.02] border border-white/[0.06] text-sm placeholder-zinc-700 focus:outline-none focus:border-violet-500/40 resize-none" />
+            </div>
+            <div className="px-6 py-4 bg-white/[0.02] border-t border-white/[0.04] flex justify-end gap-3">
+              <button onClick={() => setShowChatAdminSettings(false)} className="px-5 py-2 rounded-xl bg-white/[0.05] text-white text-xs font-semibold hover:bg-white/[0.08] transition-colors">{t('common.cancel')}</button>
+              <button onClick={saveChatAdminSettings} className="px-5 py-2 rounded-xl bg-violet-600 text-white text-xs font-semibold hover:bg-violet-500 transition-colors shadow-lg shadow-violet-600/20">{t('admin.save')}</button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
