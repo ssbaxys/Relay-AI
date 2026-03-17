@@ -61,13 +61,33 @@ export default function PaymentPage() {
     return () => unsub();
   }, []);
 
+  const promoCode = params.get("promo") || "";
+  const [appliedPromo, setAppliedPromo] = useState<any | null>(null);
+
+  useEffect(() => {
+    if (!promoCode) return;
+    const unsub = onValue(ref(db, "promocodes"), (snap) => {
+      const d = snap.val();
+      if (d) {
+        const found: any = Object.values(d).find((c: any) => c.code === promoCode);
+        if (found) {
+          const key = Object.keys(d).find(k => d[k].code === promoCode);
+          setAppliedPromo({ ...found, key });
+        }
+      }
+    });
+    return () => unsub();
+  }, [promoCode]);
+
+  const isFree = parseInt(price) === 0;
+
   const isCardValid = () => {
     const num = cardNumber.replace(/\s/g, "");
     return num.length === 16 && expiry.length === 5 && cvv.length === 3 && cardName.trim().length > 0;
   };
   const isCryptoValid = () => cryptoWallet.trim().length > 10;
 
-  const canSubmit = method === "crypto" ? isCryptoValid() : isCardValid();
+  const canSubmit = isFree ? true : (method === "crypto" ? isCryptoValid() : isCardValid());
 
   const handleSubmit = async () => {
     if (!canSubmit || processing) return;
@@ -91,12 +111,20 @@ export default function PaymentPage() {
     // Save payment record (NO card data saved)
     const user = auth.currentUser;
     const email = user?.email || "unknown";
+
+    if (appliedPromo && appliedPromo.key) {
+      await update(ref(db, `promocodes/${appliedPromo.key}`), {
+        uses: (appliedPromo.uses || 0) + 1
+      });
+    }
+
     await push(ref(db, "payments"), {
       email,
       uid: user?.uid || "",
       plan,
       method: labels[method],
       amount: price + "₽",
+      promocode: appliedPromo ? appliedPromo.code : null,
       timestamp: Date.now(),
       createdAt: serverTimestamp(),
     });
@@ -224,118 +252,127 @@ export default function PaymentPage() {
               <div className="ml-auto text-right">
                 <p className="text-lg font-bold text-white">{price}₽</p>
                 <p className="text-[10px] text-zinc-600">{t('pricing.perMonth', "в месяц")}</p>
+                {appliedPromo && <p className="text-[10px] text-emerald-400 mt-1 px-1.5 py-0.5 bg-emerald-500/10 rounded-md inline-block border border-emerald-500/20">{appliedPromo.code}</p>}
               </div>
             </div>
           </div>
 
           <div className="p-6 space-y-5">
-            {/* Payment method selector */}
-            <div>
-              <label className="block text-xs text-zinc-500 mb-2">Способ оплаты</label>
-              <div className="grid grid-cols-3 gap-2">
-                {(["ru", "foreign", "crypto"] as PayMethod[]).map((m) => (
-                  <button key={m} onClick={() => setMethod(m)}
-                    className={`px-3 py-3 rounded-xl border text-center transition-all duration-200 ${method === m
-                      ? "border-violet-500/40 bg-violet-600/[0.08] ring-1 ring-violet-500/20"
-                      : "border-white/[0.06] bg-white/[0.01] hover:border-white/[0.1]"
-                      }`}>
-                    <span className="text-lg block mb-1">{methodIcons[m]}</span>
-                    <span className="text-[10px] text-zinc-400 block">{labels[m]}</span>
-                  </button>
-                ))}
+            {isFree ? (
+              <div className="text-center py-8 bg-emerald-500/10 rounded-2xl border border-emerald-500/20">
+                <Sparkles className="w-10 h-10 text-emerald-400 mx-auto mb-4" />
+                <h3 className="text-emerald-400 font-bold text-xl mb-1">{t('payment.getFree', 'Получить бесплатно!')}</h3>
+                <p className="text-emerald-500/70 text-xs">{t('payment.getFreeDesc', 'Промокод активирован, забирайте подписку без оплаты.')}</p>
               </div>
-            </div>
-
-            {/* Card form (RU / Foreign) */}
-            {(method === "ru" || method === "foreign") && (
-              <div className="space-y-3">
+            ) : (
+              <>
+                {/* Payment method selector */}
                 <div>
-                  <label className="block text-xs text-zinc-500 mb-1.5">{t('payment.form.cardNumber')}</label>
-                  <input type="text" value={cardNumber}
-                    onChange={(e) => setCardNumber(formatCardNumber(e.target.value))}
-                    placeholder="1234 5678 9012 3456" maxLength={19}
-                    className="w-full px-3.5 py-2.5 rounded-xl bg-white/[0.02] border border-white/[0.06] text-sm placeholder-zinc-700 focus:outline-none focus:border-violet-500/40 transition-colors font-mono tracking-wider" />
-                </div>
-                <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <label className="block text-xs text-zinc-500 mb-1.5">{t('payment.form.expiry')}</label>
-                    <input type="text" value={expiry}
-                      onChange={(e) => setExpiry(formatExpiry(e.target.value))}
-                      placeholder="MM/YY" maxLength={5}
-                      className="w-full px-3.5 py-2.5 rounded-xl bg-white/[0.02] border border-white/[0.06] text-sm placeholder-zinc-700 focus:outline-none focus:border-violet-500/40 transition-colors font-mono" />
-                  </div>
-                  <div>
-                    <label className="block text-xs text-zinc-500 mb-1.5">{t('payment.form.cvv')}</label>
-                    <input type="password" value={cvv}
-                      onChange={(e) => setCvv(e.target.value.replace(/\D/g, "").slice(0, 3))}
-                      placeholder="•••" maxLength={3}
-                      className="w-full px-3.5 py-2.5 rounded-xl bg-white/[0.02] border border-white/[0.06] text-sm placeholder-zinc-700 focus:outline-none focus:border-violet-500/40 transition-colors font-mono" />
-                  </div>
-                </div>
-                <div>
-                  <label className="block text-xs text-zinc-500 mb-1.5">{t('payment.form.cardName')}</label>
-                  <input type="text" value={cardName}
-                    onChange={(e) => setCardName(e.target.value.toUpperCase())}
-                    placeholder="IVAN IVANOV"
-                    className="w-full px-3.5 py-2.5 rounded-xl bg-white/[0.02] border border-white/[0.06] text-sm placeholder-zinc-700 focus:outline-none focus:border-violet-500/40 transition-colors uppercase tracking-wide" />
-                </div>
-                {method === "foreign" && (
-                  <div>
-                    <label className="block text-xs text-zinc-500 mb-1.5">{t('payment.form.country')}</label>
-                    <select value={country} onChange={(e) => setCountry(e.target.value)}
-                      className="w-full px-3.5 py-2.5 rounded-xl bg-white/[0.02] border border-white/[0.06] text-sm text-zinc-300 focus:outline-none focus:border-violet-500/40 transition-colors appearance-none cursor-pointer">
-                      <option value="US" className="bg-[#111114]">United States</option>
-                      <option value="GB" className="bg-[#111114]">United Kingdom</option>
-                      <option value="DE" className="bg-[#111114]">Germany</option>
-                      <option value="FR" className="bg-[#111114]">France</option>
-                      <option value="JP" className="bg-[#111114]">Japan</option>
-                      <option value="KR" className="bg-[#111114]">South Korea</option>
-                      <option value="TR" className="bg-[#111114]">Turkey</option>
-                      <option value="KZ" className="bg-[#111114]">Kazakhstan</option>
-                      <option value="OTHER" className="bg-[#111114]">{t('common.other', "Другая")}</option>
-                    </select>
-                  </div>
-                )}
-              </div>
-            )}
-
-            {/* Crypto form */}
-            {method === "crypto" && (
-              <div className="space-y-3">
-                <div>
-                  <label className="block text-xs text-zinc-500 mb-1.5">{t('payment.form.network')}</label>
-                  <div className="grid grid-cols-4 gap-2">
-                    {["USDT", "BTC", "ETH", "SOL"].map((n) => (
-                      <button key={n} onClick={() => setCryptoNetwork(n)}
-                        className={`px-3 py-2 rounded-xl border text-xs font-medium text-center transition-all ${cryptoNetwork === n
-                          ? "border-violet-500/40 bg-violet-600/10 text-violet-400"
-                          : "border-white/[0.06] text-zinc-500 hover:text-zinc-300"
+                  <label className="block text-xs text-zinc-500 mb-2">{t('payment.form.method', 'Способ оплаты')}</label>
+                  <div className="grid grid-cols-3 gap-2">
+                    {(["ru", "foreign", "crypto"] as PayMethod[]).map((m) => (
+                      <button key={m} onClick={() => setMethod(m)}
+                        className={`px-3 py-3 rounded-xl border text-center transition-all duration-200 ${method === m
+                          ? "border-violet-500/40 bg-violet-600/[0.08] ring-1 ring-violet-500/20"
+                          : "border-white/[0.06] bg-white/[0.01] hover:border-white/[0.1]"
                           }`}>
-                        {n}
+                        <span className="text-lg block mb-1">{methodIcons[m]}</span>
+                        <span className="text-[10px] text-zinc-400 block">{labels[m]}</span>
                       </button>
                     ))}
                   </div>
                 </div>
-                <div>
-                  <label className="block text-xs text-zinc-500 mb-1.5">{t('payment.form.address')}</label>
-                  <input type="text" value={cryptoWallet}
-                    onChange={(e) => setCryptoWallet(e.target.value)}
-                    placeholder="0x..."
-                    className="w-full px-3.5 py-2.5 rounded-xl bg-white/[0.02] border border-white/[0.06] text-sm placeholder-zinc-700 focus:outline-none focus:border-violet-500/40 transition-colors font-mono text-xs" />
-                </div>
-                <div className="bg-white/[0.02] border border-white/[0.04] rounded-xl p-3">
-                  <p className="text-[10px] text-zinc-600 leading-relaxed">
-                    {t('payment.form.cryptoNote', { price, network: cryptoNetwork })}
-                  </p>
-                </div>
-              </div>
+
+                {/* Card form (RU / Foreign) */}
+                {(method === "ru" || method === "foreign") && (
+                  <div className="space-y-3">
+                    <div>
+                      <label className="block text-xs text-zinc-500 mb-1.5">{t('payment.form.cardNumber')}</label>
+                      <input type="text" value={cardNumber}
+                        onChange={(e) => setCardNumber(formatCardNumber(e.target.value))}
+                        placeholder="1234 5678 9012 3456" maxLength={19}
+                        className="w-full px-3.5 py-2.5 rounded-xl bg-white/[0.02] border border-white/[0.06] text-sm placeholder-zinc-700 focus:outline-none focus:border-violet-500/40 transition-colors font-mono tracking-wider" />
+                    </div>
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <label className="block text-xs text-zinc-500 mb-1.5">{t('payment.form.expiry')}</label>
+                        <input type="text" value={expiry}
+                          onChange={(e) => setExpiry(formatExpiry(e.target.value))}
+                          placeholder="MM/YY" maxLength={5}
+                          className="w-full px-3.5 py-2.5 rounded-xl bg-white/[0.02] border border-white/[0.06] text-sm placeholder-zinc-700 focus:outline-none focus:border-violet-500/40 transition-colors font-mono" />
+                      </div>
+                      <div>
+                        <label className="block text-xs text-zinc-500 mb-1.5">{t('payment.form.cvv')}</label>
+                        <input type="password" value={cvv}
+                          onChange={(e) => setCvv(e.target.value.replace(/\D/g, "").slice(0, 3))}
+                          placeholder="•••" maxLength={3}
+                          className="w-full px-3.5 py-2.5 rounded-xl bg-white/[0.02] border border-white/[0.06] text-sm placeholder-zinc-700 focus:outline-none focus:border-violet-500/40 transition-colors font-mono" />
+                      </div>
+                    </div>
+                    <div>
+                      <label className="block text-xs text-zinc-500 mb-1.5">{t('payment.form.cardName')}</label>
+                      <input type="text" value={cardName}
+                        onChange={(e) => setCardName(e.target.value.toUpperCase())}
+                        placeholder="IVAN IVANOV"
+                        className="w-full px-3.5 py-2.5 rounded-xl bg-white/[0.02] border border-white/[0.06] text-sm placeholder-zinc-700 focus:outline-none focus:border-violet-500/40 transition-colors uppercase tracking-wide" />
+                    </div>
+                    {method === "foreign" && (
+                      <div>
+                        <label className="block text-xs text-zinc-500 mb-1.5">{t('payment.form.country')}</label>
+                        <select value={country} onChange={(e) => setCountry(e.target.value)}
+                          className="w-full px-3.5 py-2.5 rounded-xl bg-white/[0.02] border border-white/[0.06] text-sm text-zinc-300 focus:outline-none focus:border-violet-500/40 transition-colors appearance-none cursor-pointer">
+                          <option value="US" className="bg-[#111114]">United States</option>
+                          <option value="GB" className="bg-[#111114]">United Kingdom</option>
+                          <option value="DE" className="bg-[#111114]">Germany</option>
+                          <option value="FR" className="bg-[#111114]">France</option>
+                          <option value="JP" className="bg-[#111114]">Japan</option>
+                          <option value="KR" className="bg-[#111114]">South Korea</option>
+                          <option value="TR" className="bg-[#111114]">Turkey</option>
+                          <option value="KZ" className="bg-[#111114]">Kazakhstan</option>
+                          <option value="OTHER" className="bg-[#111114]">{t('common.other', "Другая")}</option>
+                        </select>
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* Crypto form */}
+                {method === "crypto" && (
+                  <div className="space-y-3">
+                    <div>
+                      <label className="block text-xs text-zinc-500 mb-1.5">{t('payment.form.network')}</label>
+                      <div className="grid grid-cols-4 gap-2">
+                        {["USDT", "BTC", "ETH", "SOL"].map((n) => (
+                          <button key={n} onClick={() => setCryptoNetwork(n)}
+                            className={`px-3 py-2 rounded-xl border text-xs font-medium text-center transition-all ${cryptoNetwork === n
+                              ? "border-violet-500/40 bg-violet-600/10 text-violet-400"
+                              : "border-white/[0.06] text-zinc-500 hover:text-zinc-300"
+                              }`}>
+                            {n}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                    <div>
+                      <label className="block text-xs text-zinc-500 mb-1.5">{t('payment.form.address')}</label>
+                      <input type="text" value={cryptoWallet}
+                        onChange={(e) => setCryptoWallet(e.target.value)}
+                        placeholder="0x..."
+                        className="w-full px-3.5 py-2.5 rounded-xl bg-white/[0.02] border border-white/[0.06] text-sm placeholder-zinc-700 focus:outline-none focus:border-violet-500/40 transition-colors font-mono text-xs" />
+                    </div>
+                    <div className="bg-white/[0.02] border border-white/[0.04] rounded-xl p-3">
+                      <p className="text-[10px] text-zinc-600 leading-relaxed">
+                        {t('payment.form.cryptoNote', { price, network: cryptoNetwork })}
+                      </p>
+                    </div>
+                  </div>
+                )}
+              </>
             )}
 
             {/* Security note */}
             <div className="flex items-start gap-2 bg-white/[0.02] border border-white/[0.04] rounded-xl px-3.5 py-3">
-              <svg className="w-4 h-4 text-emerald-500 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-              </svg>
+              <Sparkles className="w-4 h-4 text-emerald-500 shrink-0 mt-0.5" />
               <p className="text-[10px] text-zinc-600 leading-relaxed">
                 {t('payment.form.securityNote')}
               </p>
@@ -347,7 +384,7 @@ export default function PaymentPage() {
               {processing ? (
                 <><div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> {t('payment.form.processing')}</>
               ) : (
-                <>{t('payment.form.submit', { price })}</>
+                isFree ? <>{t('payment.getFree', 'Получить бесплатно!')}</> : <>{t('payment.form.submit', { price: price + "₽" })}</>
               )}
             </button>
           </div>

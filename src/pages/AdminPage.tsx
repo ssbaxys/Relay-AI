@@ -15,6 +15,7 @@ import { useTranslation } from "react-i18next";
 const sanitizeKey = (k: string) => k.replace(/\./g, "_");
 
 interface UserData { uid: string; displayName: string; email: string; plan: string; role: string; lastLogin: number; createdAt: number; banned?: boolean; visibleNick?: string; language?: string; tokens?: { used: number; resetDate?: number }; }
+interface Promocode { id: string; code: string; title: string; description: string; type: "discount" | "free_sub"; targetPlan: "pro" | "ultra" | "all"; discountPercent?: number; expiresAt: number | null; maxUses: number | null; uses: number; active: boolean; createdAt: number; }
 interface SystemSettings { maintenance: boolean; maintenanceMessage: string; maintenanceEstimate: string; registrationEnabled: boolean; freeRequestsLimit: number; announcement: string; paymentMode: "success" | "insufficient_funds" | "invalid_card"; defaultPlan?: string; defaultTokens?: number; enableVoiceInput?: boolean; enableFileUploads?: boolean; supportEmail?: string; globalSystemPrompt?: string; }
 type UptimeStatus = "operational" | "degraded" | "down" | "maintenance";
 type GodModeType = "auto" | "manual" | "admin";
@@ -345,8 +346,11 @@ export default function AdminPage() {
   const [error, setError] = useState("");
   const [users, setUsers] = useState<UserData[]>([]);
   const [settings, setSettings] = useState<SystemSettings>({ maintenance: false, maintenanceMessage: t('admin.maintenanceDefaultMsg'), maintenanceEstimate: "2 hours", registrationEnabled: true, freeRequestsLimit: 5, announcement: "", paymentMode: "success", defaultPlan: "free", enableVoiceInput: true, enableFileUploads: true, supportEmail: "", globalSystemPrompt: "" });
-  const [activeTab, setActiveTab] = useState<"dashboard" | "users" | "settings" | "uptime" | "models" | "tickets" | "payments">("dashboard");
+  const [activeTab, setActiveTab] = useState<"dashboard" | "users" | "settings" | "uptime" | "models" | "tickets" | "payments" | "promocodes">("dashboard");
   const [payments, setPayments] = useState<any[]>([]);
+  const [promocodes, setPromocodes] = useState<Promocode[]>([]);
+  const [showAddPromo, setShowAddPromo] = useState(false);
+  const [promoForm, setPromoForm] = useState<Partial<Promocode>>({ type: "discount", targetPlan: "all", active: true, discountPercent: 10, maxUses: null, expiresAt: null });
   const [stats, setStats] = useState({ totalUsers: 0, totalChats: 0, totalMessages: 0, totalVisits: 0, newUsersToday: 0, newChatsToday: 0, newMessagesToday: 0 });
   const [searchUser, setSearchUser] = useState("");
   const [saved, setSaved] = useState(false);
@@ -436,12 +440,27 @@ export default function AdminPage() {
   useEffect(() => { if (!authenticated) return; const u = onValue(ref(db, "uptime"), (s) => { const d = s.val(); if (d) { setComponentUptimes(UPTIME_COMPONENTS.map(c => { const h = d[c.key] ? (d[c.key] as UptimeStatus[]) : getDefaultHours(); return { ...c, hours: Array.from({ length: 90 }, (_, i) => h[i] || "operational") as UptimeStatus[] }; })); } }); return () => u(); }, [authenticated]);
   useEffect(() => { if (!authenticated) return; const u = onValue(ref(db, "tickets"), (s) => { const d = s.val(); if (d) { setAllTickets(Object.entries(d).map(([id, v]: [string, any]) => ({ id, ...v })).sort((a: any, b: any) => (b.createdAt || 0) - (a.createdAt || 0))); } else setAllTickets([]); }); return () => u(); }, [authenticated]);
   useEffect(() => { if (!authenticated) return; const u = onValue(ref(db, "payments"), (s) => { const d = s.val(); if (d) { setPayments(Object.entries(d).map(([id, v]: [string, any]) => ({ id, ...v })).sort((a: any, b: any) => (b.timestamp || 0) - (a.timestamp || 0))); } else setPayments([]); }); return () => u(); }, [authenticated]);
+  useEffect(() => { if (!authenticated) return; const u = onValue(ref(db, "promocodes"), (s) => { const d = s.val(); if (d) { setPromocodes(Object.entries(d).map(([id, v]: [string, any]) => ({ id, ...v })).sort((a: any, b: any) => (b.createdAt || 0) - (a.createdAt || 0))); } else setPromocodes([]); }); return () => u(); }, [authenticated]);
   useEffect(() => { if (!selectedTicket) { setTicketMessages([]); return; } const u = onValue(ref(db, `tickets/${selectedTicket.id}/messages`), (s) => { const d = s.val(); if (d) { setTicketMessages(Object.entries(d).map(([id, v]: [string, any]) => ({ id, ...v })).sort((a: any, b: any) => a.timestamp - b.timestamp)); } else setTicketMessages([]); }); return () => u(); }, [selectedTicket]);
   useEffect(() => { ticketEndRef.current?.scrollIntoView({ behavior: "smooth" }); }, [ticketMessages]);
 
   const sendAdminTicketReply = async () => { if (!selectedTicket || !ticketReply.trim()) return; await push(ref(db, `tickets/${selectedTicket.id}/messages`), { role: "admin", content: ticketReply.trim(), timestamp: Date.now() }); setTicketReply(""); };
   const changeTicketStatus = async (id: string, st: "open" | "closed") => { await update(ref(db, `tickets/${id}`), { status: st }); if (selectedTicket?.id === id) setSelectedTicket({ ...selectedTicket, status: st }); };
   const deleteTicket = async (id: string) => { await remove(ref(db, `tickets/${id}`)); if (selectedTicket?.id === id) { setSelectedTicket(null); setTicketMessages([]); } };
+
+  const handleSavePromo = async () => {
+    if (!promoForm.code || !promoForm.title) return;
+    const isNew = !promoForm.id;
+    const refPath = isNew ? push(ref(db, "promocodes")) : ref(db, `promocodes/${promoForm.id}`);
+    const data: any = { ...promoForm, code: promoForm.code.toUpperCase() };
+    if (isNew) { data.createdAt = Date.now(); data.uses = 0; }
+    if (data.type === "free_sub") delete data.discountPercent;
+    await set(refPath, data);
+    setShowAddPromo(false); setPromoForm({ type: "discount", targetPlan: "all", active: true, discountPercent: 10, maxUses: null, expiresAt: null });
+  };
+  const handleDeletePromo = async (id: string) => {
+    if (window.confirm("Удалить промокод?")) await remove(ref(db, `promocodes/${id}`));
+  };
 
   // God Mode data loading
   useEffect(() => { if (!godSelectedUser) { setGodChats([]); setGodFolders([]); return; } const u1 = onValue(ref(db, `chats/${godSelectedUser.uid}`), (s) => { const d = s.val(); if (d) { setGodChats(Object.entries(d).map(([id, v]: [string, any]) => ({ id, title: v.title || t('chat.newChat'), model: v.model || "gpt-5.2-codex", createdAt: v.createdAt || 0, lastMessage: v.lastMessage || 0, messageCount: v.messageCount || 0, folderId: v.folderId || undefined })).sort((a: any, b: any) => b.lastMessage - a.lastMessage)); } else setGodChats([]); }); const u2 = onValue(ref(db, `folders/${godSelectedUser.uid}`), (s) => { const d = s.val(); if (d) { setGodFolders(Object.entries(d).map(([id, v]: [string, any]) => ({ id, name: v.name || t('admin.folder'), collapsed: v.collapsed || false }))); } else setGodFolders([]); }); return () => { u1(); u2(); }; }, [godSelectedUser]);
@@ -883,7 +902,7 @@ export default function AdminPage() {
 
   // MAIN ADMIN PANEL
   const tabs = [
-    { id: "dashboard" as const, label: t('admin.dashboard') }, { id: "users" as const, label: t('admin.users') },
+    { id: "dashboard" as const, label: t('admin.dashboard') }, { id: "users" as const, label: t('admin.users') }, { id: "promocodes" as const, label: "Промокоды" },
     { id: "tickets" as const, label: `${t('admin.tickets')}${allTickets.filter(t => t.status === "open").length > 0 ? ` (${allTickets.filter(t => t.status === "open").length})` : ""}` },
     { id: "payments" as const, label: `${t('admin.payments')}${payments.length > 0 ? ` (${payments.length})` : ""}` },
     { id: "uptime" as const, label: t('admin.uptime') }, { id: "settings" as const, label: t('admin.settings') }, { id: "models" as const, label: t('admin.models') },
@@ -1019,6 +1038,98 @@ export default function AdminPage() {
                 </tbody>
               </table>
               {payments.length === 0 && <div className="py-10 text-center text-xs text-zinc-700">{t('admin.noPayments')}</div>}
+            </div>
+          </div>
+        )}
+
+        {activeTab === "promocodes" && (
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <h3 className="text-sm font-medium mb-1">Управление промокодами</h3>
+                <p className="text-xs text-zinc-600">{promocodes.length} промокодов найдено</p>
+              </div>
+              <button onClick={() => setShowAddPromo(!showAddPromo)} className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-violet-600 text-white text-xs font-medium hover:bg-violet-500 transition-all">
+                {showAddPromo ? <XIcon className="w-3.5 h-3.5" /> : <Plus className="w-3.5 h-3.5" />}
+                {showAddPromo ? "Отмена" : "Создать промокод"}
+              </button>
+            </div>
+
+            {showAddPromo && (
+              <div className="border border-white/[0.04] bg-white/[0.01] rounded-2xl p-5 space-y-4 animate-fade-in-up">
+                <h3 className="text-sm font-medium mb-2">Новый промокод</h3>
+                <div className="grid grid-cols-2 gap-4">
+                  <div><label className="block text-xs text-zinc-600 mb-1.5">Код (например SUMMER50)</label><input type="text" value={promoForm.code || ""} onChange={(e) => setPromoForm(p => ({ ...p, code: e.target.value.toUpperCase() }))} className="w-full px-3.5 py-2.5 rounded-xl bg-white/[0.02] border border-white/[0.06] text-sm focus:outline-none focus:border-violet-500/40 uppercase font-mono" /></div>
+                  <div><label className="block text-xs text-zinc-600 mb-1.5">Заголовок</label><input type="text" value={promoForm.title || ""} onChange={(e) => setPromoForm(p => ({ ...p, title: e.target.value }))} className="w-full px-3.5 py-2.5 rounded-xl bg-white/[0.02] border border-white/[0.06] text-sm focus:outline-none focus:border-violet-500/40" /></div>
+                </div>
+                <div><label className="block text-xs text-zinc-600 mb-1.5">Описание (поддерживает Markdown)</label><textarea rows={2} value={promoForm.description || ""} onChange={(e) => setPromoForm(p => ({ ...p, description: e.target.value }))} className="w-full px-3.5 py-2.5 rounded-xl bg-white/[0.02] border border-white/[0.06] text-sm focus:outline-none focus:border-violet-500/40 resize-none" /></div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-xs text-zinc-600 mb-1.5">Тип бонуса</label>
+                    <div className="grid grid-cols-2 gap-2">
+                      <button onClick={() => setPromoForm(p => ({ ...p, type: "discount" }))} className={`py-2 rounded-xl text-xs font-medium border transition-all ${promoForm.type === "discount" ? "bg-violet-600/10 border-violet-500/40 text-violet-400" : "bg-white/[0.01] border-white/[0.06] text-zinc-400 hover:border-white/[0.1]"}`}>Скидка (%)</button>
+                      <button onClick={() => setPromoForm(p => ({ ...p, type: "free_sub" }))} className={`py-2 rounded-xl text-xs font-medium border transition-all ${promoForm.type === "free_sub" ? "bg-violet-600/10 border-violet-500/40 text-violet-400" : "bg-white/[0.01] border-white/[0.06] text-zinc-400 hover:border-white/[0.1]"}`}>Бесплатная подписка</button>
+                    </div>
+                  </div>
+                  <div>
+                    <label className="block text-xs text-zinc-600 mb-1.5">Целевой тариф</label>
+                    <select value={promoForm.targetPlan || "all"} onChange={(e) => setPromoForm(p => ({ ...p, targetPlan: e.target.value as any }))} className="w-full px-3.5 py-2.5 rounded-xl bg-white/[0.02] border border-white/[0.06] text-sm focus:outline-none focus:border-violet-500/40 text-zinc-300">
+                      <option className="bg-[#111114]" value="all">Все (Pro и Ultra)</option>
+                      <option className="bg-[#111114]" value="pro">Только /Pro</option>
+                      <option className="bg-[#111114]" value="ultra">Только /Ultra</option>
+                    </select>
+                  </div>
+                </div>
+                {promoForm.type === "discount" && (
+                  <div><label className="block text-xs text-zinc-600 mb-1.5">Размер скидки (%)</label><input type="number" min="1" max="99" value={promoForm.discountPercent || 10} onChange={(e) => setPromoForm(p => ({ ...p, discountPercent: parseInt(e.target.value) || 10 }))} className="w-24 px-3.5 py-2.5 rounded-xl bg-white/[0.02] border border-white/[0.06] text-sm focus:outline-none focus:border-violet-500/40 text-center" /></div>
+                )}
+                <div className="grid grid-cols-2 gap-4">
+                  <div><label className="block text-xs text-zinc-600 mb-1.5">Максимум активаций (пусто = ∞)</label><input type="number" min="1" value={promoForm.maxUses || ""} onChange={(e) => setPromoForm(p => ({ ...p, maxUses: e.target.value ? parseInt(e.target.value) : null }))} placeholder="∞" className="w-full px-3.5 py-2.5 rounded-xl bg-white/[0.02] border border-white/[0.06] text-sm focus:outline-none focus:border-violet-500/40" /></div>
+                  <div><label className="block text-xs text-zinc-600 mb-1.5">Действует до (пусто = ∞)</label><input type="date" onChange={(e) => setPromoForm(p => ({ ...p, expiresAt: e.target.value ? new Date(e.target.value).getTime() : null }))} className="w-full px-3.5 py-2.5 rounded-xl bg-white/[0.02] border border-white/[0.06] text-sm focus:outline-none focus:border-violet-500/40 text-zinc-300" /></div>
+                </div>
+                <button onClick={handleSavePromo} disabled={!promoForm.code || !promoForm.title} className="w-full py-2.5 rounded-xl bg-violet-600 text-white text-sm font-medium hover:bg-violet-500 disabled:opacity-40 transition-all flex justify-center items-center gap-2"><Save className="w-4 h-4" /> Сохранить промокод</button>
+              </div>
+            )}
+
+            <div className="grid gap-4 md:grid-cols-2">
+              {promocodes.map(promo => (
+                <div key={promo.id} className="border border-white/[0.04] bg-white/[0.01] rounded-2xl p-5 relative group transition-all hover:border-white/[0.1]">
+                  <div className="absolute top-4 right-4 flex items-center gap-2">
+                    <span className={`text-[10px] font-medium px-2 py-0.5 rounded-full ${promo.active ? "bg-emerald-500/10 text-emerald-400" : "bg-red-500/10 text-red-400"}`}>{promo.active ? "Активен" : "Отключен"}</span>
+                    <button onClick={() => handleDeletePromo(promo.id)} className="p-1.5 rounded-lg border border-red-500/20 text-red-400 hover:bg-red-600/10 transition-colors"><Trash2 className="w-3.5 h-3.5" /></button>
+                  </div>
+                  <div className="flex items-center gap-3 mb-3">
+                    <div className="w-10 h-10 bg-violet-600/20 rounded-xl flex items-center justify-center shrink-0">
+                      <TicketCheck className="w-5 h-5 text-violet-400" />
+                    </div>
+                    <div className="min-w-0 pr-16">
+                      <h4 className="font-bold text-white font-mono tracking-wider truncate">{promo.code}</h4>
+                      <p className="text-[10px] text-zinc-500 uppercase tracking-widest">{promo.type === "discount" ? `Скидка ${promo.discountPercent}%` : "Бесплатная подписка"} • {promo.targetPlan === "all" ? "Все тарифы" : promo.targetPlan.toUpperCase()}</p>
+                    </div>
+                  </div>
+                  <h5 className="text-sm font-semibold mb-1 ">{promo.title}</h5>
+                  <div className="text-xs text-zinc-400 mb-4 line-clamp-2"><MarkdownRenderer content={promo.description} /></div>
+                  <div className="pt-4 border-t border-white/[0.04] grid grid-cols-2 gap-y-2 gap-x-4 text-xs">
+                    <div className="flex flex-col gap-1">
+                      <span className="text-[10px] text-zinc-600 uppercase">Активаций</span>
+                      <span className="text-zinc-300 font-medium">{promo.uses || 0} / {promo.maxUses || "∞"}</span>
+                    </div>
+                    <div className="flex flex-col gap-1">
+                      <span className="text-[10px] text-zinc-600 uppercase">Истекает</span>
+                      <span className="text-zinc-300 font-medium">{promo.expiresAt ? new Date(promo.expiresAt).toLocaleDateString() : "Никогда"}</span>
+                    </div>
+                  </div>
+                </div>
+              ))}
+              {promocodes.length === 0 && !showAddPromo && (
+                <div className="col-span-1 md:col-span-2 py-10 text-center">
+                  <div className="w-12 h-12 bg-white/[0.02] rounded-full flex items-center justify-center mx-auto mb-3 border border-white/[0.04]">
+                    <TicketCheck className="w-5 h-5 text-zinc-600" />
+                  </div>
+                  <p className="text-sm text-zinc-500 font-medium">Нет промокодов</p>
+                  <p className="text-xs text-zinc-600 mt-1">Создайте новый промокод, чтобы привлечь пользователей</p>
+                </div>
+              )}
             </div>
           </div>
         )}

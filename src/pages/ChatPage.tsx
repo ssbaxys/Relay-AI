@@ -11,7 +11,7 @@ import {
   LogOut, Trash2, MessageSquare, Check, Square,
   Folder, Pencil, X, ArrowDownAZ, Clock, MessageCircle,
   GripVertical, FolderOpen, Home, User, Lock, FileText, PanelLeftClose, PanelLeft,
-  Shield, Wrench, AlertTriangle, Ban, TicketCheck, ChevronLeft, Send as SendIcon,
+  Shield, Wrench, AlertTriangle, Ban, TicketCheck, ChevronLeft, Send as SendIcon, RefreshCw,
   Play, Pause, Download, Code, Image as ImageIcon, Music, ExternalLink, Eye,
   Crown, Gem, Sparkles, Settings, Globe, Zap
 } from "lucide-react";
@@ -648,10 +648,15 @@ export default function ChatPage() {
     }, 8);
   }, []);
 
-  const sendMessage = async () => {
-    if (!input.trim() || !user || isGenerating) return;
+  const sendMessage = async (overrideText?: string, overrideTool?: ToolType) => {
+    const textToUse = overrideText !== undefined ? overrideText : input;
+    if (!textToUse.trim() || !user || isGenerating) return;
     if (isModelDisabledCheck(selectedModel.id)) return;
-    const text = input.trim().substring(0, MAX_CHARS);
+    const text = textToUse.trim().substring(0, MAX_CHARS);
+
+    if (overrideTool !== undefined) {
+      setActiveTool(overrideTool);
+    }
 
     // Token quota check
     const limit = getTokenLimit(profileData.plan);
@@ -735,34 +740,28 @@ export default function ChatPage() {
       const customSystemPrompt = [gsp, lsp, toolPrompt].filter(Boolean).join("\n\n");
 
       let responseText = "";
-      let isRegenerated = false;
       try {
         responseText = await callMistralAPI(selectedModel.id, chatHistory, controller.signal, customSystemPrompt);
       } catch (err: any) {
         if (!generationAbortRef.current) {
-          setRegeneratingStatusText(t('chat.regeneratingStatus'));
-          if (backupMistralKey) {
-            // Switch keys
-            activeMistralKey = activeMistralKey === import.meta.env.VITE_MISTRAL_API_KEY ? backupMistralKey : import.meta.env.VITE_MISTRAL_API_KEY;
-          } else {
-            await new Promise(r => setTimeout(r, 1500)); // wait 1.5s if no backup
-          }
-
-          try {
-            responseText = await callMistralAPI(selectedModel.id, chatHistory, controller.signal, customSystemPrompt);
-            isRegenerated = true; // Mark as successfully salvaged
-          } catch (err2) {
-            responseText = t('chat.bothKeysFailed');
-          }
-        } else {
-          responseText = t('chat.connectionError');
+          await push(msgsRef, {
+            role: "assistant",
+            content: t('chat.connectionError'),
+            model: selectedModel.id,
+            timestamp: Date.now(),
+            isError: true,
+            promptToRetry: text,
+            toolToRetry: activeTool || null
+          });
+          await update(chatRef, { lastMessage: Date.now(), messageCount: (cc2?.messageCount || 0) + 2 });
         }
+        setIsGenerating(false);
+        generationAbortRef.current = false;
+        return;
       }
 
-      setRegeneratingStatusText(""); // Clear status
-
       if (!responseText || generationAbortRef.current) { setIsGenerating(false); generationAbortRef.current = false; return; }
-      const msgRef = await push(msgsRef, { role: "assistant", content: responseText, model: selectedModel.id, timestamp: Date.now(), regenerated: isRegenerated });
+      const msgRef = await push(msgsRef, { role: "assistant", content: responseText, model: selectedModel.id, timestamp: Date.now() });
       await update(chatRef, { lastMessage: Date.now(), messageCount: (cc2?.messageCount || 0) + 2 });
       if (msgRef.key) animateTyping(responseText, msgRef.key);
 
@@ -805,6 +804,13 @@ export default function ChatPage() {
     </div>
   );
 
+  const handleRegenerate = async (msg: any) => {
+    if (!user || !currentChatId || isGenerating) return;
+    activeMistralKey = activeMistralKey === import.meta.env.VITE_MISTRAL_API_KEY ? backupMistralKey : import.meta.env.VITE_MISTRAL_API_KEY;
+    await remove(ref(db, `messages/${user.uid}/${currentChatId}/${msg.id}`));
+    sendMessage(msg.promptToRetry || "", msg.toolToRetry || null);
+  };
+
   const renderMessage = (msg: any) => {
     const role = String(msg.role || "user");
     const msgModel = getModelInfo(msg.model || selectedModel.id);
@@ -844,9 +850,15 @@ export default function ChatPage() {
             <>
               {msg.imageUrl && <div className="mb-2"><img src={String(msg.imageUrl)} alt="" className="max-w-[300px] max-h-[300px] rounded-xl object-cover border border-white/[0.06]" /></div>}
               {msg.audioUrl && <div className="mb-2"><AudioPlayer url={String(msg.audioUrl)} /></div>}
-              <div className="text-zinc-300 text-[13px] sm:text-sm leading-relaxed">
+              <div className={`text-[13px] sm:text-sm leading-relaxed ${msg.isError ? "text-red-400" : "text-zinc-300"}`}>
                 {typingMessageId === msg.id ? (<div><MarkdownRenderer content={typingText} /><span className="inline-block w-0.5 h-4 bg-violet-400 ml-0.5 animate-pulse align-middle" /></div>) : (<MarkdownRenderer content={String(msg.content || "")} />)}
               </div>
+              {msg.isError && msg.promptToRetry && (
+                <button onClick={() => handleRegenerate(msg)} className="mt-3 flex items-center gap-2 px-4 py-2.5 rounded-xl bg-violet-600/10 text-violet-400 text-xs font-medium hover:bg-violet-600/20 hover:text-violet-300 transition-all border border-violet-500/20 active:scale-95">
+                  <RefreshCw className="w-4 h-4" />
+                  Перегенерировать (Альтернативный ключ)
+                </button>
+              )}
             </>
           )}
         </div>

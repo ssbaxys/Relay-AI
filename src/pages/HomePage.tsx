@@ -56,6 +56,31 @@ export default function HomePage() {
   const [userCount, setUserCount] = useState<string>("0");
   const [avgUptime, setAvgUptime] = useState<string>("99.9%");
 
+  const [promoCode, setPromoCode] = useState("");
+  const [promocodes, setPromocodes] = useState<any[]>([]);
+  const [appliedPromo, setAppliedPromo] = useState<any | null>(null);
+  const [promoError, setPromoError] = useState("");
+
+  useEffect(() => {
+    const unsub = onValue(ref(db, "promocodes"), (s) => {
+      const d = s.val();
+      if (d) setPromocodes(Object.values(d));
+      else setPromocodes([]);
+    });
+    return () => unsub();
+  }, []);
+
+  const handleApplyPromo = () => {
+    setPromoError(""); setAppliedPromo(null);
+    if (!promoCode.trim()) return;
+    const p = promocodes.find(c => c.code === promoCode.trim().toUpperCase());
+    if (!p) { setPromoError(t('promo.notFound', 'Промокод не найден')); return; }
+    if (!p.active) { setPromoError(t('promo.inactive', 'Промокод отключен')); return; }
+    if (p.expiresAt && Date.now() > p.expiresAt) { setPromoError(t('promo.expired', 'Срок действия промокода истек')); return; }
+    if (p.maxUses && p.uses >= p.maxUses) { setPromoError(t('promo.limitReached', 'Лимит активаций исчерпан')); return; }
+    setAppliedPromo(p);
+  };
+
   // Dynamic user count from Firebase
   useEffect(() => {
     const unsub = onValue(ref(db, "users"), (snap) => {
@@ -106,7 +131,21 @@ export default function HomePage() {
     return () => unsub();
   }, []);
 
-  const pricing = pricingPlans(t);
+  const pricing = pricingPlans(t).map((plan: any) => {
+    if (!appliedPromo) return plan;
+    if (appliedPromo.targetPlan !== "all" && appliedPromo.targetPlan !== plan.id) return plan;
+    if (appliedPromo.type === "free_sub") {
+      return { ...plan, price: "0 ₽", originalPrice: plan.price };
+    } else if (appliedPromo.type === "discount" && appliedPromo.discountPercent) {
+      const origMatch = plan.price.match(/\d+/);
+      if (origMatch) {
+        const origNum = parseInt(origMatch[0]);
+        const newNum = Math.floor(origNum * (1 - appliedPromo.discountPercent / 100));
+        return { ...plan, price: `${newNum} ₽`, originalPrice: plan.price };
+      }
+    }
+    return plan;
+  });
 
   return (
     <div className="min-h-screen bg-[#050507] text-zinc-100">
@@ -252,9 +291,19 @@ export default function HomePage() {
       {/* Pricing */}
       <section id="pricing" className="pb-24 px-6 text-white">
         <div className="max-w-5xl mx-auto">
-          <div className="mb-12 text-center md:text-left">
-            <h2 className="text-3xl font-bold mb-3">{t('pricing.title', 'Тарифы')}</h2>
-            <p className="text-zinc-500 text-sm font-light">{t('pricing.subtitle', 'Простые и прозрачные цены')}</p>
+          <div className="mb-12 flex flex-col md:flex-row items-center justify-between gap-6 text-center md:text-left">
+            <div>
+              <h2 className="text-3xl font-bold mb-3">{t('pricing.title', 'Тарифы')}</h2>
+              <p className="text-zinc-500 text-sm font-light">{t('pricing.subtitle', 'Простые и прозрачные цены')}</p>
+            </div>
+            <div className="w-full max-w-sm flex flex-col gap-2 relative z-20">
+              <div className="flex w-full">
+                <input type="text" value={promoCode} onChange={(e) => setPromoCode(e.target.value)} placeholder={t('promo.placeholder', 'Промокод (если есть)')} className="flex-1 px-4 py-3 bg-white/[0.02] border border-white/[0.06] rounded-l-2xl text-sm font-mono uppercase focus:outline-none focus:border-violet-500/40 transition-colors placeholder:normal-case placeholder:font-sans" />
+                <button onClick={handleApplyPromo} className="px-5 py-3 bg-white/[0.05] border border-l-0 border-white/[0.06] rounded-r-2xl text-sm font-medium hover:bg-white/[0.08] transition-colors">{t('promo.apply', 'ОК')}</button>
+              </div>
+              {promoError && <p className="text-xs text-red-400 absolute -bottom-5 right-0">{promoError}</p>}
+              {appliedPromo && <p className="text-xs text-emerald-400 absolute -bottom-5 right-0">{t('promo.applied', '✅ Промокод применен!')}</p>}
+            </div>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {pricing.map((p) => (
@@ -265,7 +314,8 @@ export default function HomePage() {
                 {p.highlighted && <div className="absolute top-0 right-0 p-4"><span className="text-[10px] font-bold bg-white text-violet-700 px-3 py-1 rounded-full uppercase tracking-tighter">{t('pricing.bestDeal')}</span></div>}
                 <div className="mb-8">
                   <h3 className={`text-xl font-bold mb-4 ${p.highlighted ? "text-white" : "text-zinc-200"}`}>{p.name}</h3>
-                  <div className="flex items-baseline gap-1">
+                  <div className="flex items-baseline gap-2">
+                    {p.originalPrice && <span className="text-xl text-zinc-600 line-through font-medium">{p.originalPrice}</span>}
                     <span className="text-4xl font-bold">{p.price}</span>
                     <span className={`text-sm ${p.highlighted ? "text-violet-200" : "text-zinc-500"}`}>/{p.period}</span>
                   </div>
@@ -283,7 +333,7 @@ export default function HomePage() {
                 <Link to={
                   p.id === "free"
                     ? (user ? "/chat" : "/sign")
-                    : (user ? `/payment?plan=${p.id}&price=${p.price.replace(/[^\d]/g, "")}` : "/sign")
+                    : (user ? `/payment?plan=${p.id}&price=${p.price.replace(/[^\d]/g, "")}${appliedPromo ? `&promo=${appliedPromo.code}` : ''}` : "/sign")
                 }
                   className={`block text-center py-3.5 rounded-2xl text-sm font-semibold transition-all shadow-xl active:scale-95 ${p.highlighted
                     ? "bg-white text-violet-700 hover:bg-zinc-100 shadow-white/10"
