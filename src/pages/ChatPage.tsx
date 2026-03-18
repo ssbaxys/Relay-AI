@@ -437,6 +437,9 @@ export default function ChatPage() {
   const [folderContextMenu, setFolderContextMenu] = useState<{ folderId: string; x: number; y: number } | null>(null);
   const [showProfile, setShowProfile] = useState(false);
   const [profileData, setProfileData] = useState({ displayName: "", systemNick: "", visibleNick: "", id: "", plan: "free", language: "ru" });
+  const [promoInput, setPromoInput] = useState("");
+  const [promoStatus, setPromoStatus] = useState<"idle" | "success" | "error" | "loading">("idle");
+  const [promoMsg, setPromoMsg] = useState("");
   const [editingVisibleNick, setEditingVisibleNick] = useState(false);
   const [visibleNickInput, setVisibleNickInput] = useState("");
   const [adminInput, setAdminInput] = useState("");
@@ -781,6 +784,39 @@ export default function ChatPage() {
   useEffect(() => { const h = (e: MouseEvent) => { if (profileRef.current && !profileRef.current.contains(e.target as Node)) setShowProfile(false); }; if (showProfile) document.addEventListener("mousedown", h); return () => document.removeEventListener("mousedown", h); }, [showProfile]);
 
   const saveVisibleNick = async () => { if (!user || !visibleNickInput.trim()) return; await update(ref(db, `users/${user.uid}`), { visibleNick: visibleNickInput.trim() }); setEditingVisibleNick(false); };
+
+  const handleActivatePromo = async () => {
+    if (!user || !promoInput.trim()) return;
+    setPromoStatus("loading"); setPromoMsg("");
+    try {
+      const snap = await new Promise<any>((res) => { onValue(ref(db, "promocodes"), (s) => res(s), { onlyOnce: true }); });
+      const allPromos = snap.val();
+      if (!allPromos) { setPromoStatus("error"); setPromoMsg(t('promo.notFound', 'Промокод не найден')); return; }
+      const key = Object.keys(allPromos).find(k => allPromos[k].code === promoInput.trim().toUpperCase());
+      if (!key) { setPromoStatus("error"); setPromoMsg(t('promo.notFound', 'Промокод не найден')); return; }
+      const p = allPromos[key];
+      if (!p.active) { setPromoStatus("error"); setPromoMsg(t('promo.inactive', 'Промокод отключен')); return; }
+      if (p.expiresAt && Date.now() > p.expiresAt) { setPromoStatus("error"); setPromoMsg(t('promo.expired', 'Срок действия промокода истёк')); return; }
+      if (p.maxUses && (p.uses || 0) >= p.maxUses) { setPromoStatus("error"); setPromoMsg(t('promo.limitReached', 'Лимит активаций исчерпан')); return; }
+
+      // Apply the promocode
+      if (p.type === "free_sub") {
+        const targetPlan = p.targetPlan === "all" ? "pro" : p.targetPlan;
+        await update(ref(db, `users/${user.uid}`), { plan: targetPlan, promoApplied: p.code });
+      } else if (p.type === "discount") {
+        // For discounts, just mark the promo as applied — price reduction is handled at payment time
+        await update(ref(db, `users/${user.uid}`), { promoApplied: p.code, promoDiscount: p.discountPercent });
+      }
+      // Increment uses
+      await update(ref(db, `promocodes/${key}`), { uses: (p.uses || 0) + 1 });
+      setPromoStatus("success");
+      setPromoMsg(p.type === "free_sub" ? t('promo.freeActivated', '🎉 Подписка активирована!') : t('promo.discountApplied', `✅ Скидка ${p.discountPercent}% применена!`));
+      setPromoInput("");
+    } catch {
+      setPromoStatus("error"); setPromoMsg(t('promo.error', 'Ошибка при активации'));
+    }
+  };
+
   const handleAdminAccess = () => { if (adminInput === "4321") { localStorage.setItem("relay_admin", "true"); navigate("/admin"); } else { setAdminError(t('admin.invalidPassword')); } };
   const handleMaintenanceAdmin = () => { if (maintenanceAdminPass === "4321") { localStorage.setItem("relay_admin", "true"); navigate("/admin"); } else { setMaintenanceAdminError(t('maintenance.invalidPassword')); } };
 
@@ -1168,6 +1204,42 @@ export default function ChatPage() {
                       </Link>
                     </div>
                   )}
+                </div>
+
+                {/* Promocode Activation Card */}
+                <div>
+                  <label className="block text-[10px] text-zinc-600 uppercase tracking-wider mb-2">{t('chat.profile.promo', 'Промокод')}</label>
+                  <div className="bg-gradient-to-r from-violet-600/5 to-emerald-600/5 border border-white/[0.06] rounded-2xl p-4">
+                    <div className="flex items-center gap-2.5 mb-3">
+                      <div className="w-8 h-8 rounded-lg bg-violet-600/20 flex items-center justify-center shrink-0">
+                        <TicketCheck className="w-4 h-4 text-violet-400" />
+                      </div>
+                      <div>
+                        <p className="text-xs font-medium text-zinc-200">{t('chat.profile.promoTitle', 'Активировать промокод')}</p>
+                        <p className="text-[10px] text-zinc-600">{t('chat.profile.promoDesc', 'Получите скидку или бесплатную подписку')}</p>
+                      </div>
+                    </div>
+                    <div className="flex gap-1.5">
+                      <input
+                        type="text"
+                        value={promoInput}
+                        onChange={(e) => { setPromoInput(e.target.value.toUpperCase()); setPromoStatus("idle"); setPromoMsg(""); }}
+                        onKeyDown={(e) => { if (e.key === "Enter") handleActivatePromo(); }}
+                        placeholder="SUMMER50"
+                        className="flex-1 px-3 py-2 rounded-xl bg-white/[0.03] border border-white/[0.06] text-xs font-mono uppercase text-white placeholder-zinc-700 focus:outline-none focus:border-violet-500/40 transition-all"
+                      />
+                      <button
+                        onClick={handleActivatePromo}
+                        disabled={promoStatus === "loading" || !promoInput.trim()}
+                        className="px-4 py-2 rounded-xl bg-violet-600 text-white text-xs font-medium hover:bg-violet-500 disabled:opacity-40 disabled:cursor-not-allowed transition-all flex items-center gap-1.5"
+                      >
+                        {promoStatus === "loading" ? <><div className="w-3 h-3 border-2 border-white/30 border-t-white rounded-full animate-spin" /> ...</> : t('promo.apply', 'ОК')}
+                      </button>
+                    </div>
+                    {promoMsg && (
+                      <p className={`text-[10px] mt-2 ${promoStatus === "success" ? "text-emerald-400" : "text-red-400"}`}>{promoMsg}</p>
+                    )}
+                  </div>
                 </div>
 
                 <div className="pt-2 border-t border-white/[0.04] space-y-2">
