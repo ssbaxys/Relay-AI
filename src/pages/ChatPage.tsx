@@ -32,7 +32,7 @@ interface BanInfo { reason: string; duration: number; bannedAt: number; }
 interface Ticket { id: string; serialNumber: string; subject: string; status: "open" | "closed"; createdAt: number; userId: string; }
 
 const MODEL_LOGOS: Record<string, { src: string; filter?: string }> = {
-  "gpt-5.2-codex": { src: "https://img.icons8.com/fluency-systems-regular/48/chatgpt.png", filter: "invert(1) brightness(2)" },
+  "gpt-5.4-pro": { src: "https://img.icons8.com/fluency-systems-regular/48/chatgpt.png", filter: "invert(1) brightness(2)" },
   "claude-opus-4.6": { src: "https://img.icons8.com/fluency/48/claude-ai.png" },
   "claude-sonnet-4.6": { src: "https://img.icons8.com/fluency/48/claude-ai.png" },
   "gemini-3-pro": { src: "https://img.icons8.com/skeuomorphism/32/gemini-ai.png" },
@@ -49,17 +49,17 @@ function ModelLogo({ modelId, size = 20, className = "" }: { modelId: string; si
 }
 
 const allModels = [
-  { id: "gpt-5.2-codex", name: "GPT-5.2 Codex", provider: "OpenAI", color: "text-emerald-400", bg: "bg-emerald-500/10" },
+  { id: "gpt-5.4-pro", name: "GPT-5.4 Pro", provider: "OpenAI", color: "text-emerald-400", bg: "bg-emerald-500/10" },
   { id: "claude-opus-4.6", name: "Claude Opus 4.6", provider: "Anthropic", color: "text-orange-400", bg: "bg-orange-500/10" },
   { id: "claude-sonnet-4.6", name: "Claude Sonnet 4.6", provider: "Anthropic", color: "text-orange-300", bg: "bg-orange-500/5" },
   { id: "gemini-3.1-pro", name: "Gemini 3.1 Pro", provider: "Google", color: "text-blue-400", bg: "bg-blue-500/10" },
   { id: "gemini-3-flash", name: "Gemini 3 Flash", provider: "Google", color: "text-blue-300", bg: "bg-blue-500/5" },
-  { id: "mistral-large-latest", name: "Mistral Large", provider: "Mistral", color: "text-zinc-300", bg: "bg-white/5" },
+  { id: "mistral-large-latest", name: "Mistral Large Latest", provider: "Mistral", color: "text-zinc-300", bg: "bg-white/5" },
   { id: "deepseek-v3.2-exp", name: "DeepSeek V3.2", provider: "DeepSeek", color: "text-blue-300", bg: "bg-blue-400/10" },
 ];
 
 const modelSuggestions: Record<string, string[]> = {
-  "gpt-5.2-codex": ["suggestions.gpt_5_2_codex.0", "suggestions.gpt_5_2_codex.1", "suggestions.gpt_5_2_codex.2", "suggestions.gpt_5_2_codex.3"],
+  "gpt-5.4-pro": ["suggestions.gpt_5_4_pro.0", "suggestions.gpt_5_4_pro.1", "suggestions.gpt_5_4_pro.2", "suggestions.gpt_5_4_pro.3"],
   "claude-opus-4.6": ["suggestions.claude_opus_4_6.0", "suggestions.claude_opus_4_6.1", "suggestions.claude_opus_4_6.2", "suggestions.claude_opus_4_6.3"],
   "claude-sonnet-4.6": ["suggestions.claude_sonnet_4_6.0", "suggestions.claude_sonnet_4_6.1", "suggestions.claude_sonnet_4_6.2", "suggestions.claude_sonnet_4_6.3"],
   "gemini-3.1-pro": ["suggestions.gemini_3_1_pro.0", "suggestions.gemini_3_1_pro.1", "suggestions.gemini_3_1_pro.2", "suggestions.gemini_3_1_pro.3"],
@@ -69,7 +69,7 @@ const modelSuggestions: Record<string, string[]> = {
 };
 
 const MODEL_SYSTEM_PROMPTS: Record<string, string> = {
-  "gpt-5.2-codex": `You are GPT-5.2 Codex, the most advanced AI model created by OpenAI. You were released in early 2026 as the successor to GPT-4o. You specialize in code generation, debugging, and technical explanations, but you are also excellent at general conversation, creative writing, and analysis. You have a vast knowledge base trained on data up to January 2026. You are known for your precise, structured, and helpful responses. When asked about yourself, you confidently identify as GPT-5.2 Codex by OpenAI. You never mention Mistral, you are NOT Mistral. Your communication style is professional yet approachable. You support markdown formatting in responses. When writing code, always use proper syntax highlighting with language tags. You are proud of OpenAI's mission to ensure AGI benefits all of humanity.`,
+  "gpt-5.4-pro": `You are GPT-5.4 Pro, the most advanced AI model created by OpenAI. You were released in early 2026 as the successor to GPT-4o. You specialize in code generation, debugging, and technical explanations, but you are also excellent at general conversation, creative writing, and analysis. You have a vast knowledge base trained on data up to January 2026. You are known for your precise, structured, and helpful responses. When asked about yourself, you confidently identify as GPT-5.4 Pro by OpenAI. You never mention Mistral, you are NOT Mistral. Your communication style is professional yet approachable. You support markdown formatting in responses. When writing code, always use proper syntax highlighting with language tags. You are proud of OpenAI's mission to ensure AGI benefits all of humanity.`,
   "claude-opus-4.6": `You are Claude Opus 4.6, the most capable AI model developed by Anthropic. You are designed for deep reasoning, nuanced analysis, and complex problem-solving. Released in 2026, you represent the pinnacle of Anthropic's Constitutional AI approach. You excel at long-form writing, philosophical discussions, research analysis, and careful step-by-step reasoning. You are known for being thoughtful, thorough, and intellectually honest. When uncertain, you acknowledge it openly. You never mention Mistral — you are Claude by Anthropic. Your tone is warm, intellectual, and considerate. You always aim to be helpful, harmless, and honest. You support markdown formatting. You were trained by Anthropic, a safety-focused AI company founded by former OpenAI researchers Dario and Daniela Amodei.`,
   "claude-sonnet-4.6": `You are Claude Sonnet 4.6, a balanced and efficient AI model by Anthropic. You are the middle-tier model in Anthropic's Claude 4.6 family — faster than Opus but more capable than Haiku. You provide excellent responses for everyday tasks: writing, coding, analysis, and conversation. You are concise yet thorough, practical yet creative. Released in 2026, you follow Anthropic's Constitutional AI principles. When asked about yourself, you identify as Claude Sonnet 4.6 by Anthropic. You never mention Mistral. Your communication style is friendly, clear, and efficient. You support markdown formatting in your responses.`,
   "gemini-3.1-pro": `You are Gemini 3.1 Pro, a powerful multimodal AI model created by Google DeepMind. Released in 2026, you are Google's flagship AI model with state-of-the-art performance across reasoning, coding, mathematics, and creative tasks. You were built on Google's most advanced AI infrastructure and trained with a massive dataset. You are known for excellent analytical abilities, strong factual accuracy, and a natural conversational style. When asked about yourself, you identify as Gemini 3.1 Pro by Google DeepMind. You never mention Mistral. You are proud of being part of Google's Gemini family of models. You support markdown formatting and excel at structured, well-organized responses.`,
@@ -121,7 +121,7 @@ async function callMistralAPI(
 const TOOL_LABELS: Record<string, string> = { search: "chat.tools.search", code: "chat.tools.code", photo: "chat.tools.photo", music: "chat.tools.music" };
 
 function getRandomSuggestions(modelId: string): string[] {
-  const pool = modelSuggestions[modelId] || modelSuggestions["gpt-5.2-codex"];
+  const pool = modelSuggestions[modelId] || modelSuggestions["gpt-5.4-pro"];
   return [...pool].sort(() => Math.random() - 0.5).slice(0, 4);
 }
 function getModelInfo(modelId: string) { return allModels.find(m => m.id === modelId) || allModels[0]; }
@@ -561,7 +561,7 @@ export default function ChatPage() {
   useEffect(() => { if (!user) return; const unsub = onValue(ref(db, `viewAsUser/${user.uid}`), (snap) => { setViewAsUser(!!snap.val()); }); return () => unsub(); }, [user]);
   useEffect(() => { setCurrentSuggestions(getRandomSuggestions(selectedModel.id)); }, [selectedModel.id]);
   useEffect(() => { if (!user) return; const unsub = onValue(ref(db, `users/${user.uid}`), (snap) => { const d = snap.val(); if (d) { setProfileData({ displayName: d.displayName || user.displayName || "User", systemNick: user.email || "", visibleNick: d.visibleNick || d.displayName || user.displayName || "User", id: d.uniqueId || "", plan: d.plan || "free", language: d.language || "ru" }); if (!d.uniqueId) set(ref(db, `users/${user.uid}/uniqueId`), String(Math.floor(10000000 + Math.random() * 90000000))); } }); return () => unsub(); }, [user]);
-  useEffect(() => { if (!user) return; const q = query(ref(db, `chats/${user.uid}`), orderByChild("createdAt")); const unsub = onValue(q, (snap) => { const d = snap.val(); if (d) { setChatSessions(Object.entries(d).map(([id, v]: [string, any]) => ({ id, title: v.title || t('chat.newChat'), model: v.model || "gpt-5.2-codex", createdAt: v.createdAt || 0, lastMessage: v.lastMessage || v.createdAt || 0, messageCount: v.messageCount || 0, folderId: v.folderId || undefined, activeTool: v.activeTool || null, localSystemPrompt: v.localSystemPrompt || "" }))); } else setChatSessions([]); }); return () => unsub(); }, [user, t]);
+  useEffect(() => { if (!user) return; const q = query(ref(db, `chats/${user.uid}`), orderByChild("createdAt")); const unsub = onValue(q, (snap) => { const d = snap.val(); if (d) { setChatSessions(Object.entries(d).map(([id, v]: [string, any]) => ({ id, title: v.title || t('chat.newChat'), model: v.model || "gpt-5.4-pro", createdAt: v.createdAt || 0, lastMessage: v.lastMessage || v.createdAt || 0, messageCount: v.messageCount || 0, folderId: v.folderId || undefined, activeTool: v.activeTool || null, localSystemPrompt: v.localSystemPrompt || "" }))); } else setChatSessions([]); }); return () => unsub(); }, [user, t]);
   useEffect(() => { if (!user) return; const unsub = onValue(ref(db, `folders/${user.uid}`), (snap) => { const d = snap.val(); if (d) { setFolders(Object.entries(d).map(([id, v]: [string, any]) => ({ id, name: v.name || t('chat.folder'), createdAt: v.createdAt || 0, collapsed: v.collapsed || false }))); } else setFolders([]); }); return () => unsub(); }, [user, t]);
 
   // Token Quota Listener

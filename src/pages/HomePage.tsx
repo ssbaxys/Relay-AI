@@ -13,12 +13,12 @@ type UptimeStatus = "operational" | "degraded" | "down" | "maintenance";
 const UPTIME_KEYS = ["api_gateway", "ai_router", "web_app", "database", "auth", "cdn"];
 
 const models = [
-  { name: "GPT-5.2 Codex", provider: "OpenAI", tag: "Code", logo: "https://img.icons8.com/fluency-systems-regular/48/chatgpt.png", logoFilter: "invert(1) brightness(2)" },
+  { name: "GPT-5.4 Pro", provider: "OpenAI", tag: "Code", logo: "https://img.icons8.com/fluency-systems-regular/48/chatgpt.png", logoFilter: "invert(1) brightness(2)" },
   { name: "Claude Opus 4.6", provider: "Anthropic", tag: "Analysis", logo: "https://img.icons8.com/fluency/48/claude-ai.png", logoFilter: "" },
   { name: "Claude Sonnet 4.6", provider: "Anthropic", tag: "Fast", logo: "https://img.icons8.com/fluency/48/claude-ai.png", logoFilter: "" },
   { name: "Gemini 3.1 Pro", provider: "Google", tag: "Multimodal", logo: "https://img.icons8.com/skeuomorphism/32/gemini-ai.png", logoFilter: "" },
   { name: "Gemini 3 Flash", provider: "Google", tag: "Fast", logo: "https://img.icons8.com/skeuomorphism/32/gemini-ai.png", logoFilter: "" },
-  { name: "Mistral Large", provider: "Mistral", tag: "Logic", logo: "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHhtbG5zOnhsaW5rPSJodHRwOi8vd3d3LnczLm9yZy8xOTk5L3hsaW5rIiB4bWxuczpzZXJpZj0iaHR0cDovL3d3dy5zZXJpZi5jb20vIiB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiB2aWV3Qm94PSIwIDAgMTI5IDkxIiB2ZXJzaW9uPSIxLjEiIHhtbDpzcGFjZT0icHJlc2VydmUiIHN0eWxlPSJmaWxsLXJ1bGU6ZXZlbm9kZDtjbGlwLXJ1bGU6ZXZlbm9kZDtzdHJva2UtbGluZWpvaW46cm91bmQ7c3Ryb2tlLW1pdGVybGltaXQ6MjsiPjxnPjxyZWN0IHg9IjE4LjI5MiIgeT0iMCIgd2lkdGg9IjE4LjI5MyIgaGVpZ2h0PSIxOC4xMjMiIHN0eWxlPSJmaWxsOiNmZmQ4MDA7ZmlsbC1ydWxlOm5vbnplcm87Ii8+PHJlY3QgeD0iOTEuNDczIiB5PSIwIiB3aWR0aD0iMTguMjkzIiBoZWlnaHQ9IjE4LjEyMyIgc3R5bGU9ImZpbGw6I2ZmZDgwMDtmaWxsLXJ1bGU6bm9uemVybzsiLz48cmVjdCB4PSIxOC4yOTIiIHk9IjE4LjEyMSIgd2lkdGg9IjM2LjU4NiIgaGVpZ2h0PSIxOC4xMjMiIHN0eWxlPSJmaWxsOiNmZmFmMDA7ZmlsbC1ydWxlOm5vbnplcm87Ii8+PHJlY3QgeD0iNzMuMTgxIiB5PSIxOC4xMjEiIHdpZHRoPSIzNi41ODYiIGhlaWdodD0iMTguMTIzIiBzdHlsZT0iZmlsbDojZmZhZjAwO2ZpbGwtcnVsZTpub256ZXJvOyIvPjxyZWN0IHg9IjE4LjI5MiIgeT0iMzYuMjQzIiB3aWR0aD0iOTEuNDc2IiBoZWlnaHQ9IjE4LjEyMiIgc3R5bGU9ImZpbGw6I2ZmODIwNTtmaWxsLXJ1bGU6bm9uemVybzsiLz48cmVjdCB4PSIxOC4yOTIiIHk9IjU0LjM3IiB3aWR0aD0iMTguMjkzIiBoZWlnaHQ9IjE4LjEyMyIgc3R5bGU9ImZpbGw6I2ZhNTAwZjtmaWxsLXJ1bGU6bm9uemVybzsiLz48cmVjdCB4PSI1NC44ODMiIHk9IjU0LjM3IiB3aWR0aD0iMTguMjkzIiBoZWlnaHQ9IjE4LjEyMyIgc3R5bGU9ImZpbGw6I2ZhNTAwZjtmaWxsLXJ1bGU6bm9uemVybzsiLz48cmVjdCB4PSI5MS40NzMiIHk9IjU0LjM3IiB3aWR0aD0iMTguMjkzIiBoZWlnaHQ9IjE4LjEyMyIgc3R5bGU9ImZpbGw6I2ZhNTAwZjtmaWxsLXJ1bGU6bm9uemVybzsiLz48cmVjdCB4PSIwIiB5PSI3Mi41MDQiIHdpZHRoPSI1NC44OSIgaGVpZ2h0PSIxOC4xMjMiIHN0eWxlPSJmaWxsOiNlMTA1MDA7ZmlsbC1ydWxlOm5vbnplcm87Ii8+PHJlY3QgeD0iNzMuMTgxIiB5PSI3Mi41MDQiIHdpZHRoPSI1NC44OSIgaGVpZ2h0PSIxOC4xMjMiIHN0eWxlPSJmaWxsOiNlMTA1MDA7ZmlsbC1ydWxlOm5vbnplcm87Ii8+PC9nPjwvc3ZnPg==", logoFilter: "" },
+  { name: "Mistral Large Latest", provider: "Mistral", tag: "Logic", logo: "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHhtbG5zOnhsaW5rPSJodHRwOi8vd3d3LnczLm9yZy8xOTk5L3hsaW5rIiB4bWxuczpzZXJpZj0iaHR0cDovL3d3dy5zZXJpZi5jb20vIiB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiB2aWV3Qm94PSIwIDAgMTI5IDkxIiB2ZXJzaW9uPSIxLjEiIHhtbDpzcGFjZT0icHJlc2VydmUiIHN0eWxlPSJmaWxsLXJ1bGU6ZXZlbm9kZDtjbGlwLXJ1bGU6ZXZlbm9kZDtzdHJva2UtbGluZWpvaW46cm91bmQ7c3Ryb2tlLW1pdGVybGltaXQ6MjsiPjxnPjxyZWN0IHg9IjE4LjI5MiIgeT0iMCIgd2lkdGg9IjE4LjI5MyIgaGVpZ2h0PSIxOC4xMjMiIHN0eWxlPSJmaWxsOiNmZmQ4MDA7ZmlsbC1ydWxlOm5vbnplcm87Ii8+PHJlY3QgeD0iOTEuNDczIiB5PSIwIiB3aWR0aD0iMTguMjkzIiBoZWlnaHQ9IjE4LjEyMyIgc3R5bGU9ImZpbGw6I2ZmZDgwMDtmaWxsLXJ1bGU6bm9uemVybzsiLz48cmVjdCB4PSIxOC4yOTIiIHk9IjE4LjEyMSIgd2lkdGg9IjM2LjU4NiIgaGVpZ2h0PSIxOC4xMjMiIHN0eWxlPSJmaWxsOiNmZmFmMDA7ZmlsbC1ydWxlOm5vbnplcm87Ii8+PHJlY3QgeD0iNzMuMTgxIiB5PSIxOC4xMjEiIHdpZHRoPSIzNi41ODYiIGhlaWdodD0iMTguMTIzIiBzdHlsZT0iZmlsbDojZmZhZjAwO2ZpbGwtcnVsZTpub256ZXJvOyIvPjxyZWN0IHg9IjE4LjI5MiIgeT0iMzYuMjQzIiB3aWR0aD0iOTEuNDc2IiBoZWlnaHQ9IjE4LjEyMiIgc3R5bGU9ImZpbGw6I2ZmODIwNTtmaWxsLXJ1bGU6bm9uemVybzsiLz48cmVjdCB4PSIxOC4yOTIiIHk9IjU0LjM3IiB3aWR0aD0iMTguMjkzIiBoZWlnaHQ9IjE4LjEyMyIgc3R5bGU9ImZpbGw6I2ZhNTAwZjtmaWxsLXJ1bGU6bm9uemVybzsiLz48cmVjdCB4PSI1NC44ODMiIHk9IjU0LjM3IiB3aWR0aD0iMTguMjkzIiBoZWlnaHQ9IjE4LjEyMyIgc3R5bGU9ImZpbGw6I2ZhNTAwZjtmaWxsLXJ1bGU6bm9uemVybzsiLz48cmVjdCB4PSI5MS40NzMiIHk9IjU0LjM3IiB3aWR0aD0iMTguMjkzIiBoZWlnaHQ9IjE4LjEyMyIgc3R5bGU9ImZpbGw6I2ZhNTAwZjtmaWxsLXJ1bGU6bm9uemVybzsiLz48cmVjdCB4PSIwIiB5PSI3Mi41MDQiIHdpZHRoPSI1NC44OSIgaGVpZ2h0PSIxOC4xMjMiIHN0eWxlPSJmaWxsOiNlMTA1MDA7ZmlsbC1ydWxlOm5vbnplcm87Ii8+PHJlY3QgeD0iNzMuMTgxIiB5PSI3Mi41MDQiIHdpZHRoPSI1NC44OSIgaGVpZ2h0PSIxOC4xMjMiIHN0eWxlPSJmaWxsOiNlMTA1MDA7ZmlsbC1ydWxlOm5vbnplcm87Ii8+PC9nPjwvc3ZnPg==", logoFilter: "" },
   { name: "DeepSeek V3.2", provider: "DeepSeek", tag: "Reasoning", logo: "https://img.icons8.com/color/48/deepseek.png", logoFilter: "" },
 ];
 
@@ -137,7 +137,7 @@ export default function HomePage() {
     if (appliedPromo.type === "free_sub") {
       return { ...plan, price: "0 ₽", originalPrice: plan.price };
     } else if (appliedPromo.type === "discount" && appliedPromo.discountPercent) {
-      const origMatch = plan.price.match(/\d+/);
+      const origMatch = plan.price.replace(/\s/g, '').match(/\d+/);
       if (origMatch) {
         const origNum = parseInt(origMatch[0]);
         const newNum = Math.floor(origNum * (1 - appliedPromo.discountPercent / 100));
@@ -153,8 +153,8 @@ export default function HomePage() {
       <nav className="fixed top-0 left-0 right-0 z-50 bg-[#050507]/60 backdrop-blur-xl border-b border-white/[0.04]">
         <div className="max-w-6xl mx-auto px-4 md:px-6 h-14 flex items-center justify-between">
           <Link to="/" className="flex items-center gap-2.5">
-            <div className="w-7 h-7 bg-violet-600 rounded-lg flex items-center justify-center">
-              <span className="text-white font-bold text-xs">R</span>
+            <div className="w-8 h-8 rounded-lg overflow-hidden flex items-center justify-center">
+              <img src="/favicon.png" alt="Relay AI Logo" className="w-full h-full object-cover" />
             </div>
             <span className="font-semibold text-sm tracking-tight text-white">Relay AI</span>
           </Link>
@@ -215,7 +215,7 @@ export default function HomePage() {
             </span>
           </h1>
           <p className="text-zinc-400 text-base md:text-lg max-w-xl mx-auto mb-10 leading-relaxed font-light">
-            {t('home.subtitle', 'Единая платформа для работы с GPT-5.2 Codex, Claude Opus 4.6 и Gemini 3 Pro.')}
+            {t('home.subtitle', 'Единая платформа для работы с GPT-5.4 Pro, Claude Opus 4.6, Gemini 3.1 и другими.')}
           </p>
           <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
             <Link to={user ? "/chat" : "/sign"} className="w-full sm:w-auto flex items-center justify-center gap-2 bg-violet-600 text-white px-8 py-3.5 rounded-xl font-medium text-sm hover:bg-violet-500 transition-all hover:shadow-lg hover:shadow-violet-600/20 active:scale-95">
@@ -236,7 +236,7 @@ export default function HomePage() {
       <section className="py-20 px-6">
         <div className="max-w-4xl mx-auto grid grid-cols-2 md:grid-cols-4 gap-8 md:gap-6">
           {[
-            { value: "3", label: t('stats.models', 'AI модели') },
+            { value: String(models.length), label: t('stats.models', 'AI модели') },
             { value: userCount, label: t('stats.users', 'Пользователей') },
             { value: avgUptime, label: t('stats.uptime', 'Uptime') },
             { value: "<50ms", label: t('stats.latency', 'Задержка') },
@@ -353,8 +353,8 @@ export default function HomePage() {
           <div className="flex flex-col md:flex-row items-center justify-between gap-8 mb-12">
             <div className="flex flex-col items-center md:items-start gap-4">
               <Link to="/" className="flex items-center gap-2.5">
-                <div className="w-8 h-8 bg-violet-600 rounded-lg flex items-center justify-center shadow-lg shadow-violet-600/20">
-                  <span className="text-white font-bold text-sm">R</span>
+                <div className="w-8 h-8 rounded-lg overflow-hidden flex items-center justify-center shadow-lg shadow-violet-600/20">
+                  <img src="/favicon.png" alt="Relay AI Logo" className="w-full h-full object-cover" />
                 </div>
                 <span className="font-bold text-lg text-white tracking-tight">Relay AI</span>
               </Link>
@@ -371,9 +371,8 @@ export default function HomePage() {
               </div>
               <div className="flex flex-col gap-3">
                 <span className="text-[11px] font-bold text-zinc-700 uppercase tracking-widest mb-1">Компания</span>
-                <Link to="/terms" className="text-zinc-500 hover:text-white transition-colors">{t('nav.terms', 'Условия')}</Link>
-                <a href="mailto:support@relay-ai.com" className="text-zinc-500 hover:text-white transition-colors">{t('nav.support', 'Поддержка')}</a>
-                <a href="#" className="text-zinc-500 hover:text-white transition-colors">Twitter</a>
+                <Link to="/terms" className="text-zinc-500 hover:text-white transition-colors">{t('nav.terms', 'Условия использования')}</Link>
+                <a href="#support" onClick={(e) => { e.preventDefault(); navigate('/chat?ticket=true'); }} className="text-zinc-500 hover:text-white transition-colors">{t('nav.support', 'Поддержка')}</a>
               </div>
             </div>
           </div>

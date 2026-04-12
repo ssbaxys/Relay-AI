@@ -7,7 +7,7 @@ const resources = {
     "translation": {
 
       "suggestions": {
-        "gpt_5_2_codex": {
+        "gpt_5_4_pro": {
           "0": "Write a python script",
           "1": "Explain React hooks",
           "2": "Create a CSS grid layout",
@@ -100,7 +100,7 @@ const resources = {
         "badge": "Top AI models are available",
         "titleLine1": "All AI Models",
         "titleLine2": "in one place",
-        "subtitle": "Unified platform for working with GPT-5.2, Claude 4.6, Gemini 3.1 and more.",
+        "subtitle": "Unified platform for working with GPT-5.4 Pro, Claude 4.6, Gemini 3.1 and more.",
         "getStarted": "Get Started for Free",
         "models": "Models"
       },
@@ -113,7 +113,7 @@ const resources = {
       "features": {
         "Layers": {
           "title": "Top Models",
-          "desc": "GPT-5.2, Claude 4.6, and Gemini 3.1 through a single interface."
+          "desc": "GPT-5.4 Pro, Claude 4.6, and Gemini 3.1 through a single interface."
         },
         "Zap": {
           "title": "Instant Speed",
@@ -692,7 +692,7 @@ const resources = {
     "translation": {
 
       "suggestions": {
-        "gpt_5_2_codex": {
+        "gpt_5_4_pro": {
           "0": "Напиши скрипт на Python",
           "1": "Объясни хуки в React",
           "2": "Создай CSS grid",
@@ -785,7 +785,7 @@ const resources = {
         "badge": "Лучшие AI модели доступны",
         "titleLine1": "Все AI модели",
         "titleLine2": "в одном месте",
-        "subtitle": "Единая платформа для работы с GPT-5.2, Claude 4.6, Gemini 3.1 и другими.",
+        "subtitle": "Единая платформа для работы с GPT-5.4 Pro, Claude 4.6, Gemini 3.1 и другими.",
         "getStarted": "Начать бесплатно",
         "models": "Модели"
       },
@@ -798,7 +798,7 @@ const resources = {
       "features": {
         "Layers": {
           "title": "Лучшие модели",
-          "desc": "GPT-5.2, Claude 4.6 и Gemini 3.1 через единый интерфейс."
+          "desc": "GPT-5.4 Pro, Claude 4.6 и Gemini 3.1 через единый интерфейс."
         },
         "Zap": {
           "title": "Мгновенная скорость",
@@ -1425,7 +1425,7 @@ const resources = {
         "latency": "Latencia"
       },
       "features": {
-        "Layers": { "title": "Mejores Modelos", "desc": "GPT-5.2, Claude 4.6 y Gemini 3.1 a través de una sola interfaz." },
+        "Layers": { "title": "Mejores Modelos", "desc": "GPT-5.4 Pro, Claude 4.6 y Gemini 3.1 a través de una sola interfaz." },
         "Zap": { "title": "Velocidad Instantánea", "desc": "Enrutamiento optimizado con menos de 50ms de latencia." },
         "Globe": { "title": "API Unificada", "desc": "Una clave para todos los modelos. Sin registro por separado." },
         "Shield": { "title": "Seguridad", "desc": "Cifrado de extremo a extremo y cumplimiento de estándares de protección." }
@@ -1474,7 +1474,7 @@ const resources = {
         "badge": "Modelos IA top disponibles",
         "titleLine1": "Todos los modelos IA",
         "titleLine2": "en un solo lugar",
-        "subtitle": "Plataforma unificada para trabajar con GPT-5.2, Claude 4.6, Gemini 3.1 y más.",
+        "subtitle": "Plataforma unificada para trabajar con GPT-5.4 Pro, Claude 4.6, Gemini 3.1 y más.",
         "getStarted": "Empezar Gratis",
         "models": "Modèles"
       },
@@ -1941,7 +1941,7 @@ const resources = {
         "latency": "Latence"
       },
       "features": {
-        "Layers": { "title": "Meilleurs Modèles", "desc": "GPT-5.2, Claude 4.6 et Gemini 3.1 via une seule interface." },
+        "Layers": { "title": "Meilleurs Modèles", "desc": "GPT-5.4 Pro, Claude 4.6 et Gemini 3.1 via une seule interface." },
         "Zap": { "title": "Vitesse Instantanée", "desc": "Routage optimisé avec moins de 50ms de latence." },
         "Globe": { "title": "API Unifiée", "desc": "Une clé pour tous les modèles. Sans inscription séparée." },
         "Shield": { "title": "Seguridad", "desc": "Chiffrement de bout en bout et conformité aux normes de protection." }
@@ -1990,7 +1990,7 @@ const resources = {
         "badge": "Meilleurs modèles IA disponibles",
         "titleLine1": "Tous les modèles IA",
         "titleLine2": "au même endroit",
-        "subtitle": "Plateforme unifiée pour GPT-5.2, Claude 4.6, Gemini 3.1 et plus.",
+        "subtitle": "Plateforme unifiée pour GPT-5.4 Pro, Claude 4.6, Gemini 3.1 et plus.",
         "getStarted": "Démarrer Gratuitement",
         "models": "Modèles"
       },
@@ -2399,7 +2399,7 @@ const resources = {
           "latency": "Latenz"
         },
         "features": {
-          "Layers": { "title": "Beste Modelle", "desc": "GPT-5.2, Claude 4.6 und Gemini 3.1 über eine einzige Schnittstelle." },
+          "Layers": { "title": "Beste Modelle", "desc": "GPT-5.4 Pro, Claude 4.6 und Gemini 3.1 über eine einzige Schnittstelle." },
           "Zap": { "title": "Sofortige Geschwindigkeit", "desc": "Optimiertes Routing mit weniger als 50ms Latenz." },
           "Globe": { "title": "Einheitliche API", "desc": "Ein Schlüssel für alle Modelle. Ohne separate Registrierung." },
           "Shield": { "title": "Sicherheit", "desc": "End-to-End-Verschlüsselung und Einhaltung von Schutzstandards." }
@@ -2448,7 +2448,7 @@ const resources = {
           "badge": "Top-KI-Modelle verfügbar",
           "titleLine1": "Alle KI-Modelle",
           "titleLine2": "an einem Ort",
-          "subtitle": "Einheitliche Plattform für GPT-5.2, Claude 4.6, Gemini 3.1 und mehr.",
+          "subtitle": "Einheitliche Plattform für GPT-5.4 Pro, Claude 4.6, Gemini 3.1 und mehr.",
           "getStarted": "Kostenlos starten",
           "models": "Modelle"
         },
@@ -2852,7 +2852,7 @@ const resources = {
           "latency": "延迟"
         },
         "features": {
-          "Layers": { "title": "顶级模型", "desc": "通过统一界面访问 GPT-5.2、Claude 4.6 和 Gemini 3.1。" },
+          "Layers": { "title": "顶级模型", "desc": "通过统一界面访问 GPT-5.4 Pro、Claude 4.6 和 Gemini 3.1。" },
           "Zap": { "title": "极速响应", "desc": "优化路由，延迟低于 50ms。" },
           "Globe": { "title": "统一 API", "desc": "一个密钥访问所有模型。无需单独注册。" },
           "Shield": { "title": "安全保障", "desc": "端到端加密，符合保护标准。" }
@@ -2901,7 +2901,7 @@ const resources = {
           "badge": "现已支持顶级 AI 模型",
           "titleLine1": "所有 AI 模型",
           "titleLine2": "尽在一个平台",
-          "subtitle": "集成 GPT-5.2、Claude 4.6、Gemini 3.1 等顶级模型的统一平台。",
+          "subtitle": "集成 GPT-5.4 Pro、Claude 4.6、Gemini 3.1 等顶级模型的统一平台。",
           "getStarted": "免费开始使用",
           "models": "模型"
         },
