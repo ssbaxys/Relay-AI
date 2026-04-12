@@ -84,7 +84,7 @@ const MISTRAL_API_URL = "https://api.mistral.ai/v1/chat/completions";
 
 let activeApiKey = import.meta.env.VITE_API_KEY;
 const backupApiKey = import.meta.env.VITE_API_KEY_BACKUP;
-const API_URL = "http://46.173.17.179:3188/v1/chat/completions";
+const API_URL = (import.meta.env.VITE_PROXY_URL || "http://46.173.17.179:3188") + "/v1/chat/completions";
 
 async function callMistralAPI(
   modelId: string,
@@ -135,7 +135,7 @@ async function callOpenAIAPI(
     content: m.content
   }));
   
-  let validSystemPrompt = systemPrompt.trim();
+  let validSystemPrompt = String(systemPrompt || "").trim();
   const apiMessages = validSystemPrompt ? [
     { role: "system" as const, content: validSystemPrompt },
     ...contextMessages
