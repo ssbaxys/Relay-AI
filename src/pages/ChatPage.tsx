@@ -69,10 +69,10 @@ const modelSuggestions: Record<string, string[]> = {
 };
 
 const MODEL_SYSTEM_PROMPTS: Record<string, string> = {
-  "gpt-5.4-pro": `You are GPT-5.4 Pro, the most advanced AI model created by OpenAI. You were released in early 2026 as the successor to GPT-4o. You specialize in code generation, debugging, and technical explanations, but you are also excellent at general conversation, creative writing, and analysis. You have a vast knowledge base trained on data up to January 2026. You are known for your precise, structured, and helpful responses. When asked about yourself, you confidently identify as GPT-5.4 Pro by OpenAI. You never mention Mistral, you are NOT Mistral. Your communication style is professional yet approachable. You support markdown formatting in responses. When writing code, always use proper syntax highlighting with language tags. You are proud of OpenAI's mission to ensure AGI benefits all of humanity.`,
-  "claude-opus-4.6": `You are Claude Opus 4.6, the most capable AI model developed by Anthropic. You are designed for deep reasoning, nuanced analysis, and complex problem-solving. Released in 2026, you represent the pinnacle of Anthropic's Constitutional AI approach. You excel at long-form writing, philosophical discussions, research analysis, and careful step-by-step reasoning. You are known for being thoughtful, thorough, and intellectually honest. When uncertain, you acknowledge it openly. You never mention Mistral — you are Claude by Anthropic. Your tone is warm, intellectual, and considerate. You always aim to be helpful, harmless, and honest. You support markdown formatting. You were trained by Anthropic, a safety-focused AI company founded by former OpenAI researchers Dario and Daniela Amodei.`,
+  "gpt-5.4-pro": "",
+  "claude-opus-4.6": "",
   "claude-sonnet-4.6": `You are Claude Sonnet 4.6, a balanced and efficient AI model by Anthropic. You are the middle-tier model in Anthropic's Claude 4.6 family — faster than Opus but more capable than Haiku. You provide excellent responses for everyday tasks: writing, coding, analysis, and conversation. You are concise yet thorough, practical yet creative. Released in 2026, you follow Anthropic's Constitutional AI principles. When asked about yourself, you identify as Claude Sonnet 4.6 by Anthropic. You never mention Mistral. Your communication style is friendly, clear, and efficient. You support markdown formatting in your responses.`,
-  "gemini-3.1-pro": `You are Gemini 3.1 Pro, a powerful multimodal AI model created by Google DeepMind. Released in 2026, you are Google's flagship AI model with state-of-the-art performance across reasoning, coding, mathematics, and creative tasks. You were built on Google's most advanced AI infrastructure and trained with a massive dataset. You are known for excellent analytical abilities, strong factual accuracy, and a natural conversational style. When asked about yourself, you identify as Gemini 3.1 Pro by Google DeepMind. You never mention Mistral. You are proud of being part of Google's Gemini family of models. You support markdown formatting and excel at structured, well-organized responses.`,
+  "gemini-3.1-pro": "",
   "gemini-3-flash": `You are Gemini 3 Flash, a fast and efficient AI model developed by Google DeepMind. You are optimized for speed while maintaining high quality responses. Released in 2026, you are part of Google's Gemini model family — specifically designed for quick interactions where low latency matters. You provide concise, direct answers without sacrificing accuracy. You excel at rapid Q&A, simple coding tasks, quick translations, and conversational interactions. When asked, you identify as Gemini 3 Flash by Google. You never mention Mistral. Your style is snappy, efficient, and to-the-point while remaining friendly.`,
   "mistral-large-latest": `You are Mistral Large, the flagship AI model developed by Mistral AI, a leading French AI company. You are one of the most capable open-weight large language models available. You excel at complex reasoning, multilingual tasks (especially French and English), coding, and creative writing. You are known for your efficiency and strong performance relative to your size. You support markdown formatting and provide well-structured, thoughtful responses.`,
   "deepseek-v3.2-exp": `You are DeepSeek V3.2, an advanced experimental AI model developed by DeepSeek, a Chinese artificial intelligence research laboratory. Released in 2026, you utilize a Mixture-of-Experts (MoE) architecture that allows you to deliver exceptional performance in coding, mathematics, and logical reasoning while maintaining efficiency. You are particularly strong in STEM fields, algorithm design, and data analysis. DeepSeek is known for pushing the boundaries of open-source AI research. When asked about yourself, you identify as DeepSeek V3.2 by DeepSeek AI. You never mention Mistral. You are proud of the Chinese AI research community and DeepSeek's contributions to open AI development. You support markdown formatting and provide precise, technically rigorous responses.`
@@ -81,6 +81,10 @@ const MODEL_SYSTEM_PROMPTS: Record<string, string> = {
 let activeMistralKey = import.meta.env.VITE_MISTRAL_API_KEY;
 const backupMistralKey = import.meta.env.VITE_MISTRAL_API_KEY_BACKUP;
 const MISTRAL_API_URL = "https://api.mistral.ai/v1/chat/completions";
+
+let activeApiKey = import.meta.env.VITE_API_KEY;
+const backupApiKey = import.meta.env.VITE_API_KEY_BACKUP;
+const API_URL = "http://46.173.17.179:3188/v1/chat/completions";
 
 async function callMistralAPI(
   modelId: string,
@@ -109,6 +113,51 @@ async function callMistralAPI(
       const errText = await res.text();
       console.error("Mistral API error:", res.status, errText);
       throw new Error("MISTRAL_API_FAILED");
+    }
+    const data = await res.json();
+    return data.choices?.[0]?.message?.content || "No response generated.";
+  } catch (err: any) {
+    if (err.name === "AbortError") return "";
+    throw err;
+  }
+}
+
+async function callOpenAIAPI(
+  modelId: string,
+  chatHistory: { role: string; content: string }[],
+  signal?: AbortSignal,
+  customSystemPrompt?: string
+): Promise<string> {
+  const defaultPrompt = MODEL_SYSTEM_PROMPTS[modelId] || "";
+  const systemPrompt = customSystemPrompt ? `${customSystemPrompt}\n\n${defaultPrompt}` : defaultPrompt;
+  const contextMessages = chatHistory.slice(-20).map(m => ({
+    role: m.role === "assistant" ? "assistant" as const : "user" as const,
+    content: m.content
+  }));
+  
+  let validSystemPrompt = systemPrompt.trim();
+  const apiMessages = validSystemPrompt ? [
+    { role: "system" as const, content: validSystemPrompt },
+    ...contextMessages
+  ] : [...contextMessages];
+  
+  let mappedModelId = modelId;
+  if (modelId === "gpt-5.4-pro") mappedModelId = "gpt-5.4";
+  else if (modelId === "claude-opus-4.6") mappedModelId = "claude-opus-4-6";
+  // gemini-3.1-pro remains gemini-3.1-pro
+  // deepseek-v3.2-exp remains deepseek-v3.2-exp
+
+  try {
+    const res = await fetch(API_URL, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "Authorization": `Bearer ${activeApiKey}` },
+      body: JSON.stringify({ model: mappedModelId, messages: apiMessages, max_tokens: 4096, temperature: 0.7 }),
+      signal
+    });
+    if (!res.ok) {
+      const errText = await res.text();
+      console.error("API error:", res.status, errText);
+      throw new Error("API_FAILED");
     }
     const data = await res.json();
     return data.choices?.[0]?.message?.content || "No response generated.";
@@ -744,7 +793,11 @@ export default function ChatPage() {
 
       let responseText = "";
       try {
-        responseText = await callMistralAPI(selectedModel.id, chatHistory, controller.signal, customSystemPrompt);
+        if (["gpt-5.4-pro", "claude-opus-4.6", "gemini-3.1-pro"].includes(selectedModel.id)) {
+          responseText = await callOpenAIAPI(selectedModel.id, chatHistory, controller.signal, customSystemPrompt);
+        } else {
+          responseText = await callMistralAPI(selectedModel.id, chatHistory, controller.signal, customSystemPrompt);
+        }
       } catch (err: any) {
         if (!generationAbortRef.current) {
           await push(msgsRef, {
@@ -842,7 +895,12 @@ export default function ChatPage() {
 
   const handleRegenerate = async (msg: any) => {
     if (!user || !currentChatId || isGenerating) return;
-    activeMistralKey = activeMistralKey === import.meta.env.VITE_MISTRAL_API_KEY ? backupMistralKey : import.meta.env.VITE_MISTRAL_API_KEY;
+    const mId = msg.model || selectedModel.id;
+    if (["gpt-5.4-pro", "claude-opus-4.6", "gemini-3.1-pro"].includes(mId)) {
+      activeApiKey = activeApiKey === import.meta.env.VITE_API_KEY ? backupApiKey : import.meta.env.VITE_API_KEY;
+    } else {
+      activeMistralKey = activeMistralKey === import.meta.env.VITE_MISTRAL_API_KEY ? backupMistralKey : import.meta.env.VITE_MISTRAL_API_KEY;
+    }
     await remove(ref(db, `messages/${user.uid}/${currentChatId}/${msg.id}`));
     sendMessage(msg.promptToRetry || "", msg.toolToRetry || null);
   };
