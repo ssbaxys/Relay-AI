@@ -25,6 +25,8 @@ render-proxy/*
 *.sw?
 
 # env files
+model_menu.ps1
+.claude/*
 .env
 .env.*
 !.env.example

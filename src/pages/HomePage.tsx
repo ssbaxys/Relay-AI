@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../App";
 import { ArrowRight, Check, Zap, Shield, Globe, Layers } from "lucide-react";
 import { ref, onValue } from "firebase/database";
@@ -7,6 +7,8 @@ import { db } from "../firebase";
 import Dither from "../components/Dither";
 import { useTranslation } from "react-i18next";
 import { LanguageSwitcher } from "../components/LanguageSwitcher";
+
+const navigate_hook_placeholder = null; // resolved in component
 
 type UptimeStatus = "operational" | "degraded" | "down" | "maintenance";
 
@@ -359,7 +361,7 @@ export default function HomePage() {
                 <span className="font-bold text-lg text-white tracking-tight">Relay AI</span>
               </Link>
               <p className="text-xs text-zinc-600 font-light max-w-[200px] text-center md:text-left leading-relaxed">
-                {t('footer.description', 'Ваш проводник в мир современного искусственного интеллекта.')}
+                {t('footer.description', 'Сайт создан @ssbaxys')}
               </p>
             </div>
             <div className="grid grid-cols-2 sm:flex sm:items-center gap-8 md:gap-12 text-[14px]">
@@ -377,7 +379,7 @@ export default function HomePage() {
             </div>
           </div>
           <div className="pt-8 border-t border-white/[0.02] flex flex-col md:flex-row items-center justify-between gap-4">
-            <span className="text-[11px] text-zinc-700 uppercase tracking-widest">© 2025 Relay AI. All rights reserved.</span>
+            <span className="text-[11px] text-zinc-700 uppercase tracking-widest">© 2026 Relay AI. Все права защищены.</span>
             <div className="flex items-center gap-2 opacity-30 grayscale hover:grayscale-0 transition-all">
               <img src="https://img.icons8.com/color/48/visa.png" width={24} />
               <img src="https://img.icons8.com/color/48/mastercard.png" width={24} />
