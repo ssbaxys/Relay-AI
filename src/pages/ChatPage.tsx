@@ -663,8 +663,8 @@ export default function ChatPage() {
 
   const createNewChat = async () => { if (!user) return; const nc = await push(ref(db, `chats/${user.uid}`), { title: t('chat.newChat'), model: selectedModel.id, createdAt: serverTimestamp(), lastMessage: Date.now(), messageCount: 0 }); setCurrentChatId(nc.key); setMessages([]); };
   const deleteChat = async (chatId: string) => { if (!user) return; await remove(ref(db, `chats/${user.uid}/${chatId}`)); await remove(ref(db, `messages/${user.uid}/${chatId}`)); if (currentChatId === chatId) { setCurrentChatId(null); setMessages([]); } };
-  const renameChat = async (chatId: string, t: string) => { if (!user || !t.trim()) return; await update(ref(db, `chats/${user.uid}/${chatId}`), { title: t.trim() }); setRenamingChatId(null); };
-  const renameFolder = async (fId: string, n: string) => { if (!user || !n.trim()) return; await update(ref(db, `folders/${user.uid}/${fId}`), { name: n.trim() }); setRenamingFolderId(null); };
+  const renameChat = async (chatId: string, title: unknown) => { const v = typeof title === "string" ? title : String(title ?? ""); if (!user || !v.trim()) return; await update(ref(db, `chats/${user.uid}/${chatId}`), { title: v.trim() }); setRenamingChatId(null); };
+  const renameFolder = async (fId: string, name: unknown) => { const v = typeof name === "string" ? name : String(name ?? ""); if (!user || !v.trim()) return; await update(ref(db, `folders/${user.uid}/${fId}`), { name: v.trim() }); setRenamingFolderId(null); };
   const saveChatAdminSettings = async () => {
     if (!user || !currentChatId) return;
     await update(ref(db, `chats/${user.uid}/${currentChatId}`), { localSystemPrompt: chatAdminPrompt });
@@ -701,7 +701,8 @@ export default function ChatPage() {
   }, []);
 
   const sendMessage = async (overrideText?: string, overrideTool?: ToolType) => {
-    const textToUse = overrideText !== undefined ? overrideText : input;
+    const raw = overrideText !== undefined ? overrideText : input;
+    const textToUse = typeof raw === "string" ? raw : String(raw ?? "");
     if (!textToUse.trim() || !user || isGenerating) return;
     if (isModelDisabledCheck(selectedModel.id)) return;
     const text = textToUse.trim().substring(0, MAX_CHARS);
@@ -1392,7 +1393,7 @@ export default function ChatPage() {
                       <Square className="w-3 h-3 text-zinc-900 fill-zinc-900" />
                     </div>
                   ) : (
-                    <button onClick={sendMessage} disabled={!input.trim() || charOverLimit || isModelDisabled || noModelsAvailable}
+                    <button onClick={() => sendMessage()} disabled={!input.trim() || charOverLimit || isModelDisabled || noModelsAvailable}
                       className="p-2 rounded-xl text-zinc-600 hover:text-violet-400 hover:bg-violet-600/10 disabled:text-zinc-800 transition-all"><Send className="w-4 h-4" /></button>
                   )}
                 </div>
